@@ -28,7 +28,7 @@ export default async function Mail({ params }) {
   return (<Shell profile={profile}>
     <span className="file">{e.file_number}</span><h1 style={{ marginTop: 8 }}>{e.legal_name}</h1>
     <EntityTabs file={e.file_number} active="mail" />
-    <p className="sub">Registered agent notices and business mail received at our Florida office for this company. To forward an item, pick the shipping speed next to it; postage is billed at cost. Legal papers are flagged urgent: please read them right away and contact an attorney if needed.</p>
+    <p className="sub">Registered agent notices and business mail received at our Florida office for this company. To forward an item, choose the carrier service next to it (your default is set in Mail settings); postage is billed at cost. Legal papers are flagged urgent: please read them right away and contact an attorney if needed.</p>
     {!items?.length ? <div className="note">No mail received yet.</div> : <div className="scroll"><table><thead><tr><th>Received</th><th>Type</th><th>From</th><th>Status</th><th>Scan</th><th>Original</th></tr></thead><tbody>
       {items.map(m => <tr key={m.id}>
         <td>{fmtDate(m.received_at)}</td>
@@ -38,7 +38,7 @@ export default async function Mail({ params }) {
         <td>{m.file_path ? <a className="btn small" href={`/api/file?type=mail&id=${m.id}`}>Download PDF</a> : <span className="muted">Not scanned</span>}</td>
         <td>{['received', 'scanned', 'held'].includes(m.status) ? <form action={requestAction} className="row" style={{ gap: 6 }}>
           <input type="hidden" name="id" value={m.id} />
-          <select name="shipping" defaultValue={pref?.forward_shipping || 'first_class'} aria-label="Shipping speed" style={{ width: 'auto' }}>{Object.entries(SHIPPING_SHORT).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+          <label className="muted" style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>Forward:<select name="shipping" defaultValue={pref?.forward_shipping || 'first_class'} aria-label="Carrier service" title="Carrier service" style={{ width: 'auto' }}>{Object.entries(SHIPPING_SHORT).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
           <button className="btn small sec" name="action" value="forward">Forward</button>
           <button className="btn small sec" name="action" value="shred">Shred</button>
         </form> : <span className="muted">{m.client_request ? `You asked: ${m.client_request}${m.forward_shipping ? ` (${SHIPPING_SHORT[m.forward_shipping]})` : ''}` : ''}</span>}</td>

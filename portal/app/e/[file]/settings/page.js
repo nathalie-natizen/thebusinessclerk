@@ -29,7 +29,7 @@ export default async function Settings({ params, searchParams }) {
       {searchParams?.saved && <p className="ok-msg">Mail settings saved.</p>}
       <h2 style={{ marginTop: 0 }}>What should we do with your mail?</h2>
       <label>Default handling<select name="handling" defaultValue={v.handling}>{Object.entries(HANDLING).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
-      <label>Default shipping when we mail originals to you<select name="forward_shipping" defaultValue={v.forward_shipping || 'first_class'}>{Object.entries(SHIPPING).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+      <label>Default carrier service for forwarding<select name="forward_shipping" defaultValue={v.forward_shipping || 'first_class'}>{Object.entries(SHIPPING).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
       <p className="muted">Legal papers and state notices are always scanned and sent to you the same business day. Forwarding is billed at postage cost. You can pick a different speed for any single item on the Mail page.</p>
       <h2>Forwarding address</h2>
       <label>Name<input name="forward_name" defaultValue={v.forward_name || ''} autoComplete="name" /></label>

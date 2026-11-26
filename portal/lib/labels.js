@@ -36,4 +36,4 @@ export const SHIPPING = {
   express: 'USPS Priority Mail Express (overnight to 2 days)',
   courier_overnight: 'UPS or FedEx overnight',
 };
-export const SHIPPING_SHORT = { first_class: 'Regular mail', priority: 'Priority', express: 'Express', courier_overnight: 'Overnight courier' };
+export const SHIPPING_SHORT = { first_class: 'USPS First-Class', priority: 'USPS Priority', express: 'USPS Priority Express', courier_overnight: 'UPS/FedEx Overnight' };

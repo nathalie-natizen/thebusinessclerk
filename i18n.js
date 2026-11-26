@@ -15,7 +15,7 @@ const altsFor = path => ALT.find(g => Object.values(g).includes(path)) || null;
 
 const L = {
   en: {
-    locale: 'en_US', home: 'Home', faq: 'Frequently asked questions', getStarted: 'Get started', menu: 'Menu', skip: 'Skip to content',
+    locale: 'en_US', home: 'Home', faq: 'Frequently asked questions', getStarted: 'Get started', portal: 'Client login', menu: 'Menu', skip: 'Skip to content',
     subtitle: 'Florida Registered Agent · Business Formation · Address & Mail · Launch',
     nav: [['florida-registered-agent.html', 'Registered Agent'], ['florida-llc-formation.html', 'Formation'], ['business-filings.html', 'Filings'], ['business-address-mail.html', 'Mail'], ['launch-pack.html', 'Launch'], ['pricing.html', 'Pricing'], ['resources/index.html', 'Guides']],
     ctaH: 'Ready to make it official?', ctaP: 'Form your Florida company, name us as your registered agent and get a real business address, all in one place.',
@@ -29,7 +29,7 @@ const L = {
     guideNote: d => `This guide is general information, not legal or tax advice. Fees and rules can change; confirm current requirements with the Florida Division of Corporations or a licensed professional. Last reviewed ${d}.`,
   },
   pt: {
-    locale: 'pt_BR', home: 'Início', faq: 'Perguntas frequentes', getStarted: 'Começar', menu: 'Menu', skip: 'Ir para o conteúdo',
+    locale: 'pt_BR', home: 'Início', faq: 'Perguntas frequentes', getStarted: 'Começar', portal: 'Área do cliente', menu: 'Menu', skip: 'Ir para o conteúdo',
     subtitle: 'Agente Registrado na Flórida · Abertura de Empresas · Endereço e Correspondência · Lançamento',
     nav: [['pt/agente-registrado-florida.html', 'Agente Registrado'], ['pt/abrir-llc-na-florida.html', 'Abrir LLC'], ['pt/empreendedores-internacionais.html', 'Internacionais'], ['pt/precos.html', 'Preços'], ['pt/guias/index.html', 'Guias']],
     ctaH: 'Pronto para oficializar sua empresa?', ctaP: 'Abra sua empresa na Flórida, nomeie-nos como agente registrado e tenha um endereço comercial real, tudo em um só lugar.',
@@ -43,7 +43,7 @@ const L = {
     guideNote: d => `Este guia é informativo e não constitui consultoria jurídica ou tributária. Taxas e regras podem mudar; confirme os requisitos atuais com a Divisão de Corporações da Flórida ou um profissional habilitado. Revisado em ${d}.`,
   },
   es: {
-    locale: 'es_US', home: 'Inicio', faq: 'Preguntas frecuentes', getStarted: 'Empezar', menu: 'Menú', skip: 'Ir al contenido',
+    locale: 'es_US', home: 'Inicio', faq: 'Preguntas frecuentes', getStarted: 'Empezar', portal: 'Portal del cliente', menu: 'Menú', skip: 'Ir al contenido',
     subtitle: 'Agente Registrado en Florida · Formación de Empresas · Dirección y Correo · Lanzamiento',
     nav: [['es/agente-registrado-florida.html', 'Agente Registrado'], ['es/abrir-llc-en-florida.html', 'Abrir LLC'], ['es/emprendedores-internacionales.html', 'Internacionales'], ['es/precios.html', 'Precios'], ['es/guias/index.html', 'Guías']],
     ctaH: '¿Listo para formalizar tu empresa?', ctaP: 'Forma tu empresa en Florida, nómbranos tu agente registrado y obtén una dirección comercial real, todo en un solo lugar.',

@@ -66,10 +66,11 @@ nav.main a:hover,nav.main a[aria-current]{background:var(--sand);color:var(--lin
 .btn.ghost{border-color:currentColor;color:var(--link);background:transparent}
 .btn.light{background:#fff;color:var(--teal)}
 .navlangs{display:none}.navlangs a{font-weight:700}
+.portal{white-space:nowrap;font-weight:700;font-size:14.5px;color:var(--teal);text-decoration:none;padding:8px 4px}.portal:hover{text-decoration:underline}:root:not([data-theme=light]) .portal{color:light-dark(var(--teal),#EEF3F2)}nav.main .navportal{display:none}
 @media(max-width:600px){nav.main.open .navlangs{display:flex;gap:6px;border-top:1px solid var(--line);margin-top:6px;padding-top:6px}}
 .langs{flex:none;display:flex;gap:2px;font-size:13px;font-weight:700;margin-left:6px}.langs a{color:var(--soft);text-decoration:none;padding:10px 6px;border-radius:6px}.langs a[aria-current]{color:var(--link);background:var(--sand)}
 .menu{flex:none;display:none;margin-left:8px;background:none;border:1px solid var(--line);border-radius:8px;min-height:44px;padding:0 14px;color:var(--ink);font:600 15px Inter,sans-serif}
-@media(max-width:1300px){nav.main{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:var(--bg);padding:10px max(5vw,18px) 18px;border-bottom:1px solid var(--line)}nav.main.open{display:flex}.menu{display:block}.top .cta{display:none}.langs{margin-left:auto}}
+@media(max-width:1300px){nav.main{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:var(--bg);padding:10px max(5vw,18px) 18px;border-bottom:1px solid var(--line)}nav.main.open{display:flex}.menu{display:block}.top .cta{display:none}.top .portal{display:none}nav.main.open .navportal{display:block}.langs{margin-left:auto}}
 /* hero */
 .hero{background:var(--teal);color:#F3F7F6;position:relative;overflow:hidden}
 .hero .wrap{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);align-items:center}
@@ -178,6 +179,8 @@ ${schema.map(s => `<script type="application/ld+json">${JSON.stringify(s)}</scri
 </head>`;
 }
 
+const PORTAL = 'https://app.thebusinessclerk.com';
+
 function header(path, rel, lang) {
   const T = L[lang], alts = altsFor(path), home = { en: 'index.html', pt: 'pt/index.html', es: 'es/index.html' };
   const start = { en: 'get-started.html', pt: 'pt/comecar.html', es: 'es/empezar.html' }[lang];
@@ -186,22 +189,23 @@ function header(path, rel, lang) {
   return `<a class="skip" href="#main">${T.skip}</a>
 <header class="top"><div class="wrap">
 <a class="brand" href="${rel}${home[lang]}">${logo}<span>THE BUSINESS CLERK<small>${esc(T.subtitle)}</small></span></a>
-<nav class="main" id="nav" aria-label="Main">${''}${T.nav.map(([h, t]) => `<a href="${rel}${h}"${path === h || (h.endsWith('index.html') && h !== home[lang] && section(h) && path.startsWith(section(h) + '/')) ? ' aria-current="page"' : ''}>${t}</a>`).join('')}<div class="navlangs">${sw}</div></nav>
+<nav class="main" id="nav" aria-label="Main">${''}${T.nav.map(([h, t]) => `<a href="${rel}${h}"${path === h || (h.endsWith('index.html') && h !== home[lang] && section(h) && path.startsWith(section(h) + '/')) ? ' aria-current="page"' : ''}>${t}</a>`).join('')}<a class="navportal" href="${PORTAL}">${T.portal} ↗</a><div class="navlangs">${sw}</div></nav>
 <div class="langs" aria-label="Language">${sw}</div>
 <button class="menu" aria-expanded="false" aria-controls="nav">${T.menu}</button>
+<a class="portal" href="${PORTAL}">${T.portal}</a>
 <a class="btn primary cta" href="${rel}${start}">${T.getStarted}</a>
 </div></header>`;
 }
 
 function footer(rel, lang) {
   const T = L[lang];
-  const col = (t, links) => `<div><h4>${t}</h4><ul>${links.map(([h, x]) => `<li><a href="${rel}${h}">${x}</a></li>`).join('')}</ul></div>`;
+  const col = (t, links) => `<div><h4>${t}</h4><ul>${links.map(([h, x]) => `<li><a href="${/^https?:/.test(h) ? h : rel + h}">${x}</a></li>`).join('')}</ul></div>`;
   return `<footer class="band"><div class="wrap">
 <div><a class="brand" href="${rel}${lang === 'en' ? '' : lang + '/'}index.html">${logo}<span>THE BUSINESS CLERK</span></a>
 <p style="margin-top:14px">${esc(T.subtitle)}</p><p>${T.footAbout}</p>
 <p>${T.email}: <a href="mailto:${C.email}">${C.email}</a></p></div>
 ${col(T.fServices, T.services)}
-${col(T.fCompany, T.company)}
+${col(T.fCompany, [...T.company, [PORTAL, T.portal]])}
 ${col(T.fLegal, T.legal)}
 <p class="legal">© ${new Date().getFullYear()} THE BUSINESS CLERK LLC. ${T.legalLine}</p>
 </div></footer>
