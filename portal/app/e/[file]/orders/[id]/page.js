@@ -23,7 +23,7 @@ async function saveQuestionnaire(fd) {
   'use server';
   const { user } = await requireUser();
   const o = await loadOrder(String(fd.get('order_id'))); if (!o) return { error: 'Not allowed.' };
-  if (['submitted', 'completed', 'delivered', 'cancelled'].includes(o.status)) return { error: 'This order is already being filed. Reply below if something changed.' };
+  if (['submitted', 'final_review', 'completed', 'delivered', 'cancelled'].includes(o.status)) return { error: 'This order is already being filed. Reply below if something changed.' };
   const def = QUESTIONNAIRES[o.kind]; if (!def) return { error: 'No questionnaire for this order.' };
   const { q, missing } = collect(def, fd);
   for (const f of def.fields.filter(f => f.type === 'file')) if (!q[f.name] && o.details?.q?.[f.name]) q[f.name] = o.details.q[f.name];
@@ -54,7 +54,7 @@ async function approve(fd) {
   'use server';
   const { user } = await requireUser();
   const o = await loadOrder(String(fd.get('order_id'))); if (!o || o.kind !== 'launch' || o.status !== 'submitted') return;
-  await setOrderStatus({ orderId: o.id, status: 'completed', note: 'Approved by client.', notify: false, userId: user.id });
+  await setOrderStatus({ orderId: o.id, status: 'final_review', note: 'Approved by client. Final quality check, then handover.', notify: false, userId: user.id });
   revalidatePath('/e/[file]/orders/[id]', 'page');
 }
 
@@ -79,7 +79,7 @@ export default async function OrderPage({ params, searchParams }) {
   const def = QUESTIONNAIRES[o.kind]; const q = o.details?.q;
   const events = (o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const ask = o.status === 'information_needed' ? events.find(ev => ev.status === 'information_needed' && ev.note) : null;
-  const locked = ['submitted', 'completed', 'delivered', 'cancelled'].includes(o.status);
+  const locked = ['submitted', 'final_review', 'completed', 'delivered', 'cancelled'].includes(o.status);
   const rev = o.kind === 'launch' ? revisions(o.details) : null; const left = rev ? rev.allowed - rev.used : 0;
   return (<Shell profile={profile}>
     <span className="file">{e.file_number}</span><h1 style={{ marginTop: 8 }}>{e.legal_name}</h1>
@@ -102,7 +102,7 @@ export default async function OrderPage({ params, searchParams }) {
           <label>All the changes you want in this revision<textarea name="message" rows={5} placeholder="List every change at once: one revision covers as many changes as you like." /></label>
           <label>Attach a file (optional)<input name="file" type="file" accept="image/*,application/pdf" /></label>
         </UploadForm></div> : <p className="note">You've used both revisions. Further changes are quoted separately: send us a message below.</p>}
-      </> : <p className="muted">{o.status === 'completed' ? 'This order is complete.' : 'You can approve or request a revision once we deliver your work for review.'}</p>}
+      </> : <p className="muted">{o.status === 'final_review' ? 'Approved. We are doing a final quality check and preparing your handover sheet.' : o.status === 'completed' ? 'This order is complete.' : 'You can approve or request a revision once we deliver your work for review.'}</p>}
     </section>}
     {def && <section className="card" style={{ marginBottom: 18 }}>
       <h3 style={{ marginTop: 0 }}>{def.title}{q ? ' ✓' : ''}</h3>

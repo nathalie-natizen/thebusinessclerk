@@ -20,10 +20,10 @@ export const HANDLING = {
 };
 export const ORDER_STATUS = {
   awaiting_payment: 'Awaiting payment', received: 'In progress', payment_confirmed: 'In progress', in_review: 'In progress',
-  information_needed: 'Action needed', submitted: 'Submitted', completed: 'Completed', delivered: 'Completed', cancelled: 'Cancelled',
+  information_needed: 'Action needed', submitted: 'Submitted', final_review: 'Final review', completed: 'Completed', delivered: 'Completed', cancelled: 'Cancelled',
 };
 // The four stages staff move orders through (plus Cancel)
-export const STAFF_STATUSES = [['received', 'To do'], ['information_needed', 'Waiting on client'], ['submitted', 'Filed / submitted'], ['completed', 'Completed'], ['cancelled', 'Cancelled']];
+export const STAFF_STATUSES = [['received', 'To do'], ['information_needed', 'Waiting on client'], ['submitted', 'Filed / submitted'], ['final_review', 'Final review (quality check)'], ['completed', 'Archive (completed)'], ['cancelled', 'Cancelled']];
 export const DOC_CATEGORY = {
   formation: 'Formation', filing: 'Filing', annual_report: 'Annual report', ein: 'EIN letter',
   certificate: 'Certificate', agreement: 'Agreement', other: 'Other',
@@ -46,9 +46,10 @@ export const statusLabel = (status, kind) => status === 'submitted'
   : ORDER_STATUS[status] || status;
 
 // Pipeline columns, in order
+export const ARCHIVED = ['completed', 'delivered'];
 export const PIPELINE = [
   ['To do', ['received', 'payment_confirmed', 'in_review']], ['Waiting on client', ['information_needed']],
-  ['Filed / submitted', ['submitted']], ['Completed', ['completed', 'delivered']],
+  ['Filed / submitted', ['submitted']], ['Final review', ['final_review']],
 ];
 
 // Services that can be ordered

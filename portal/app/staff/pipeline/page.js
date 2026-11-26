@@ -6,7 +6,7 @@ import { requireStaff } from '@/lib/auth';
 import { setOrderStatus, logRevision } from '@/lib/orders';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { revisions, STAFF_STEPS } from '@/lib/guidelines';
-import { PIPELINE, KINDS, STAFF_STATUSES, fmtDate } from '@/lib/labels';
+import { PIPELINE, ARCHIVED, KINDS, STAFF_STATUSES, fmtDate } from '@/lib/labels';
 
 async function move(fd) {
   'use server';
@@ -39,11 +39,11 @@ export default async function Pipeline({ searchParams }) {
   const filter = (k, label) => <Link key={k || 'all'} className={`pill ${kind === k ? 'ok' : ''}`} href={`/staff/pipeline${k ? `?kind=${k}` : ''}`} style={{ textDecoration: 'none', marginRight: 6 }}>{label}</Link>;
   return (<Shell profile={profile}>
     <h1>Pipeline</h1>
-    <p className="sub">Every paid order, by stage. Moving an order updates the client's portal and notifies them (untick "Notify" to skip). Use "Waiting on client" with a note when you need something from them. Completed orders show for 30 days (<a href="/staff/pipeline?done=1">show all</a>).</p>
+    <p className="sub">Every paid order, by stage. Moving an order updates the client's portal and notifies them (untick "Notify" to skip). Use "Waiting on client" with a note when you need something from them. When the quality check in Final review passes, choose Archive: the client sees Completed and the order leaves the board ({showDone ? <a href="/staff/pipeline">hide archived</a> : <a href="/staff/pipeline?done=1">show archived</a>}).</p>
     {unpaid?.length > 0 && <div className="note" style={{ borderLeftColor: '#C0392B' }}><strong>Payment problems ({unpaid.length}):</strong> the client was alerted by email and text to update their card. {unpaid.map(u => <span key={u.file_number} style={{ marginRight: 12 }}><Link href={`/staff/e/${u.file_number}`}>{u.legal_name}</Link> ${((u.payment_issue.amount || 0) / 100).toFixed(2)} · {new Date(u.payment_issue.at).toLocaleDateString('en-US')}</span>)}</div>}
     <p>{filter(null, 'All')}{Object.entries(KINDS).map(([k, v]) => filter(k, v.name.replace('Florida ', '')))}</p>
     <div style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(270px, 1fr)', gap: 14, overflowX: 'auto', paddingBottom: 12 }}>
-      {PIPELINE.map(([label, sts]) => { const list = (orders || []).filter(o => sts.includes(o.status) && (label !== 'Completed' || showDone || new Date(o.updated_at) > Date.now() - 30 * 864e5));
+      {[...PIPELINE, ...(showDone ? [['Archived', ARCHIVED]] : [])].map(([label, sts]) => { const list = (orders || []).filter(o => sts.includes(o.status));
         return (<section key={label} style={{ background: 'var(--sand)', borderRadius: 14, padding: 10, minHeight: 200 }}>
           <h3 style={{ margin: '4px 6px 10px' }}>{label} <span className="muted">({list.length})</span></h3>
           {list.map(o => <div key={o.id} className="card" style={{ padding: 14, marginBottom: 10 }}>
