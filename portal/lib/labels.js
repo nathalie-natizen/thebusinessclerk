@@ -28,3 +28,12 @@ export const DOC_CATEGORY = {
 };
 export const fmtDate = (d) => d ? new Date(d).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
 export const fmtDay = (d) => d ? new Date(d).toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+
+// Forwarding speed. Postage is billed at cost.
+export const SHIPPING = {
+  first_class: 'USPS First-Class Mail (regular, usually 2–5 business days)',
+  priority: 'USPS Priority Mail (usually 1–3 business days)',
+  express: 'USPS Priority Mail Express (overnight to 2 days)',
+  courier_overnight: 'UPS or FedEx overnight',
+};
+export const SHIPPING_SHORT = { first_class: 'Regular mail', priority: 'Priority', express: 'Express', courier_overnight: 'Overnight courier' };
