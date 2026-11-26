@@ -10,7 +10,8 @@ async function complete(formData) {
   const { sb } = await requireStaff();
   const id = String(formData.get('id')); const status = String(formData.get('status'));
   if (!['forwarded', 'shredded', 'picked_up', 'held'].includes(status)) return;
-  await sb.from('mail_items').update({ status }).eq('id', id);
+  const postage = Math.round(parseFloat(String(formData.get('postage') || '').replace(/[^0-9.]/g, '')) * 100);
+  await sb.from('mail_items').update({ status, ...(postage >= 0 && !isNaN(postage) ? { postage_cents: postage } : {}) }).eq('id', id);
   if (status === 'forwarded') await startTracking(id, String(formData.get('carrier')), String(formData.get('tracking') || ''));
   revalidatePath('/staff/queue');
 }
@@ -29,7 +30,7 @@ export default async function Queue() {
         <td><span className="pill warn">{MAIL_STATUS[m.status]}</span>{m.status === 'forward_requested' && <div><strong>{SHIPPING[m.forward_shipping || 'first_class']}</strong></div>}</td>
         <td className="muted">{m.status === 'forward_requested' && pr ? [pr.forward_name, pr.forward_line1, pr.forward_line2, [pr.forward_city, pr.forward_state, pr.forward_postal].filter(Boolean).join(', '), pr.forward_country].filter(Boolean).map((l, i) => <div key={i}>{l}</div>) : (pr ? HANDLING[pr.handling] : '')}</td>
         <td><form action={complete} className="row" style={{ gap: 6 }}><input type="hidden" name="id" value={m.id} />
-          {m.status === 'forward_requested' ? <><select name="carrier" defaultValue={['courier_overnight'].includes(m.forward_shipping) ? 'UPS' : 'USPS'} style={{ width: 'auto' }}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" placeholder="Tracking #" /><button className="btn small" name="status" value="forwarded">Mark forwarded</button></> : <button className="btn small" name="status" value="shredded">Mark shredded</button>}
+          {m.status === 'forward_requested' ? <><select name="carrier" defaultValue={['courier_overnight'].includes(m.forward_shipping) ? 'UPS' : 'USPS'} style={{ width: 'auto' }}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" placeholder="Tracking #" /><input name="postage" placeholder="Postage $" inputMode="decimal" style={{ maxWidth: 110 }} /><button className="btn small" name="status" value="forwarded">Mark forwarded</button></> : <button className="btn small" name="status" value="shredded">Mark shredded</button>}
         </form></td></tr>; })}
     </tbody></table></div>}
     <h2>Open orders</h2>

@@ -2,5 +2,11 @@
   "framework": "nextjs",
   "installCommand": "npm install",
   "buildCommand": "next build",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "crons": [
+    {
+      "path": "/api/billing/close-month",
+      "schedule": "0 12 1 * *"
+    }
+  ]
 }
