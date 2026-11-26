@@ -14,6 +14,7 @@ export const HANDLING = {
   scan_all: 'Open and scan everything to my portal (per-scan pricing applies)',
   forward_each: 'Forward each item to me as it arrives ($2.50 per item + postage)',
   forward_weekly: 'Forward my mail once a week ($2.50 per item + postage)',
+  forward_biweekly: 'Forward my mail every two weeks ($2.50 per item + postage)',
   forward_monthly: 'Forward my mail once a month ($2.50 per item + postage)',
   hold_pickup: 'Hold my mail for pickup at the office',
 };

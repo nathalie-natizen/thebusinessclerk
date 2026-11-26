@@ -480,3 +480,7 @@ alter table public.capture_tokens enable row level security;  -- no policies: on
 
 -- Sunbiz detail page link (staff paste)
 alter table public.entities add column if not exists sunbiz_url text;
+
+-- Biweekly forwarding option
+alter table public.mail_preferences drop constraint if exists mail_preferences_handling_check;
+alter table public.mail_preferences add constraint mail_preferences_handling_check check (handling in ('notify','scan_all','forward_each','forward_weekly','forward_biweekly','forward_monthly','hold_pickup'));

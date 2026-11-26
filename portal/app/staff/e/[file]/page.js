@@ -29,7 +29,7 @@ async function recordMail(fd) {
   let status = 'received', client_request = null, forward_shipping = null;
   if (content_path) status = 'scanned';
   else if (h === 'scan_all') { status = 'scan_requested'; client_request = 'scan (standing choice)'; }
-  else if (h.startsWith('forward_')) { status = 'forward_requested'; client_request = { forward_each: 'forward', forward_weekly: 'forward (weekly batch)', forward_monthly: 'forward (monthly batch)' }[h]; forward_shipping = pref?.forward_shipping || 'first_class'; }
+  else if (h.startsWith('forward_')) { status = 'forward_requested'; client_request = { forward_each: 'forward', forward_weekly: 'forward (weekly batch)', forward_biweekly: 'forward (every 2 weeks batch)', forward_monthly: 'forward (monthly batch)' }[h]; forward_shipping = pref?.forward_shipping || 'first_class'; }
   else if (h === 'hold_pickup') status = 'held';
   const { error } = await sb.from('mail_items').insert({
     entity_id, category, urgent, sender: clean(fd.get('sender')), description: clean(fd.get('description'), 500),
