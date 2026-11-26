@@ -15,7 +15,6 @@ export default async function PhoneCapture({ params }) {
         ['id1', 'Photo ID: front', 'Your passport photo page, driver’s license or other photo ID.', 'environment'],
         ['id1_back', 'Photo ID: back (if it has information)', 'Skip this for passports.', 'environment'],
         ['id2', 'Second ID showing your home address', 'Lease, insurance policy, voter or vehicle registration card, mortgage, or a driver’s license if not used above.', 'environment'],
-        ['selfie', 'Selfie holding your photo ID', 'Hold your photo ID next to your face so we can match it to you.', 'user'],
       ]} />
     </>}
   </main>);

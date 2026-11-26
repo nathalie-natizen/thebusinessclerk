@@ -119,11 +119,11 @@ export default async function Compliance({ params, searchParams }) {
       {qrSvg ? <div className="row" style={{ alignItems: 'center' }}>
         <div style={{ flex: '0 0 200px' }} dangerouslySetInnerHTML={{ __html: qrSvg }} />
         <div><p>Scan this code with your phone's camera, or open this link on your phone:</p><p style={{ wordBreak: 'break-all' }}><a href={qrUrl}>{qrUrl}</a></p>
-          <p className="muted">The link works for 30 minutes. It opens your camera to photograph your photo ID (front and back), your address ID and a selfie holding your ID. Then <a href={`/e/${e.file_number}/compliance`}>refresh this page</a>.</p></div>
+          <p className="muted">The link works for 30 minutes. It opens your camera to photograph your photo ID (front and back), and your address ID. Then <a href={`/e/${e.file_number}/compliance`}>refresh this page</a>.</p></div>
       </div> : <form action={phoneLink}><H name="entity_id" value={e.id} /><H name="file" value={e.file_number} />
         <p className="muted">Fastest way: we show you a QR code, you scan it with your phone, and your camera opens to take each photo. Nothing to download.</p>
         <button className="btn">Show QR code</button></form>}
-      <p className="muted" style={{ marginTop: 10 }}>Photos received: {[['id1', 'photo ID front'], ['id1_back', 'back'], ['id2', 'address ID'], ['selfie', 'selfie']].map(([k, l]) => a[`${k}_path`] ? <a key={k} style={{ marginRight: 10 }} href={`/api/file?type=compliance&id=${e.id}&part=${k}&view=1`} target="_blank" rel="noopener noreferrer">✓ {l}</a> : <span key={k} style={{ marginRight: 10 }}>○ {l}</span>)}</p>
+      <p className="muted" style={{ marginTop: 10 }}>Photos received: {[['id1', 'photo ID front'], ['id1_back', 'back'], ['id2', 'address ID']].map(([k, l]) => a[`${k}_path`] ? <a key={k} style={{ marginRight: 10 }} href={`/api/file?type=compliance&id=${e.id}&part=${k}&view=1`} target="_blank" rel="noopener noreferrer">✓ {l}</a> : <span key={k} style={{ marginRight: 10 }}>○ {l}</span>)}</p>
     </section>}
 
     {['id1', 'id2'].map((w, i) => <Step key={w} n={i + 2} done={!!a[`${w}_path`]} title={i === 0 ? 'Photo ID (primary)' : 'Second ID showing your home address'}>

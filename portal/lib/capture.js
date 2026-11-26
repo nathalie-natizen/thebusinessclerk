@@ -2,7 +2,7 @@ import 'server-only';
 import crypto from 'crypto';
 import { supabaseAdmin } from './supabase/admin';
 
-export const SLOTS = { id1: 'id1_path', id1_back: 'id1_back_path', id2: 'id2_path', selfie: 'selfie_path' };
+export const SLOTS = { id1: 'id1_path', id1_back: 'id1_back_path', id2: 'id2_path' };
 const TTL_MIN = 30;
 
 export async function newCaptureToken(entityId, userId) {
