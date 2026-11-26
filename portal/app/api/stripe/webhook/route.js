@@ -7,6 +7,7 @@ import { needsQuestionnaire } from '@/lib/questionnaires';
 import { KINDS } from '@/lib/labels';
 import { flagPaymentIssue, clearPaymentIssue } from '@/lib/payments';
 import { priceOf, isRa, isMail } from '@/lib/prices';
+import { sendEmail, notifyStaff } from '@/lib/notify';
 
 // Stripe → portal. Creates the company file, order and client access after payment, and keeps service flags in sync.
 export async function POST(req) {
@@ -26,6 +27,10 @@ export async function POST(req) {
       const q = needsQuestionnaire(o.kind);
       await setOrderStatus({ orderId: o.id, status: q ? 'information_needed' : 'received', note: q ? 'Payment received. Please complete the short questionnaire in your portal so we can start.' : 'Payment received. We\u2019re starting on it.' });
     }
+    const { data: ent } = await db.from('entities').select('legal_name, file_number, contact_name, contact_email').eq('id', entityId).single();
+    const APP = process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com';
+    if (ent?.contact_email) await sendEmail(ent.contact_email, `Payment received: ${ent.legal_name} (${ent.file_number})`, `Thank you, ${ent.contact_name || ''}. Your payment was received and your order is with our team.\n\nYour company file number is ${ent.file_number}. Follow every step and complete any questionnaire in your client portal. Sign in with this email: ${APP}/login\n\nTHE BUSINESS CLERK`).catch(() => {});
+    await notifyStaff({ subject: `New paid order: ${ent?.legal_name} (${ent?.file_number})`, text: `${(orders || []).map(o => KINDS[o.kind]?.name || o.kind).join(', ')}\n\n${APP}/staff/pipeline` }).catch(() => {});
     // Formation includes the first year of registered agent service; set up the yearly renewal to start in 12 months
     const formation = (orders || []).some(o => ['llc', 'corp'].includes(o.kind));
     const raPrice = formation && s.customer ? await priceOf('ra') : null;

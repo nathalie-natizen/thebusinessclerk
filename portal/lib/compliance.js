@@ -21,5 +21,7 @@ export async function maybeSubmit(entityId) {
     && (a.witness_method === 'in_person' || a.form_path);
   if (!complete) return false;
   await db.from('cmra_applications').update({ status: 'submitted', submitted_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('entity_id', entityId);
+  const { data: ent } = await db.from('entities').select('legal_name, file_number').eq('id', entityId).single();
+  await (await import('./notify')).notifyStaff({ subject: `Form 1583 ready to review: ${ent?.legal_name} (${ent?.file_number})`, text: `Review it in the Mail queue: ${process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com'}/staff/queue` }).catch(() => {});
   return true;
 }

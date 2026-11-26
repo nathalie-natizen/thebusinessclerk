@@ -8,6 +8,9 @@ import { requireUser, getEntity } from '@/lib/auth';
 import { supabaseServer } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { setOrderStatus, logRevision } from '@/lib/orders';
+import { notifyStaff } from '@/lib/notify';
+const staffLink = o => `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com'}/staff/pipeline`;
+const ping = (o, what) => notifyStaff({ subject: `${what}: ${o.entities?.legal_name} (${o.entities?.file_number})`, text: `${o.service}: ${what.toLowerCase()}.\n\n${staffLink(o)}` }).catch(() => {});
 import ServiceTerms from '@/components/ServiceTerms';
 import { revisions, AUTO_APPROVE_DAYS } from '@/lib/guidelines';
 import { KINDS } from '@/lib/labels';
@@ -30,6 +33,7 @@ async function saveQuestionnaire(fd) {
   if (missing.length) return { error: `Please complete: ${missing.join('; ')}` };
   await supabaseAdmin().from('orders').update({ details: { ...(o.details || {}), q, q_submitted_at: new Date().toISOString() } }).eq('id', o.id);
   if (o.status === 'information_needed') await setOrderStatus({ orderId: o.id, status: 'received', note: 'Questionnaire completed by client.', notify: false, userId: user.id });
+  await ping(o, 'Questionnaire completed');
   revalidatePath('/e/[file]/orders/[id]', 'page');
   return { message: 'Thank you! Your answers are saved and our team has been notified.' };
 }
@@ -45,6 +49,7 @@ async function reply(fd) {
   await db.from('orders').update({ details: { ...(o.details || {}), replies } }).eq('id', o.id);
   if (o.status === 'information_needed') await setOrderStatus({ orderId: o.id, status: 'received', note: `Client replied: ${text || '(file attached)'}`, notify: false, userId: user.id });
   else await db.from('order_events').insert({ order_id: o.id, status: o.status, note: `Client message: ${text || '(file attached)'}`, created_by: user.id });
+  await ping(o, 'Client replied');
   revalidatePath('/e/[file]/orders/[id]', 'page');
   return { message: 'Sent. Our team will pick it up right away.' };
 }
@@ -55,6 +60,7 @@ async function approve(fd) {
   const { user } = await requireUser();
   const o = await loadOrder(String(fd.get('order_id'))); if (!o || o.kind !== 'launch' || o.status !== 'submitted') return;
   await setOrderStatus({ orderId: o.id, status: 'final_review', note: 'Approved by client. Final quality check, then handover.', notify: false, userId: user.id });
+  await ping(o, 'Client approved the Launch Pack');
   revalidatePath('/e/[file]/orders/[id]', 'page');
 }
 
@@ -67,6 +73,7 @@ async function requestRevision(fd) {
   if (!text && !path) return { error: 'Describe all the changes you want in this revision.' };
   const r = await logRevision({ order: o, text, file: path, by: 'client', userId: user.id });
   if (r.error) return r;
+  await ping(o, `Revision ${r.n} of ${r.allowed} requested`);
   revalidatePath('/e/[file]/orders/[id]', 'page');
   return { message: `Revision ${r.n} of ${r.allowed} sent. We'll deliver the update within 3 business days.` };
 }

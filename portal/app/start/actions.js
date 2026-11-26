@@ -8,6 +8,7 @@ import { needsQuestionnaire } from '@/lib/questionnaires';
 import { GUIDELINES_VERSION } from '@/lib/guidelines';
 import { recordAcceptance } from '@/lib/agreements';
 import { prices } from '@/lib/prices';
+import { sendEmail, notifyStaff } from '@/lib/notify';
 
 const FORMATION = ['llc', 'corp'];
 const clip = (v, n = 200) => String(v ?? '').trim().slice(0, n);
@@ -60,6 +61,10 @@ export async function submitIntake(_prev, fd) {
   if (prof) await db.from('entity_members').upsert({ entity_id: entity.id, user_id: prof.id });
   else await db.from('invitations').upsert({ email, entity_id: entity.id });
 
+  const APP = process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com';
+  const names = kinds.map(k => KINDS[k].name).join(', ');
+  if (!canPay) await sendEmail(email, `Order received: ${entity.legal_name} (${entity.file_number})`, `Thank you, ${details.contact.name}. We received your order: ${names}.\n\nYour company file number is ${entity.file_number}. Follow every step and complete any questionnaire in your client portal. Sign in with this email: ${APP}/login\n\nTHE BUSINESS CLERK`).catch(() => {});
+  if (!canPay) await notifyStaff({ subject: `New website order: ${entity.legal_name} (${entity.file_number})`, text: `${names}\nContact: ${details.contact.name} · ${email} · ${details.contact.phone || ''}\n\n${APP}/staff/pipeline` }).catch(() => {});
   if (!canPay) redirect(`/start/thanks?file=${entity.file_number}&lang=${lang}`);
 
   const app = process.env.NEXT_PUBLIC_APP_URL;
