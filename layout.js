@@ -66,11 +66,12 @@ nav.main a:hover,nav.main a[aria-current]{background:var(--sand);color:var(--lin
 .btn.ghost{border-color:currentColor;color:var(--link);background:transparent}
 .btn.light{background:#fff;color:var(--teal)}
 .navlangs{display:none}.navlangs a{font-weight:700}
-.portal{white-space:nowrap;font-weight:700;font-size:14.5px;color:var(--teal);text-decoration:none;padding:8px 4px}.portal:hover{text-decoration:underline}:root:not([data-theme=light]) .portal{color:light-dark(var(--teal),#EEF3F2)}nav.main .navportal{display:none}
+.util{background:var(--sand);border-bottom:1px solid var(--line);font-size:13px}.util .wrap{display:flex;justify-content:flex-end;align-items:center;gap:12px;padding:2px max(5vw,18px);max-width:1300px}.util .sep{width:1px;height:14px;background:var(--line)}
+.portal{white-space:nowrap;font-weight:700;color:var(--link);text-decoration:none;padding:6px 2px}.portal:hover{text-decoration:underline}
 @media(max-width:600px){nav.main.open .navlangs{display:flex;gap:6px;border-top:1px solid var(--line);margin-top:6px;padding-top:6px}}
-.langs{flex:none;display:flex;gap:2px;font-size:13px;font-weight:700;margin-left:6px}.langs a{color:var(--soft);text-decoration:none;padding:10px 6px;border-radius:6px}.langs a[aria-current]{color:var(--link);background:var(--sand)}
+.langs{flex:none;display:flex;gap:2px;font-size:13px;font-weight:700}.langs a{color:var(--soft);text-decoration:none;padding:6px 7px;border-radius:6px}.langs a[aria-current]{color:var(--link);background:var(--sand)}
 .menu{flex:none;display:none;margin-left:8px;background:none;border:1px solid var(--line);border-radius:8px;min-height:44px;padding:0 14px;color:var(--ink);font:600 15px Inter,sans-serif}
-@media(max-width:1300px){nav.main{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:var(--bg);padding:10px max(5vw,18px) 18px;border-bottom:1px solid var(--line)}nav.main.open{display:flex}.menu{display:block}.top .cta{display:none}.top .portal{display:none}nav.main.open .navportal{display:block}.langs{margin-left:auto}}
+@media(max-width:1300px){nav.main{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:var(--bg);padding:10px max(5vw,18px) 18px;border-bottom:1px solid var(--line)}nav.main.open{display:flex}.menu{display:block}.top .cta{display:none}.menu{margin-left:auto}}
 /* hero */
 .hero{background:var(--teal);color:#F3F7F6;position:relative;overflow:hidden}
 .hero .wrap{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);align-items:center}
@@ -146,7 +147,7 @@ footer .brand{color:#fff}footer .mark{color:#E3EEEC}
 @media(max-width:520px){footer .wrap{grid-template-columns:1fr}}
 .pill{display:inline-block;background:var(--sand);color:var(--ink);border-radius:20px;padding:4px 12px;font-size:13.5px;font-weight:600;margin:0 6px 6px 0}
 .scroll{overflow-x:auto}
-@media(max-width:600px){.brand small{display:none}.brand{font-size:13px;white-space:nowrap;gap:8px}.mark{width:30px;height:30px}.top .wrap{gap:8px}.langs{display:none}.top .wrap{justify-content:space-between}.menu{padding:0 10px;margin-left:2px}table{font-size:14px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 16px;padding-inline-start:9em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:8.5em;margin-inline-start:-8.5em;font-weight:600;white-space:normal}}
+@media(max-width:600px){.brand small{display:none}.brand{font-size:13px;white-space:nowrap;gap:8px}.mark{width:30px;height:30px}.top .wrap{gap:8px}.top .wrap{justify-content:space-between}.menu{padding:0 10px;margin-left:2px}table{font-size:14px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 16px;padding-inline-start:9em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:8.5em;margin-inline-start:-8.5em;font-weight:600;white-space:normal}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.sunrise{animation:none!important}}
 .sunrise{animation:rise 1.6s ease-out both}@keyframes rise{from{transform:translateY(40px);opacity:.2}to{transform:none;opacity:1}}
 `;
@@ -187,12 +188,11 @@ function header(path, rel, lang) {
   const sw = ['en', 'pt', 'es'].map(l => `<a href="${rel}${(alts && alts[l]) || home[l]}" hreflang="${l}" lang="${l}"${l === lang ? ' aria-current="true"' : ''}>${l.toUpperCase()}</a>`).join('');
   const section = p => p.split('/').slice(0, -1).join('/');
   return `<a class="skip" href="#main">${T.skip}</a>
+<div class="util"><div class="wrap"><a class="portal" href="${PORTAL}">${T.portal}</a><span class="sep" aria-hidden="true"></span><div class="langs" aria-label="Language">${sw}</div></div></div>
 <header class="top"><div class="wrap">
 <a class="brand" href="${rel}${home[lang]}">${logo}<span>THE BUSINESS CLERK<small>${esc(T.subtitle)}</small></span></a>
-<nav class="main" id="nav" aria-label="Main">${''}${T.nav.map(([h, t]) => `<a href="${rel}${h}"${path === h || (h.endsWith('index.html') && h !== home[lang] && section(h) && path.startsWith(section(h) + '/')) ? ' aria-current="page"' : ''}>${t}</a>`).join('')}<a class="navportal" href="${PORTAL}">${T.portal} ↗</a><div class="navlangs">${sw}</div></nav>
-<div class="langs" aria-label="Language">${sw}</div>
+<nav class="main" id="nav" aria-label="Main">${''}${T.nav.map(([h, t]) => `<a href="${rel}${h}"${path === h || (h.endsWith('index.html') && h !== home[lang] && section(h) && path.startsWith(section(h) + '/')) ? ' aria-current="page"' : ''}>${t}</a>`).join('')}</nav>
 <button class="menu" aria-expanded="false" aria-controls="nav">${T.menu}</button>
-<a class="portal" href="${PORTAL}">${T.portal}</a>
 <a class="btn primary cta" href="${rel}${start}">${T.getStarted}</a>
 </div></header>`;
 }
