@@ -18,12 +18,12 @@ export async function savedCard(customerId) {
 export async function priceFor(kind) { return priceOf(kind); }
 
 // Create the order record after payment (website, checkout or card on file)
-export async function createPaidOrder(entity, kind, { amount = null, source = 'portal', ref = null, unpaid = false } = {}) {
+export async function createPaidOrder(entity, kind, { amount = null, source = 'portal', ref = null, unpaid = false, pending = false } = {}) {
   const db = supabaseAdmin();
-  const status = needsQuestionnaire(kind) ? 'information_needed' : 'received';
+  const status = pending ? 'awaiting_payment' : needsQuestionnaire(kind) ? 'information_needed' : 'received';
   const { data: o } = await db.from('orders').insert({ entity_id: entity.id, kind, service: KINDS[kind].name, status, source, stripe_session_id: ref, amount_cents: amount, details: { service_terms_version: GUIDELINES_VERSION } }).select().single();
-  await db.from('order_events').insert({ order_id: o.id, status, note: unpaid ? `Order placed. We’ll send a secure payment link.${status === 'information_needed' ? ' Please complete the short questionnaire so we can start.' : ''}` : status === 'information_needed' ? 'Payment received. Please complete the short questionnaire so we can start.' : 'Payment received. We’re starting on it.' });
-  await (await import('./notify')).notifyStaff({ subject: `New portal order: ${entity.legal_name} (${entity.file_number})`, text: `${KINDS[kind].name}${unpaid ? ' (payment link needed)' : ''}\n\n${process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com'}/staff/pipeline` }).catch(() => {});
+  await db.from('order_events').insert({ order_id: o.id, status, note: pending ? 'Order placed. Pending payment: it is charged automatically to this company’s card on file as soon as a card is saved on the Billing tab.' : unpaid ? `Order placed. Payment pending (card payments are being activated).${status === 'information_needed' ? ' Please complete the short questionnaire so we can start.' : ''}` : status === 'information_needed' ? 'Payment received. Please complete the short questionnaire so we can start.' : 'Payment received. We’re starting on it.' });
+  if (!pending) await (await import('./notify')).notifyStaff({ subject: `New portal order: ${entity.legal_name} (${entity.file_number})`, text: `${KINDS[kind].name}${unpaid ? ' (payment pending: Stripe not connected yet)' : ''}\n\n${process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com'}/staff/pipeline` }).catch(() => {});
   if (kind === 'ra' || kind === 'foreign') await db.from('entities').update({ registered_agent: true }).eq('id', entity.id);
   if (kind === 'foreign') await startRaRenewal(entity).catch(() => {});
   if (kind === 'mail') await db.from('entities').update({ mail_service: true }).eq('id', entity.id);
@@ -73,4 +73,23 @@ export async function startRaRenewal(entity) {
   const price = await priceOf('ra'); const card = await savedCard(entity.stripe_customer_id);
   if (!price || !card) return null;
   return stripe().subscriptions.create({ customer: entity.stripe_customer_id, items: [{ price: price.id }], trial_period_days: 365, default_payment_method: card.id, metadata: { entity_id: entity.id, product: 'ra' } });
+}
+
+// Charge every order of this company that is pending payment (after a card is saved, or "Pay now")
+export async function payPendingOrders(entity) {
+  const db = supabaseAdmin();
+  const { data: pend } = await db.from('orders').select('*').eq('entity_id', entity.id).eq('status', 'awaiting_payment').eq('source', 'portal');
+  const out = [];
+  for (const o of pend || []) {
+    const r = await chargeOnFile(entity, o.kind);
+    if (!r.ok) { out.push({ id: o.id, ok: false, reason: r.reason }); continue; }
+    const status = needsQuestionnaire(o.kind) ? 'information_needed' : 'received';
+    await db.from('orders').update({ status, amount_cents: r.amount, stripe_session_id: r.ref, updated_at: new Date().toISOString() }).eq('id', o.id);
+    await db.from('order_events').insert({ order_id: o.id, status, note: status === 'information_needed' ? 'Payment received. Please complete the short questionnaire so we can start.' : 'Payment received. We’re starting on it.' });
+    if (o.kind === 'ra' || o.kind === 'foreign') await db.from('entities').update({ registered_agent: true }).eq('id', entity.id);
+    if (o.kind === 'mail') await db.from('entities').update({ mail_service: true }).eq('id', entity.id);
+    await (await import('./notify')).notifyStaff({ subject: `New portal order: ${entity.legal_name} (${entity.file_number})`, text: `${KINDS[o.kind]?.name || o.service} (paid)\n\n${process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com'}/staff/pipeline` }).catch(() => {});
+    out.push({ id: o.id, ok: true });
+  }
+  return out;
 }

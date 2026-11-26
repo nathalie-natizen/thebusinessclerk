@@ -20,7 +20,7 @@ export const HANDLING = {
   hold_pickup: 'Hold my mail for pickup at the office',
 };
 export const ORDER_STATUS = {
-  awaiting_payment: 'Awaiting payment', received: 'In progress', payment_confirmed: 'In progress', in_review: 'In progress',
+  awaiting_payment: 'Pending payment', received: 'In progress', payment_confirmed: 'In progress', in_review: 'In progress',
   information_needed: 'Action needed', submitted: 'Submitted', final_review: 'Final review', completed: 'Completed', delivered: 'Completed', cancelled: 'Cancelled',
 };
 // The four stages staff move orders through (plus Cancel)

@@ -17,6 +17,18 @@ export async function POST(req) {
   catch { return new NextResponse('Invalid signature', { status: 400 }); }
   const db = supabaseAdmin();
 
+  // Card saved for a company (setup mode): make it the default card and charge any orders pending payment
+  if (event.type === 'checkout.session.completed' && event.data.object.mode === 'setup') {
+    const s = event.data.object; const entityId = s.metadata?.entity_id;
+    if (entityId && s.setup_intent) {
+      const st = stripe(); const si = await st.setupIntents.retrieve(s.setup_intent);
+      if (si.payment_method) await st.customers.update(s.customer, { invoice_settings: { default_payment_method: si.payment_method } });
+      const { data: ent } = await db.from('entities').select('*').eq('id', entityId).single();
+      if (ent) { await (await import('@/lib/charge')).payPendingOrders(ent); await clearPaymentIssue(ent.id); }
+    }
+    return NextResponse.json({ received: true });
+  }
+
   // Website intake orders: the orders already exist, mark them paid
   if (event.type === 'checkout.session.completed' && event.data.object.metadata?.order_ids) {
     const s = event.data.object; const entityId = s.metadata.entity_id;

@@ -46,7 +46,7 @@ export async function submitIntake(_prev, fd) {
   await db.from('mail_preferences').insert({ entity_id: entity.id });
   await recordAcceptance(entity, [service, ...addons], { name: g('sign_name'), email });
 
-  // Pay online only when every needed Stripe price is set up; otherwise we send a payment link later
+  // Pay online only when every needed Stripe price is set up; otherwise the order waits as pending payment in the portal
   const kinds = [service, ...addons];
   const pr = await prices();
   const canPay = !!process.env.STRIPE_SECRET_KEY && kinds.every(k => pr[k]);
