@@ -17,7 +17,7 @@ export default function Shell({ profile, children }) {
         <img src="/favicon.svg" alt="" width="30" height="30" />
         <span>THE BUSINESS CLERK<small>{staff ? 'Staff portal' : 'Client portal'}</small></span>
       </Link>
-      {staff ? <><Link href="/staff/pipeline">Pipeline</Link><Link href="/staff">Entities</Link><Link href="/staff/queue">Mail</Link><Link href="/staff/billing">Billing</Link><Link href="/staff/reports">Reports</Link><Link href="/staff/guidelines">Guidelines</Link><Link href="/staff/resources">Resources</Link></>
+      {staff ? <><Link href="/staff/pipeline">Pipeline</Link><Link href="/staff">Entities</Link><Link href="/staff/queue">Mail</Link><Link href="/staff/billing">Billing</Link><Link href="/staff/reports">Reports</Link><Link href="/staff/guidelines">Guidelines</Link><Link href="/staff/resources">Resources</Link>{profile?.role === 'admin' && <Link href="/admin" title="Admin settings (prices, setup)" aria-label="Admin settings" style={{ fontSize: 18, lineHeight: 1 }}>⚙</Link>}</>
              : <><Link href="/dashboard">My companies</Link><Link href="/billing">Billing</Link><Link href="/resources">Resources</Link><Link href="/account">Account</Link></>}
       <span className="who hide-sm">{profile?.email}</span>
       <form action="/auth/signout" method="post"><button className="btn small sec" style={{ background: 'transparent', color: '#fff', borderColor: '#fff' }}>Sign out</button></form>
