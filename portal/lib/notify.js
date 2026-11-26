@@ -38,3 +38,13 @@ export async function notifyEntity(entityId, { subject, text, sms }) {
   if (log.length) await db.from('notifications').insert(log);
   return log;
 }
+
+// Email every staff member (alerts that need someone to act)
+export async function notifyStaff({ subject, text }) {
+  const db = supabaseAdmin();
+  const { data: staff } = await db.from('profiles').select('email').in('role', ['staff', 'admin']);
+  const log = [];
+  for (const p of staff || []) { const e = await sendEmail(p.email, subject, `${text}\n\nTHE BUSINESS CLERK portal`); log.push({ channel: 'email', recipient: p.email, subject, status: e.ok ? 'sent' : 'failed', error: e.error || null }); }
+  if (log.length) await db.from('notifications').insert(log).then(() => {}, () => {});
+  return log;
+}

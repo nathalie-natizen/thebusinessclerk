@@ -5,6 +5,7 @@ import { setOrderStatus } from '@/lib/orders';
 import { createPaidOrder } from '@/lib/charge';
 import { needsQuestionnaire } from '@/lib/questionnaires';
 import { KINDS } from '@/lib/labels';
+import { flagPaymentIssue, clearPaymentIssue } from '@/lib/payments';
 
 // Stripe → portal. Creates the company file, order and client access after payment, and keeps service flags in sync.
 export async function POST(req) {
@@ -74,6 +75,20 @@ export async function POST(req) {
     if (Object.keys(fields).length) {
       if (sub.metadata?.entity_id) await db.from('entities').update(fields).eq('id', sub.metadata.entity_id);
       else await db.from('entities').update(fields).eq('stripe_customer_id', sub.customer);
+    }
+  }
+
+  // Failed card payment (renewals, mail statements): alert client + staff immediately. Paid: clear the alert.
+  if (event.type === 'invoice.payment_failed' || event.type === 'invoice.paid') {
+    const inv = event.data.object;
+    let q = db.from('entities').select('*');
+    q = inv.metadata?.entity_id ? q.eq('id', inv.metadata.entity_id) : q.eq('stripe_customer_id', inv.customer);
+    const { data: ents } = await q.limit(1);
+    const ent = ents?.[0];
+    if (ent && event.type === 'invoice.paid') await clearPaymentIssue(ent.id);
+    if (ent && event.type === 'invoice.payment_failed') {
+      const what = inv.lines?.data?.map(l => l.description).filter(Boolean).slice(0, 2).join('; ') || inv.description || 'your services';
+      await flagPaymentIssue(ent, { amountCents: inv.amount_due, what, invoiceId: inv.id, invoiceUrl: inv.hosted_invoice_url });
     }
   }
   return NextResponse.json({ received: true });

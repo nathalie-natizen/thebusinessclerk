@@ -35,10 +35,12 @@ export default async function Pipeline({ searchParams }) {
   let q = sb.from('orders').select('*, entities(file_number, legal_name, contact_name)').not('status', 'in', '(cancelled,awaiting_payment)').order('created_at');
   if (kind) q = q.eq('kind', kind);
   const { data: orders } = await q;
+  const { data: unpaid } = await sb.from('entities').select('file_number, legal_name, payment_issue').not('payment_issue', 'is', null);
   const filter = (k, label) => <Link key={k || 'all'} className={`pill ${kind === k ? 'ok' : ''}`} href={`/staff/pipeline${k ? `?kind=${k}` : ''}`} style={{ textDecoration: 'none', marginRight: 6 }}>{label}</Link>;
   return (<Shell profile={profile}>
     <h1>Pipeline</h1>
     <p className="sub">Every paid order, by stage. Moving an order updates the client's portal and notifies them (untick "Notify" to skip). Use "Waiting on client" with a note when you need something from them. Completed orders show for 30 days (<a href="/staff/pipeline?done=1">show all</a>).</p>
+    {unpaid?.length > 0 && <div className="note" style={{ borderLeftColor: '#C0392B' }}><strong>Payment problems ({unpaid.length}):</strong> the client was alerted by email and text to update their card. {unpaid.map(u => <span key={u.file_number} style={{ marginRight: 12 }}><Link href={`/staff/e/${u.file_number}`}>{u.legal_name}</Link> ${((u.payment_issue.amount || 0) / 100).toFixed(2)} · {new Date(u.payment_issue.at).toLocaleDateString('en-US')}</span>)}</div>}
     <p>{filter(null, 'All')}{Object.entries(KINDS).map(([k, v]) => filter(k, v.name.replace('Florida ', '')))}</p>
     <div style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(270px, 1fr)', gap: 14, overflowX: 'auto', paddingBottom: 12 }}>
       {PIPELINE.map(([label, sts]) => { const list = (orders || []).filter(o => sts.includes(o.status) && (label !== 'Completed' || showDone || new Date(o.updated_at) > Date.now() - 30 * 864e5));

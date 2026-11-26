@@ -17,7 +17,14 @@ export default function Shell({ profile, children }) {
   </>);
 }
 
+async function PaymentBanner({ file }) {
+  const { supabaseServer } = await import('@/lib/supabase/server');
+  const { data: e } = await supabaseServer().from('entities').select('payment_issue').eq('file_number', file).maybeSingle();
+  const p = e?.payment_issue; if (!p) return null;
+  return <div className="note" style={{ borderLeftColor: '#C0392B' }}><strong>Payment failed:</strong> we couldn't charge ${((p.amount || 0) / 100).toFixed(2)} for {p.what} to your card on file. <Link href={`/e/${file}/billing`}>Update your card now</Link> so your services continue.</div>;
+}
+
 export function EntityTabs({ file, active }) {
   const t = [['', 'Overview'], ['mail', 'Mail & legal notices'], ['documents', 'Documents'], ['orders', 'Orders'], ['billing', 'Billing'], ['settings', 'Mail settings'], ['compliance', 'Compliance']];
-  return <nav className="tabs">{t.map(([p, l]) => <Link key={p} href={`/e/${file}${p ? '/' + p : ''}`} aria-current={active === p ? 'page' : undefined}>{l}</Link>)}</nav>;
+  return <><PaymentBanner file={file} /><nav className="tabs">{t.map(([p, l]) => <Link key={p} href={`/e/${file}${p ? '/' + p : ''}`} aria-current={active === p ? 'page' : undefined}>{l}</Link>)}</nav></>;
 }
