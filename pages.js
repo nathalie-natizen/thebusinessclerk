@@ -428,7 +428,7 @@ When we serve as your registered agent, we will accept service of process and of
 ## 5. Mail services
 Mail services require a completed USPS Form 1583 and two acceptable forms of identification. Until the form is approved, mail is held and not opened or forwarded. We may refuse or return items that are prohibited, hazardous, oversized or addressed to persons not on your account. Items with no instruction are held 30 days; after a further 15-day notice, ordinary mail may be shredded (never checks, legal papers or packages).
 ## 6. Fees
-Service fees are listed on our pricing page. Government fees and third-party costs are separate unless a package says they are included. Registered agent service, annual report filing and mail plans renew automatically by default until you cancel. Annual report filings are charged (${C.prices.annualReport} plus the state fee) when we file each year. You can turn off auto-renew anytime in your account or by emailing us before the renewal date.
+Service fees are listed on our pricing page. Government fees and third-party costs are separate unless a package says they are included. Registered agent service, annual report filing and mail plans renew automatically by default until you cancel. Annual report filings are charged ($${C.prices.annualReport} plus the state fee) when we file each year. You can turn off auto-renew anytime in your account or by emailing us before the renewal date.
 ## 7. Processing times
 We submit filings promptly, but we do not control and cannot guarantee government or IRS processing times, approval of filings, EIN issuance or bank account approval.
 ## 8. Limitation of liability
