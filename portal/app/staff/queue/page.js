@@ -13,12 +13,14 @@ import { fmtDate, MAIL_CATEGORY, MAIL_STATUS, ORDER_STATUS, HANDLING, SHIPPING, 
 async function complete(formData) {
   'use server';
   const { sb } = await requireStaff();
-  const id = String(formData.get('id')); const status = String(formData.get('status'));
+  const id = String(formData.get('id')); const status = String(formData.get('status') || 'forwarded');
   if (!['forwarded', 'shredded', 'picked_up', 'held'].includes(status)) return;
   const postage = Math.round(parseFloat(String(formData.get('postage') || '').replace(/[^0-9.]/g, '')) * 100);
-  await sb.from('mail_items').update({ status, ...(postage >= 0 && !isNaN(postage) ? { postage_cents: postage } : {}) }).eq('id', id);
+  if (status === 'forwarded' && (!String(formData.get('tracking') || '').trim() || isNaN(postage) || postage < 0)) return { error: 'Enter the tracking number and the postage paid.' };
+  await sb.from('mail_items').update({ status, ...(postage >= 0 && !isNaN(postage) ? { postage_cents: postage } : {}), ...(formData.get('label_path') ? { label_path: String(formData.get('label_path')).slice(0, 300) } : {}) }).eq('id', id);
   if (status === 'forwarded') await startTracking(id, String(formData.get('carrier')), String(formData.get('tracking') || ''));
   revalidatePath('/staff/queue');
+  return { message: status === 'forwarded' ? 'Marked forwarded; tracking started.' : 'Done.' };
 }
 
 // Staff uploads the opened & scanned contents for a scan request
@@ -52,9 +54,8 @@ export default async function Queue() {
         <td>{MAIL_CATEGORY[m.category]}<div className="muted">{m.sender} · {fmtDate(m.received_at)}</div></td>
         <td><span className="pill warn">{MAIL_STATUS[m.status]}</span> {(() => { const d = mailDeadline(m); return <span className={`pill ${toneClass(d.tone)}`}>{d.text}</span>; })()}{m.status === 'forward_requested' && <div><strong>{SHIPPING[m.forward_shipping || 'first_class']}</strong>{m.client_request && m.client_request !== 'forward' && <div className="muted">{m.client_request}</div>}</div>}</td>
         <td className="muted">{m.status === 'forward_requested' && pr ? [pr.forward_name, pr.forward_line1, pr.forward_line2, [pr.forward_city, pr.forward_state, pr.forward_postal].filter(Boolean).join(', '), pr.forward_country].filter(Boolean).map((l, i) => <div key={i}>{l}</div>) : (pr ? HANDLING[pr.handling] : '')}</td>
-        <td><form action={complete} className="row" style={{ gap: 6 }}><input type="hidden" name="id" value={m.id} />
-          {m.status === 'forward_requested' ? <><select name="carrier" defaultValue={['courier_overnight'].includes(m.forward_shipping) ? 'UPS' : 'USPS'} style={{ width: 'auto' }}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" placeholder="Tracking #" /><input name="postage" placeholder="Postage $" inputMode="decimal" style={{ maxWidth: 110 }} /><button className="btn small" name="status" value="forwarded">Mark forwarded</button></> : <button className="btn small" name="status" value="shredded">Mark shredded</button>}
-        </form></td></tr>; })}
+        <td>{m.status === 'forward_requested' ? <UploadForm bucket="mail" entityId={m.entity_id} action={complete} submitLabel="Mark forwarded"><input type="hidden" name="id" value={m.id} /><input type="hidden" name="status" value="forwarded" /><div className="row" style={{ gap: 6 }}><select name="carrier" required defaultValue={['courier_overnight'].includes(m.forward_shipping) ? 'UPS' : 'USPS'}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" placeholder="Tracking # *" required /><input name="postage" placeholder="Postage $ *" inputMode="decimal" required style={{ maxWidth: 120 }} /></div><label style={{ fontSize: 13 }}>Label / postage receipt (photo or PDF)<input name="label_file" type="file" accept="image/*,application/pdf" /></label></UploadForm> : <form action={complete}><input type="hidden" name="id" value={m.id} /><button className="btn small" name="status" value="shredded">Mark shredded</button></form>}
+        </td></tr>; })}
     </tbody></table></div>}
     {expired?.length > 0 && <><h2>Ready to shred (no instruction after notice)</h2>
       <p className="muted">Ordinary mail held 30 days with no instruction; the client was notified and 15 more days passed. Checks, legal papers and packages never appear here.</p>

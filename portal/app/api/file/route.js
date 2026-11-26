@@ -36,7 +36,7 @@ export async function GET(req) {
   const sb = supabaseServer();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return NextResponse.redirect(new URL('/login', req.url));
-  const part = type === 'mail' && url.searchParams.get('part') === 'content' ? 'content_path' : 'file_path';
+  const part = type === 'mail' && url.searchParams.get('part') === 'content' ? 'content_path' : type === 'mail' && url.searchParams.get('part') === 'label' ? 'label_path' : 'file_path';
   const { data: row } = await sb.from(table).select(`id, ${part}`).eq('id', id).single();
   const path = row?.[part];
   if (!path) return new NextResponse('Not found', { status: 404 });

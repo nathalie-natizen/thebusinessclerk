@@ -44,18 +44,18 @@ export async function createDueBatches() {
 }
 
 // Staff ship the selected items in one package: each item is billed as forwarded, postage is recorded once, one tracking number for all
-export async function shipBatch({ orderId, itemIds, carrier, tracking, postageCents, userId }) {
+export async function shipBatch({ orderId, itemIds, carrier, tracking, postageCents, labelPath = null, userId }) {
   const db = supabaseAdmin();
   const { data: o } = await db.from('orders').select('*').eq('id', orderId).single();
   if (!o || o.kind !== 'mail_batch') return { error: 'Not a forwarding task.' };
   const { data: items } = await db.from('mail_items').select('id, status').eq('entity_id', o.entity_id).in('id', itemIds).eq('status', 'forward_requested');
   if (!items?.length) return { error: 'Select at least one item.' };
   const now = new Date().toISOString();
-  for (const [i, it] of items.entries()) await db.from('mail_items').update({ status: 'forwarded', batch_order_id: o.id, postage_cents: i === 0 ? (postageCents >= 0 ? postageCents : null) : 0 }).eq('id', it.id);
+  for (const [i, it] of items.entries()) await db.from('mail_items').update({ status: 'forwarded', batch_order_id: o.id, label_path: labelPath, postage_cents: i === 0 ? (postageCents >= 0 ? postageCents : null) : 0 }).eq('id', it.id);
   const patch = await startTracking(items[0].id, CARRIERS[carrier] ? carrier : 'USPS', tracking);
   if (items.length > 1) await db.from('mail_items').update({ tracking_number: patch.tracking_number, carrier: patch.carrier, tracking_url: patch.tracking_url, tracking_status: patch.tracking_status, tracker_id: patch.tracker_id, est_delivery: patch.est_delivery || null }).in('id', items.slice(1).map(i => i.id));
   const note = `Shipped ${items.length} item${items.length > 1 ? 's' : ''} in one package${patch.tracking_number ? ` · ${carrier} ${patch.tracking_number}` : ''}.`;
-  await db.from('orders').update({ details: { ...(o.details || {}), shipped: { at: now, items: items.map(i => i.id), carrier, tracking: patch.tracking_number, postage_cents: postageCents } } }).eq('id', o.id);
+  await db.from('orders').update({ details: { ...(o.details || {}), shipped: { at: now, items: items.map(i => i.id), carrier, tracking: patch.tracking_number, postage_cents: postageCents, label_path: labelPath } } }).eq('id', o.id);
   await setOrderStatus({ orderId: o.id, status: 'completed', note, notify: false, userId });
   await notifyEntity(o.entity_id, { category: 'mail', subject: `Your mail is on the way (${items.length} item${items.length > 1 ? 's' : ''})`, text: `${note}${patch.tracking_url ? `\n\nTrack it: ${patch.tracking_url}` : ''}\n\nEach item is listed on your Mail page and on your monthly statement.`, sms: `THE BUSINESS CLERK: ${items.length} mail item(s) shipped${patch.tracking_number ? `, tracking ${patch.tracking_number}` : ''}.` });
   return { ok: true, count: items.length };

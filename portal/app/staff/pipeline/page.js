@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import Shell from '@/components/Shell';
+import AutoSelect from '@/components/AutoSelect';
+import UploadForm from '@/components/UploadForm';
 import OrderDetails from '@/components/OrderDetails';
 import { requireStaff } from '@/lib/auth';
 import { setOrderStatus, logRevision } from '@/lib/orders';
@@ -48,8 +50,10 @@ async function ship(fd) {
   'use server';
   const { user } = await requireStaff();
   const postage = Math.round(parseFloat(String(fd.get('postage') || '').replace(/[^0-9.]/g, '')) * 100);
-  await shipBatch({ orderId: String(fd.get('order_id')), itemIds: fd.getAll('item').map(String), carrier: String(fd.get('carrier')), tracking: String(fd.get('tracking') || ''), postageCents: isNaN(postage) ? null : postage, userId: user.id });
+  if (!String(fd.get('tracking') || '').trim() || isNaN(postage) || postage < 0) return { error: 'Enter the tracking number and the postage paid.' };
+  const r = await shipBatch({ orderId: String(fd.get('order_id')), itemIds: fd.getAll('item').map(String), carrier: String(fd.get('carrier')), tracking: String(fd.get('tracking') || ''), postageCents: postage, labelPath: String(fd.get('label_path') || '') || null, userId: user.id });
   revalidatePath('/staff/pipeline');
+  return r.error ? r : { message: `Shipped ${r.count} item(s); client notified.` };
 }
 
 const bizDays = d => { let n = 0; const t = new Date(d); const now = new Date(); t.setHours(0, 0, 0, 0); now.setHours(0, 0, 0, 0); while (t < now) { t.setDate(t.getDate() + 1); if (t.getDay() % 6) n++; } return n; };
@@ -57,11 +61,12 @@ const STAGES = [...PIPELINE.map(([label, sts]) => ({ key: label.toLowerCase().re
 
 export default async function Pipeline({ searchParams }) {
   const { sb, profile } = await requireStaff();
-  const kind = KINDS[searchParams?.kind] ? searchParams.kind : null;
+  const GROUPS = { all_mail: ['mail', 'mail_batch'], all_filings: Object.keys(KINDS).filter(k => KINDS[k].filing), all_formation: ['llc', 'corp'] };
+  const kind = KINDS[searchParams?.kind] || GROUPS[searchParams?.kind] ? searchParams.kind : null;
   const stage = STAGES.find(x => x.key === searchParams?.stage) || STAGES[0];
   const term = String(searchParams?.q || '').trim().toLowerCase();
   let q = sb.from('orders').select('*, entities(file_number, legal_name, contact_name, entity_type, status)').not('status', 'in', '(cancelled,awaiting_payment)').order('updated_at');
-  if (kind) q = q.eq('kind', kind);
+  if (kind) q = GROUPS[kind] ? q.in('kind', GROUPS[kind]) : q.eq('kind', kind);
   const { data: all } = await q;
   const batchEnts = [...new Set((all || []).filter(o => o.kind === 'mail_batch' && !['completed', 'cancelled'].includes(o.status)).map(o => o.entity_id))];
   const { data: batchItems } = batchEnts.length ? await sb.from('mail_items').select('id, entity_id, sender, category, received_at, description, file_path').in('entity_id', batchEnts).eq('status', 'forward_requested').order('received_at') : { data: [] };
@@ -84,9 +89,9 @@ export default async function Pipeline({ searchParams }) {
 
     <form method="get" action="/staff/pipeline" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
       <input type="hidden" name="stage" value={stage.key} />
-      <select name="kind" defaultValue={kind || ''} style={{ maxWidth: 260 }}><option value="">All services</option>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select>
+      <AutoSelect name="kind" defaultValue={kind || ''} style={{ maxWidth: 300 }}><option value="">All services</option><option value="all_mail">All mail tasks (address setup + forwarding)</option><option value="all_formation">All formations</option><option value="all_filings">All Florida filings</option><option disabled>──────────</option>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</AutoSelect>
       <input name="q" defaultValue={term} placeholder="Search company, file number or contact" style={{ flex: '1 1 260px', maxWidth: 420 }} />
-      <button className="btn small sec">Filter</button>{(kind || term) && <Link href={`/staff/pipeline?stage=${stage.key}`}>Clear</Link>}
+      <button className="btn small sec">Search</button>{(kind || term) && <Link href={`/staff/pipeline?stage=${stage.key}`}>Clear</Link>}
     </form>
     <p className="muted" style={{ marginTop: 0 }}>Most urgent first: deadlines follow what the website promises (Staff → Guidelines). Red = overdue, amber = due today or needs a check. Click a row to open it, work it and move it. Moving an order updates the client's portal and notifies them unless you untick Notify. In Final review, choose Archive once the quality check passes.</p>
 
@@ -107,16 +112,16 @@ export default async function Pipeline({ searchParams }) {
           </div>
           <div>
             {o.kind === 'mail_batch' && !['completed', 'cancelled'].includes(o.status) && (() => { const its = (batchItems || []).filter(i => i.entity_id === o.entity_id); const pf = (batchPrefs || []).find(p => p.entity_id === o.entity_id) || {};
-              return <form action={ship} className="stack" style={{ gap: 8, marginTop: 12, padding: 12, border: '2px solid var(--teal, #0E4A57)', borderRadius: 10 }}>
+              return <div style={{ marginTop: 12, padding: 12, border: '2px solid var(--teal, #0E4A57)', borderRadius: 10 }}><UploadForm bucket="mail" entityId={o.entity_id} action={ship} submitLabel="Ship and close">
                 <input type="hidden" name="order_id" value={o.id} />
                 <strong>Ship this package</strong>
                 <div className="muted" style={{ fontSize: 13 }}>To: {[pf.forward_name, pf.forward_line1, pf.forward_line2, [pf.forward_city, pf.forward_state, pf.forward_postal].filter(Boolean).join(', '), pf.forward_country].filter(Boolean).join(' · ') || 'No forwarding address on file: ask the client'}<br />Speed: {SHIPPING[pf.forward_shipping || 'first_class']}</div>
                 {!its.length ? <p className="muted">No mail waiting. Cancel this task with a note.</p> : <fieldset style={{ border: 0, padding: 0, margin: 0 }}><legend style={{ fontWeight: 700, fontSize: 14 }}>Items held since the last shipment ({its.length})</legend>
                   {its.map(i => <label key={i.id} style={{ display: 'flex', gap: 8, fontWeight: 400, fontSize: 14 }}><input type="checkbox" name="item" value={i.id} defaultChecked style={{ minHeight: 'auto' }} />{i.sender || 'Unknown sender'} · {fmtDate(i.received_at)}{i.description ? ` · ${i.description}` : ''}</label>)}</fieldset>}
-                <div className="row" style={{ gap: 6 }}><select name="carrier" defaultValue={pf.forward_shipping === 'courier_overnight' ? 'UPS' : 'USPS'}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" placeholder="Tracking number" /></div>
-                <input name="postage" placeholder="Postage paid $ (billed at cost)" inputMode="decimal" />
-                {its.length > 0 && <button className="btn">Ship and close</button>}
-              </form>; })()}
+                <div className="row" style={{ gap: 6 }}><select name="carrier" defaultValue={pf.forward_shipping === 'courier_overnight' ? 'UPS' : 'USPS'}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" placeholder="Tracking number *" required /></div>
+                <input name="postage" placeholder="Postage paid $ * (billed at cost)" inputMode="decimal" required />
+                <label style={{ fontSize: 13 }}>Label / postage receipt (photo or PDF)<input name="label_file" type="file" accept="image/*,application/pdf" /></label>
+              </UploadForm></div>; })()}
             <form action={move} className="stack" style={{ gap: 8, marginTop: 12 }}>
               <input type="hidden" name="order_id" value={o.id} />
               <label>Move to<select name="status" defaultValue={STAFF_STATUSES.some(([k]) => k === o.status) ? o.status : 'received'}>{STAFF_STATUSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
