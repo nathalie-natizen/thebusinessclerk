@@ -5,25 +5,16 @@ import AutoSelect from '@/components/AutoSelect';
 import UploadForm from '@/components/UploadForm';
 import OrderDetails from '@/components/OrderDetails';
 import { requireStaff } from '@/lib/auth';
-import { setOrderStatus, logRevision } from '@/lib/orders';
+import { logRevision } from '@/lib/orders';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { chargeStateFee } from '@/lib/charge';
+import OrderWork from '@/components/OrderWork';
+import { archiveCheck } from '@/lib/orders';
+import { unopenedLegal } from '@/lib/escalations';
 import { orderDeadline, toneClass } from '@/lib/sla';
 import { shipBatch } from '@/lib/batches';
 import { CARRIERS, SHIPPING } from '@/lib/labels';
 import { revisions, STAFF_STEPS } from '@/lib/guidelines';
 import { PIPELINE, ARCHIVED, KINDS, STAFF_STATUSES, fmtDate } from '@/lib/labels';
-
-async function move(fd) {
-  'use server';
-  const { user } = await requireStaff();
-  const status = String(fd.get('status'));
-  if (!STAFF_STATUSES.some(([k]) => k === status)) return;
-  const note = String(fd.get('note') || '').trim().slice(0, 1000);
-  if (status === 'information_needed' && !note) return; // the client must see what we need
-  await setOrderStatus({ orderId: String(fd.get('order_id')), status, note: note || null, notify: fd.get('notify') === 'on', userId: user.id });
-  revalidatePath('/staff/pipeline');
-}
 
 async function staffRevision(fd) {
   'use server';
@@ -31,18 +22,6 @@ async function staffRevision(fd) {
   const { data: o } = await supabaseAdmin().from('orders').select('*').eq('id', String(fd.get('order_id'))).single();
   if (!o || o.kind !== 'launch') return;
   await logRevision({ order: o, text: String(fd.get('note') || '').trim().slice(0, 2000) || 'Requested by phone/email', by: 'staff', userId: user.id });
-  revalidatePath('/staff/pipeline');
-}
-
-async function stateFee(fd) {
-  'use server';
-  const { user } = await requireStaff();
-  const db = supabaseAdmin();
-  const { data: o } = await db.from('orders').select('*, entities(*)').eq('id', String(fd.get('order_id'))).single();
-  if (!o || !(o.kind === 'annual_report' || KINDS[o.kind]?.filing)) return;
-  const cents = Math.round(parseFloat(String(fd.get('amount') || '').replace(/[^0-9.]/g, '')) * 100);
-  const r = await chargeStateFee(o.entities, o, cents);
-  await db.from('order_events').insert({ order_id: o.id, status: o.status, note: r.ok ? (r.already ? 'State fee was already charged.' : `Florida state fee charged: $${(r.cents / 100).toFixed(2)}.`) : `State fee not charged: ${r.reason}`, created_by: user.id });
   revalidatePath('/staff/pipeline');
 }
 
@@ -65,12 +44,13 @@ export default async function Pipeline({ searchParams }) {
   const kind = KINDS[searchParams?.kind] || GROUPS[searchParams?.kind] ? searchParams.kind : null;
   const stage = STAGES.find(x => x.key === searchParams?.stage) || STAGES[0];
   const term = String(searchParams?.q || '').trim().toLowerCase();
-  let q = sb.from('orders').select('*, entities(file_number, legal_name, contact_name, entity_type, status)').not('status', 'in', '(cancelled,awaiting_payment)').order('updated_at');
+  let q = sb.from('orders').select('*, order_events(*), entities(file_number, legal_name, contact_name, entity_type, status, stripe_customer_id)').not('status', 'in', '(cancelled,awaiting_payment)').order('updated_at');
   if (kind) q = GROUPS[kind] ? q.in('kind', GROUPS[kind]) : q.eq('kind', kind);
   const { data: all } = await q;
   const batchEnts = [...new Set((all || []).filter(o => o.kind === 'mail_batch' && !['completed', 'cancelled'].includes(o.status)).map(o => o.entity_id))];
   const { data: batchItems } = batchEnts.length ? await sb.from('mail_items').select('id, entity_id, sender, category, received_at, description, file_path').in('entity_id', batchEnts).eq('status', 'forward_requested').order('received_at') : { data: [] };
   const { data: batchPrefs } = batchEnts.length ? await sb.from('mail_preferences').select('*').in('entity_id', batchEnts) : { data: [] };
+  const legal = await unopenedLegal();
   const { data: unpaid } = await sb.from('entities').select('file_number, legal_name, payment_issue').not('payment_issue', 'is', null);
   const match = o => !term || [o.entities?.file_number, o.entities?.legal_name, o.entities?.contact_name, o.service].some(v => String(v || '').toLowerCase().includes(term));
   const count = st => (all || []).filter(o => st.sts.includes(o.status) && match(o)).length;
@@ -78,9 +58,16 @@ export default async function Pipeline({ searchParams }) {
   const rank = o => ({ late: 0, today: 1, ok: 2, info: 3 })[orderDeadline(o).tone];
   let list = (all || []).filter(o => stage.sts.includes(o.status) && match(o));
   if (stage.key === 'archived') list = list.reverse(); else list = list.sort((a, b) => rank(a) - rank(b) || (orderDeadline(a).due || 0) - (orderDeadline(b).due || 0));
+  const { data: staffP } = await sb.from('profiles').select('id, email, full_name').in('role', ['staff', 'admin']);
+  const staffNames = Object.fromEntries((staffP || []).map(p => [p.id, p.full_name || p.email]));
+  const qc = Object.fromEntries(await Promise.all(list.filter(o => o.status === 'final_review').map(async o => [o.id, await archiveCheck(o.id)])));
+  const lastNote = o => [...(o.order_events || [])].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).find(x => x.note)?.note;
   const url = (over = {}) => { const p = new URLSearchParams({ ...(kind ? { kind } : {}), stage: stage.key, ...(term ? { q: term } : {}), ...over }); [...p].forEach(([k, v]) => !v && p.delete(k)); return `/staff/pipeline?${p}`; };
   return (<Shell profile={profile}>
     <h1>Pipeline</h1>
+    {searchParams?.err && <div className="note" style={{ borderLeftColor: '#C0392B' }}><strong>Not done.</strong> {searchParams.err}</div>}
+    {searchParams?.saved && <p className="ok-msg">Saved.</p>}
+    {legal.length > 0 && <div className="note" style={{ borderLeftColor: '#C0392B' }}><strong>Call now: legal papers not opened by the client after 1 business day ({legal.length}).</strong> Call, then note the call on the company file.<ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>{legal.map(m => <li key={m.id}><Link href={`/staff/e/${m.entities?.file_number}?tab=mail`}>{m.entities?.file_number} {m.entities?.legal_name}</Link> · {m.category === 'service_of_process' ? 'Lawsuit papers' : 'State notice'}{m.sender ? ` from ${m.sender}` : ''} · received {fmtDate(m.received_at)} · {m.entities?.contact_name || 'contact'} {m.entities?.contact_phone || '(no phone on file)'}</li>)}</ul></div>}
     {unpaid?.length > 0 && <div className="note" style={{ borderLeftColor: '#C0392B' }}><strong>Payment problems ({unpaid.length}):</strong> the client was alerted by email and text to update their card. {unpaid.map(u => <span key={u.file_number} style={{ marginRight: 12 }}><Link href={`/staff/e/${u.file_number}`}>{u.legal_name}</Link> ${((u.payment_issue.amount || 0) / 100).toFixed(2)} · {new Date(u.payment_issue.at).toLocaleDateString('en-US')}</span>)}</div>}
 
     <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '6px 0 14px' }}>{STAGES.map(st => { const on = st.key === stage.key; const n = count(st);
@@ -89,18 +76,18 @@ export default async function Pipeline({ searchParams }) {
 
     <form method="get" action="/staff/pipeline" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
       <input type="hidden" name="stage" value={stage.key} />
-      <AutoSelect name="kind" defaultValue={kind || ''} style={{ maxWidth: 300 }}><option value="">All services</option><option value="all_mail">All mail tasks (address setup + forwarding)</option><option value="all_formation">All formations</option><option value="all_filings">All Florida filings</option><option disabled>──────────</option>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</AutoSelect>
+      <AutoSelect name="kind" defaultValue={kind || ''} style={{ maxWidth: 400, minWidth: 340 }}><option value="">All services</option><option value="all_mail">All mail tasks (address setup + forwarding)</option><option value="all_formation">All formations</option><option value="all_filings">All Florida filings</option><option disabled>──────────</option>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</AutoSelect>
       <input name="q" defaultValue={term} placeholder="Search company, file number or contact" style={{ flex: '1 1 260px', maxWidth: 420 }} />
       <button className="btn small sec">Search</button>{(kind || term) && <Link href={`/staff/pipeline?stage=${stage.key}`}>Clear</Link>}
     </form>
     <p className="muted" style={{ marginTop: 0 }}>Most urgent first: deadlines follow what the website promises (Staff → Guidelines). Red = overdue, amber = due today or needs a check. Click a row to open it, work it and move it. Moving an order updates the client's portal and notifies them unless you untick Notify. In Final review, choose Archive once the quality check passes.</p>
 
     {!list.length ? <div className="note">Nothing in {stage.label}.</div> : <div className="stack" style={{ gap: 8 }}>{list.map(o => { const dl = orderDeadline(o); const r = o.kind === 'launch' ? revisions(o.details) : null;
-      return (<details key={o.id} className="card" style={{ padding: 0 }}>
+      return (<details key={o.id} className="card" style={{ padding: 0 }} open={searchParams?.open === o.id}>
         <summary style={{ cursor: 'pointer', listStyle: 'none', display: 'grid', gridTemplateColumns: '110px minmax(180px, 2fr) minmax(150px, 1.4fr) 120px 150px', gap: 12, alignItems: 'center', padding: '14px 18px' }}>
           <span className="file">{o.entities?.file_number}</span>
           <span><strong>{o.entities?.legal_name}</strong><br /><span className="muted" style={{ fontSize: 13 }}>{o.entities?.contact_name || ''}</span></span>
-          <span>{o.service}{r && <><br /><span className="pill" style={{ fontSize: 12 }}>Revision {r.used} of {r.allowed}</span></>}</span>
+          <span>{KINDS[o.kind] && o.service !== KINDS[o.kind].name ? <>{KINDS[o.kind].name}<br /><span className="muted" style={{ fontSize: 13 }}>{o.service}</span></> : o.service}{r && <><br /><span className="pill" style={{ fontSize: 12 }}>Revision {r.used} of {r.allowed}</span></>}{lastNote(o) && <><br /><span className="muted" style={{ fontSize: 12.5 }} title={lastNote(o)}>Last note: {lastNote(o).slice(0, 70)}{lastNote(o).length > 70 ? '…' : ''}</span></>}</span>
           <span className="muted" style={{ fontSize: 13 }}>{o.source === 'website' ? 'Website' : o.source === 'portal' ? 'Portal' : 'Staff'}<br />{fmtDate(o.created_at)}</span>
           <span className={`pill ${toneClass(dl.tone)}`} style={{ justifySelf: 'start' }}>{dl.text || 'Completed'}</span>
         </summary>
@@ -108,7 +95,7 @@ export default async function Pipeline({ searchParams }) {
           <div>
             <p style={{ margin: '12px 0 4px' }}><Link href={`/staff/e/${o.entities?.file_number}`}>Open company file →</Link></p>
             <OrderDetails d={o.details} kind={o.kind} orderId={o.id} />
-            {STAFF_STEPS[o.kind] && <details style={{ margin: '6px 0' }}><summary style={{ cursor: 'pointer', fontWeight: 700 }}>Staff steps</summary><ol style={{ fontSize: 14, paddingLeft: 18, margin: '6px 0' }}>{STAFF_STEPS[o.kind].map(([st, txt], i) => <li key={i}><strong>{st}:</strong> {txt}</li>)}</ol></details>}
+            {STAFF_STEPS[o.kind] && <details open style={{ margin: '6px 0' }}><summary style={{ cursor: 'pointer', fontWeight: 700 }}>Staff steps (checklist)</summary><div style={{ fontSize: 14, margin: '6px 0' }}>{STAFF_STEPS[o.kind].map(([st, txt], i) => <label key={i} style={{ display: 'flex', gap: 8, fontWeight: 400, alignItems: 'flex-start', marginBottom: 4 }}><input type="checkbox" style={{ minHeight: 'auto', marginTop: 3 }} /><span><strong>{st}:</strong> {txt}</span></label>)}</div></details>}
           </div>
           <div>
             {o.kind === 'mail_batch' && !['completed', 'cancelled'].includes(o.status) && (() => { const its = (batchItems || []).filter(i => i.entity_id === o.entity_id); const pf = (batchPrefs || []).find(p => p.entity_id === o.entity_id) || {};
@@ -122,14 +109,7 @@ export default async function Pipeline({ searchParams }) {
                 <input name="postage" placeholder="Postage paid $ * (billed at cost)" inputMode="decimal" required />
                 <label style={{ fontSize: 13 }}>Label / postage receipt (photo or PDF)<input name="label_file" type="file" accept="image/*,application/pdf" /></label>
               </UploadForm></div>; })()}
-            <form action={move} className="stack" style={{ gap: 8, marginTop: 12 }}>
-              <input type="hidden" name="order_id" value={o.id} />
-              <label>Move to<select name="status" defaultValue={STAFF_STATUSES.some(([k]) => k === o.status) ? o.status : 'received'}>{STAFF_STATUSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
-              <label>Note to client (optional)<textarea name="note" rows={3} placeholder="Required when moving to Waiting on client" /></label>
-              <label style={{ display: 'flex', gap: 8, fontWeight: 400, fontSize: 14 }}><input type="checkbox" name="notify" defaultChecked style={{ minHeight: 'auto' }} /> Notify client</label>
-              <button className="btn">Move</button>
-            </form>
-            {(o.kind === 'annual_report' || KINDS[o.kind]?.filing) && (o.details?.state_fee?.ref ? <p className="muted" style={{ marginTop: 14 }}>State fee charged ${(o.details.state_fee.cents / 100).toFixed(2)} on {fmtDate(o.details.state_fee.at)}.</p> : <form action={stateFee} className="stack" style={{ marginTop: 14, gap: 6 }}><input type="hidden" name="order_id" value={o.id} /><label>Florida state fee ($)<input name="amount" required defaultValue={o.kind === 'annual_report' ? (/corp/i.test(o.entities?.entity_type || '') ? '150.00' : '138.75') : ''} placeholder="Amount shown on Sunbiz" /></label><button className="btn small sec">Charge state fee to card on file</button><div className="muted" style={{ fontSize: 13 }}>Do this when you file. The result is logged on the order.</div></form>)}
+            <div style={{ marginTop: 12 }}><OrderWork o={o} entity={o.entities} back={url()} missing={qc[o.id]} staffNames={staffNames} /></div>
             {r && r.used < r.allowed && <form action={staffRevision} className="stack" style={{ gap: 6, marginTop: 14 }}><input type="hidden" name="order_id" value={o.id} /><label>Log revision (phone/email request)<input name="note" placeholder="What the client asked for" required /></label><button className="btn small sec">Log revision {r.used + 1} of {r.allowed}</button></form>}
           </div>
         </div>

@@ -1,4 +1,6 @@
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
+import { KINDS } from '@/lib/labels';
+const addr = v => !v ? null : /^[^,]*$/.test(v.trim()) && /united states|usa|^us$/i.test(v.trim()) ? 'Not provided' : v;
 
 // Staff view of what the client entered: website order form, questionnaire answers and replies
 export default function OrderDetails({ d, kind, orderId }) {
@@ -10,11 +12,12 @@ export default function OrderDetails({ d, kind, orderId }) {
     <table style={{ fontSize: 14 }}><tbody>
       {d.service && <>
         {row('Names (in order)', names.length ? names.map((n, i) => `${i + 1}. ${n}${d.ending ? ' ' + d.ending : ''}`).join('\n') : null)}
-        {row('If first name taken', d.use_backup === false ? 'Ask me first' : names.length > 1 ? 'File with the next choice' : null)}
+        {row('If first name taken', names.length ? (d.use_backup === false ? 'Ask me first' : 'File with the next choice without asking') : null)}
+        {row('Registered agent', ['llc', 'corp', 'foreign'].includes(kind) ? 'Included: THE BUSINESS CLERK (first year)' : null)}
         {row('Sunbiz doc #', d.sunbiz_doc_number)}{row('Business purpose', d.purpose)}{row('Management', d.management)}
         {row('Shares / par value', d.shares ? `${d.shares} shares, par ${d.par || 'none'}` : null)}{row('Incorporator', d.incorporator)}{row('S-corp election', d.s_corp)}
         {row('Effective date', d.effective_date)}{row('Authorized signer', d.signer)}
-        {row('Add-ons', (d.addons || []).join(', '))}{row('Principal address', d.principal_address)}{row('Mailing address', d.mailing_address)}
+        {row('Add-ons', (d.addons || []).map(a => KINDS[a]?.name || a).join(', '))}{row('Principal address', addr(d.principal_address) || (d.service ? 'Not provided' : null))}{row('Mailing address', addr(d.mailing_address) || (d.service ? 'Same as principal' : null))}
         {row('People', (d.people || []).length ? d.people.map(p => `${p.name} (${p.title})${p.address ? ' · ' + p.address : ''}`).join('\n') : null)}
         {row('Contact', [d.contact?.name, d.contact?.email, d.contact?.phone, d.contact?.language?.toUpperCase()].filter(Boolean).join(' · '))}
         {row('Notes', d.notes)}{row('Submitted', d.submitted_at && new Date(d.submitted_at).toLocaleString('en-US', { timeZone: 'America/New_York' }))}

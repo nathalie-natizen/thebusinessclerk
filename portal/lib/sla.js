@@ -4,7 +4,22 @@ import { revisions, AUTO_APPROVE_DAYS } from './guidelines';
 import { FILINGS } from './filings';
 
 const etDay = d => { const x = new Date(new Date(d).toLocaleString('en-US', { timeZone: 'America/New_York' })); x.setHours(0, 0, 0, 0); return x; };
-const isBiz = d => d.getDay() % 6 !== 0;
+// Florida state holidays (Sunbiz closed): New Year, MLK, Memorial, Independence, Labor, Veterans, Thanksgiving + Friday, Christmas.
+// A holiday on Saturday is observed Friday; on Sunday, Monday.
+const nth = (y, m, wd, n) => { const d = new Date(y, m, 1); while (d.getDay() !== wd) d.setDate(d.getDate() + 1); d.setDate(d.getDate() + 7 * (n - 1)); return d; };
+const last = (y, m, wd) => { const d = new Date(y, m + 1, 0); while (d.getDay() !== wd) d.setDate(d.getDate() - 1); return d; };
+const obs = d => { const x = new Date(d); if (x.getDay() === 6) x.setDate(x.getDate() - 1); else if (x.getDay() === 0) x.setDate(x.getDate() + 1); return x; };
+const HOL = {};
+export function holidays(y) {
+  if (HOL[y]) return HOL[y];
+  const tg = nth(y, 10, 4, 4); const fri = new Date(tg); fri.setDate(fri.getDate() + 1);
+  const list = [obs(new Date(y, 0, 1)), nth(y, 0, 1, 3), last(y, 4, 1), obs(new Date(y, 6, 4)), nth(y, 8, 1, 1), obs(new Date(y, 10, 11)), tg, fri, obs(new Date(y, 11, 25))];
+  return (HOL[y] = new Set(list.map(d => d.toDateString())));
+}
+export const HOLIDAY_NOTE = 'Business days are Monday to Friday, Eastern time, excluding Florida state holidays (New Year’s Day, Martin Luther King Jr. Day, Memorial Day, Independence Day, Labor Day, Veterans Day, Thanksgiving and the Friday after, Christmas), when the state is closed.';
+const isBiz = d => d.getDay() % 6 !== 0 && !holidays(d.getFullYear()).has(d.toDateString());
+// Florida annual reports can only be filed January 1 – May 1
+export function arWindowOpen(now = new Date()) { const d = etDay(now); return d.getMonth() < 4 || (d.getMonth() === 4 && d.getDate() === 1); }
 export function addBizDays(from, n) { const d = etDay(from); let left = n; while (left > 0) { d.setDate(d.getDate() + 1); if (isBiz(d)) left--; } return d; }
 export function bizDaysBetween(a, b) { const s = etDay(a), e = etDay(b); let n = 0; const sign = e >= s ? 1 : -1; const d = new Date(s); while ((sign > 0 ? d < e : d > e)) { d.setDate(d.getDate() + sign); if (isBiz(d)) n += sign; } return n; }
 const fmt = d => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -27,6 +42,7 @@ export function orderDeadline(o, now = new Date()) {
   if (['received', 'payment_confirmed', 'in_review'].includes(s)) {
     if (o.kind === 'mail') return { text: 'Starts when Form 1583 is approved (Mail queue)', tone: 'info' };
     if (o.kind === 'ein' && o.entities?.status === 'pending') return { text: 'Starts when Florida approves the company', tone: 'info' };
+    if (o.kind === 'annual_report' && !arWindowOpen(now)) return { text: `Files when Sunbiz opens Jan 1, ${etDay(now).getFullYear() + 1}`, tone: 'info' };
     const rev = o.kind === 'launch' && revisions(o.details).used > 0 && (o.details?.revisions?.log?.slice(-1)[0]?.at || '') >= since;
     return due(rev ? TODO_DAYS.launch_revision : (TODO_DAYS[o.kind] ?? 1));
   }
@@ -47,6 +63,7 @@ export function clientExpectation(o) {
     if (o.kind === 'mail') return 'Your address goes live once your USPS Form 1583 is approved (Compliance tab).';
     if (o.kind === 'mail_batch') return 'Your scheduled mail shipment goes out today. You will get the tracking number by email.';
     if (o.kind === 'ein' && o.entities?.status === 'pending') return 'We apply for your EIN as soon as Florida approves your company.';
+    if (o.kind === 'annual_report' && !arWindowOpen()) return `Florida opens annual report filing on January 1. We file within one business day after that, once your questionnaire is complete.`;
     const d = addBizDays(since, o.kind === 'launch' ? (revisions(o.details).used > 0 ? TODO_DAYS.launch_revision : TODO_DAYS.launch) : (TODO_DAYS[o.kind] ?? 1));
     return o.kind === 'launch' ? `We expect to deliver by ${fmt(d)}.` : `We expect to file by ${fmt(d)}.`;
   }

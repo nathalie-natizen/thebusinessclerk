@@ -21,6 +21,12 @@ export async function requireStaff() {
   return s;
 }
 
+export async function requireAdmin() {
+  const s = await requireUser();
+  if (s.profile?.role !== 'admin') redirect('/staff/pipeline');
+  return s;
+}
+
 // Loads an entity by file number if the signed-in user may see it (RLS enforces access)
 export async function getEntity(sb, file) {
   const { data } = await sb.from('entities').select('*').eq('file_number', String(file).toUpperCase()).single();

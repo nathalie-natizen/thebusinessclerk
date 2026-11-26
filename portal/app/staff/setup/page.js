@@ -1,6 +1,6 @@
 import Shell from '@/components/Shell';
 import Action from './Actions';
-import { requireStaff } from '@/lib/auth';
+import { requireAdmin as requireStaff } from '@/lib/auth';
 import { stripe } from '@/lib/stripe';
 import { ensureCatalog, prices, CATALOG, WEBHOOK_EVENTS } from '@/lib/prices';
 import { sendEmail, sendSms } from '@/lib/notify';

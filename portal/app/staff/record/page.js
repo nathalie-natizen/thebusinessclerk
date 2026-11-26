@@ -14,7 +14,8 @@ export default async function RecordMail({ searchParams }) {
     sb.from('cmra_applications').select('status').eq('entity_id', e.id).maybeSingle(),
     sb.from('mail_items').select('id, received_at, category, sender, status').eq('entity_id', e.id).order('received_at', { ascending: false }).limit(5),
   ]) : [{}, {}, {}];
-  const legalOnly = e && !e.mail_service;
+  const legalOnly = e && e.registered_agent && !e.mail_service;
+  const none = e && !e.registered_agent && !e.mail_service;
   const held = e?.mail_service && !['verified', 'filed'].includes(cmra?.status);
   return (<Shell profile={profile}>
     <h1>Record mail</h1>
@@ -27,9 +28,10 @@ export default async function RecordMail({ searchParams }) {
         <span className="pill">{[e.registered_agent && 'Registered agent', e.mail_service && 'Mail service'].filter(Boolean).join(' + ') || 'No active service'}</span>
         <Link href={`/staff/e/${e.file_number}?tab=mail`} style={{ marginLeft: 'auto' }}>Open company file →</Link>
       </div>
+      {none && <div className="note" style={{ marginBottom: 12, borderLeftColor: '#C0392B' }}><strong>No active service.</strong> We are not this company's registered agent and it has no mail service: return mail to sender and don't accept legal papers for it.</div>}
       {legalOnly && <div className="note" style={{ marginBottom: 12 }}>This company has <strong>registered agent only</strong>: accept legal papers and state notices. Ordinary mail is not covered; return it to sender unless the client adds mail service.</div>}
-      {held && <div className="note" style={{ marginBottom: 12 }}>Form 1583 is <strong>{CMRA_STATUS[cmra?.status || 'not_started'] || 'not started'}</strong>. Log the envelope, but hold the mail (don't open or forward ordinary mail) until it's approved. Legal papers are always scanned.</div>}
-      <RecordMailForm entityId={e.id} handling={pref?.handling} />
+      {held && <div className="note" style={{ marginBottom: 12 }}>Form 1583 is <strong>{CMRA_STATUS[cmra?.status || 'not_started'] || 'not started'}</strong>. Ordinary mail is saved as Held automatically: don't open or forward it until the form is approved. Legal papers are always scanned.</div>}
+      {!none && <RecordMailForm entityId={e.id} handling={pref?.handling} />}
       {recent?.length > 0 && <><h3>Last items for this company</h3><ul style={{ margin: 0, paddingLeft: 18 }}>{recent.map(m => <li key={m.id}>{fmtDate(m.received_at)} · {MAIL_CATEGORY[m.category]}{m.sender ? ` · ${m.sender}` : ''} · <span className="muted">{MAIL_STATUS[m.status] || m.status}</span></li>)}</ul></>}
       <p style={{ marginBottom: 0 }}><Link className="btn small sec" href="/staff/record">Next envelope →</Link></p>
     </section>}

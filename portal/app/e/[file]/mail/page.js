@@ -14,8 +14,10 @@ async function requestAction(formData) {
   const id = String(formData.get('id')); const action = String(formData.get('action'));
   const map = { forward: 'forward_requested', shred: 'shred_requested', hold: 'held', scan: 'scan_requested' };
   if (!map[action]) return;
-  const { data: item } = await sb.from('mail_items').select('id, entity_id, status').eq('id', id).single(); // RLS: only members see it
+  const { data: item } = await sb.from('mail_items').select('id, entity_id, status, category').eq('id', id).single(); // RLS: only members see it
   if (!item || ['forwarded', 'delivered', 'shredded', 'picked_up'].includes(item.status)) return;
+  // USPS: ordinary mail can't be opened, forwarded or shredded until Form 1583 is approved
+  if (action !== 'hold' && !['service_of_process', 'state_notice'].includes(item.category)) { const { data: c } = await sb.from('cmra_applications').select('status').eq('entity_id', item.entity_id).maybeSingle(); if (!['verified', 'filed'].includes(c?.status)) return; }
   if (action === 'scan' && item.status === 'scanned') return;
   const ship = String(formData.get('shipping'));
   await supabaseAdmin().from('mail_items').update({ status: map[action], client_request: action, requested_at: new Date().toISOString(),

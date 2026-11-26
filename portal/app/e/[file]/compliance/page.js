@@ -70,7 +70,7 @@ export default async function Compliance({ params, searchParams }) {
   const { sb, profile } = await requireUser();
   const e = await getEntity(sb, params.file); if (!e) notFound();
   const { data: a0 } = await sb.from('cmra_applications').select('*').eq('entity_id', e.id).maybeSingle();
-  const a = a0 || { status: 'not_started', business_name: e.legal_name, applicant_email: profile?.email };
+  const a = a0 || { status: 'not_started', business_name: e.legal_name, applicant_email: ['staff', 'admin'].includes(profile?.role) ? (e.contact_email || '') : profile?.email };
   const ro = locked(a.status);
   const app = process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com';
   const qrUrl = searchParams?.qr && /^[A-Za-z0-9_-]{20,64}$/.test(searchParams.qr) ? `${app}/m/${searchParams.qr}` : null;

@@ -3,7 +3,7 @@ import ServiceTerms from '@/components/ServiceTerms';
 import { requireStaff } from '@/lib/auth';
 import { KINDS } from '@/lib/labels';
 import { STAFF_STEPS, GUIDELINES_VERSION, AUTO_APPROVE_DAYS } from '@/lib/guidelines';
-import { TODO_DAYS, FINAL_REVIEW_DAYS, STATE_CHECK_DAYS, MAIL_DAYS, CMRA_REVIEW_DAYS } from '@/lib/sla';
+import { TODO_DAYS, FINAL_REVIEW_DAYS, STATE_CHECK_DAYS, MAIL_DAYS, CMRA_REVIEW_DAYS, HOLIDAY_NOTE } from '@/lib/sla';
 
 const MANUAL = 'https://docs.google.com/document/d/1lOePoSbuQGxkE01cfuZVqvXP8k2IBHcoA0FlPvYxHrY/edit';
 
@@ -14,7 +14,7 @@ export default async function Guidelines() {
     <p className="sub">Staff steps and the exact terms each client sees for the services they order. Version {GUIDELINES_VERSION}. Full manual: <a href={MANUAL} target="_blank" rel="noopener noreferrer">Service Guidelines & Operations Manual ↗</a></p>
     <section className="card" style={{ marginBottom: 16 }}>
       <h2 style={{ marginTop: 0 }}>Deadlines (what the website promises)</h2>
-      <p className="muted">Business days, Monday to Friday, Eastern time. The Pipeline and Mail queue show each order's due date and turn red when overdue.</p>
+      <p className="muted">{HOLIDAY_NOTE} Annual reports can only be filed January 1 – May 1; an annual report order placed outside that window waits until January 1. The Pipeline and Mail queue show each order's due date and turn red when overdue.</p>
       <table><tbody>
         <tr><td>Formation, annual report, EIN, registered agent change, every filing: file after the order reaches To do</td><td>{TODO_DAYS.llc} business day</td></tr>
         <tr><td>Launch Pack: domain, email and first draft / each revision</td><td>{TODO_DAYS.launch} / {TODO_DAYS.launch_revision} business days</td></tr>

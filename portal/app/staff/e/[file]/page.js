@@ -13,6 +13,9 @@ import { notifyEntity } from '@/lib/notify';
 import { setOrderStatus } from '@/lib/orders';
 import { startTracking } from '@/lib/tracking';
 import OrderDetails from '@/components/OrderDetails';
+import OrderWork from '@/components/OrderWork';
+import { archiveCheck } from '@/lib/orders';
+import { needsQuestionnaire } from '@/lib/questionnaires';
 import { fmtDate, fmtDay, MAIL_CATEGORY, MAIL_STATUS, ORDER_STATUS, DOC_CATEGORY, HANDLING, statusLabel, STAFF_STATUSES, KINDS, CARRIERS, TRACKING_STATUS, CMRA_STATUS, WITNESS } from '@/lib/labels';
 
 const clean = (v, n = 200) => String(v || '').trim().slice(0, n) || null;
@@ -34,17 +37,9 @@ async function createOrder(fd) {
   'use server';
   const { sb, user } = await requireStaff();
   const kind = KINDS[fd.get('kind')] ? String(fd.get('kind')) : null;
-  const { data: o } = await sb.from('orders').insert({ entity_id: String(fd.get('entity_id')), kind, service: clean(fd.get('service')) || (kind ? KINDS[kind].name : 'Service'), status: 'received' }).select().single();
-  if (o) await sb.from('order_events').insert({ order_id: o.id, status: 'received', note: clean(fd.get('note'), 500), created_by: user.id });
-  revalidatePath('/staff/e/[file]', 'page');
-}
-
-async function updateOrder(fd) {
-  'use server';
-  const { sb, user } = await requireStaff();
-  const id = String(fd.get('order_id')); const status = String(fd.get('status')); const note = clean(fd.get('note'), 500);
-  if (!STAFF_STATUSES.some(([k]) => k === status)) return;
-  await setOrderStatus({ orderId: id, status, note, notify: fd.get('notify') === 'on', userId: user.id });
+  const status = kind && needsQuestionnaire(kind) ? 'information_needed' : 'received';
+  const { data: o } = await sb.from('orders').insert({ entity_id: String(fd.get('entity_id')), kind, service: clean(fd.get('service')) || (kind ? KINDS[kind].name : 'Service'), status }).select().single();
+  if (o) await sb.from('order_events').insert({ order_id: o.id, status, note: clean(fd.get('note'), 500) || (status === 'information_needed' ? 'Please complete the short questionnaire on this order so we can start.' : null), created_by: user.id, notified: false });
   revalidatePath('/staff/e/[file]', 'page');
 }
 
@@ -59,6 +54,7 @@ async function updateEntity(fd) {
     stripe_customer_id: clean(fd.get('stripe_customer_id')), ein: clean(fd.get('ein'), 20),
     sunbiz_url: /^https:\/\/search\.sunbiz\.org\//.test(String(fd.get('sunbiz_url') || '')) ? clean(fd.get('sunbiz_url'), 600) : null,
     contact_name: clean(fd.get('contact_name')), contact_email: clean(fd.get('contact_email')), contact_phone: clean(fd.get('contact_phone'), 40),
+    principal_address: clean(fd.get('principal_address'), 300), mailing_address: clean(fd.get('mailing_address'), 300),
   }).eq('id', id);
   await sb.from('entity_notes').upsert({ entity_id: id, notes: clean(fd.get('notes'), 2000), updated_at: new Date().toISOString() });
   redirect(`/staff/e/${String(fd.get('file'))}?saved=1&tab=details`);
@@ -113,6 +109,8 @@ async function reviewCmra(fd) {
   return { message: 'Saved.' };
 }
 
+const tab0 = sp => sp?.tab;
+
 export default async function StaffEntity({ params, searchParams }) {
   const { sb, profile } = await requireStaff();
   const e = await getEntity(sb, params.file); if (!e) notFound();
@@ -126,13 +124,16 @@ export default async function StaffEntity({ params, searchParams }) {
     sb.from('entity_notes').select('notes').eq('entity_id', e.id).maybeSingle(),
   ]);
   const { data: cmra } = await sb.from('cmra_applications').select('*').eq('entity_id', e.id).maybeSingle();
+  const { data: staffP } = await sb.from('profiles').select('id, email, full_name').in('role', ['staff', 'admin']);
+  const staffNames = Object.fromEntries((staffP || []).map(p => [p.id, p.full_name || p.email]));
+  const qc = tab0(searchParams) === 'orders' ? Object.fromEntries(await Promise.all((orders || []).filter(o => o.status === 'final_review').map(async o => [o.id, await archiveCheck(o.id)]))) : {};
   const opts = o => Object.entries(o).map(([k, l]) => <option key={k} value={k}>{l}</option>);
   const TABS = [['overview', 'Overview'], ['mail', 'Mail'], ['documents', 'Documents'], ['orders', 'Orders'], ...(e.mail_service ? [['compliance', 'Form 1583']] : []), ['access', 'Client access'], ['details', 'Company details']];
   const tab = TABS.some(([k]) => k === searchParams?.tab) ? searchParams.tab : 'overview';
   const T = k => `/staff/e/${e.file_number}?tab=${k}`;
   return (<Shell profile={profile}>
     <p><Link href="/staff">← All entities</Link></p>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}><div><span className="file" style={{ fontSize: 16 }}>{e.file_number}</span><h1 style={{ marginTop: 8 }}>{e.legal_name}</h1></div><ClientView file={e.file_number} /></div>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}><div><span className="file" style={{ fontSize: 16 }}>{e.file_number}</span> <span className="pill">{[e.registered_agent && 'Registered agent', e.mail_service && 'Mail service'].filter(Boolean).join(' + ') || 'No active service'}</span><h1 style={{ marginTop: 8 }}>{e.legal_name}</h1></div><ClientView file={e.file_number} /></div>
     <nav className="tabs">{TABS.map(([k, l]) => <Link key={k} href={T(k)} aria-current={tab === k ? 'page' : undefined}>{l}</Link>)}</nav>
     {tab === 'overview' && <>{(() => {
       const open = (orders || []).filter(o => !['completed', 'delivered', 'cancelled', 'awaiting_payment'].includes(o.status));
@@ -146,12 +147,13 @@ export default async function StaffEntity({ params, searchParams }) {
         {tile('Company status', e.status === 'active' ? 'Active' : e.status === 'pending' ? 'Pending at the State' : e.status, e.sunbiz_doc_number ? `Doc # ${e.sunbiz_doc_number}` : 'No document number yet', e.status === 'active' ? 'ok' : 'warn', T('details'))}
         {tile('Open orders', open.length, late ? `${late} overdue` : open.length ? 'On time' : 'Nothing open', late ? 'late' : open.length ? 'warn' : 'ok', T('orders'))}
         {tile('Mail to act on', waiting, `${unread} without instructions${legal ? ` · ${legal} legal unread by client` : ''}`, legal ? 'late' : waiting ? 'warn' : 'ok', T('mail'))}
-        {tile('Services', [e.registered_agent && 'RA', e.mail_service && 'Mail'].filter(Boolean).join(' + ') || 'None', e.mail_service && BATCH[prefs?.handling] ? `${scheduleLabel(prefs.handling, prefs.forward_day)} · next ${nextShipDay(prefs.handling, prefs.forward_day)?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : (prefs?.handling ? { notify: 'Mail: notify only', scan_all: 'Mail: scan all', forward_each: 'Mail: forward each', hold_pickup: 'Mail: hold for pickup' }[prefs.handling] || '' : ''), 'info', T('details'))}
+        {tile('Services', [e.registered_agent && 'RA', e.mail_service && 'Mail'].filter(Boolean).join(' + ') || 'None', !e.mail_service ? (e.registered_agent ? 'Legal papers & state notices only' : 'No active service') : BATCH[prefs?.handling] ? `${scheduleLabel(prefs.handling, prefs.forward_day)} · next ${nextShipDay(prefs.handling, prefs.forward_day)?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : (prefs?.handling ? { notify: 'Mail: notify only', scan_all: 'Mail: scan all', forward_each: 'Mail: forward each', hold_pickup: 'Mail: hold for pickup' }[prefs.handling] || '' : ''), 'info', T('details'))}
         {e.mail_service && tile('Form 1583', CMRA_STATUS[cmra?.status || 'not_started'] || 'Not started', 'Mail is held until approved', ['verified', 'filed'].includes(cmra?.status) ? 'ok' : cmra?.status === 'submitted' ? 'warn' : 'late', T('compliance'))}
         {e.registered_agent && tile(`Annual report ${y}`, arDone ? 'Ordered' : 'Not ordered', 'Due May 1', arDone ? 'ok' : new Date().getMonth() >= 2 ? 'warn' : 'info', T('orders'))}
         {e.payment_issue && tile('Payment', 'Failed', `$${((e.payment_issue.amount || 0) / 100).toFixed(2)} · client alerted`, 'late', T('details'))}
       </div>; })()}
-    <p className="sub">Label the paper folder and the PMB line with <strong>{e.file_number}</strong>. Mail handling: {HANDLING[prefs?.handling || 'notify']}.</p>
+    {!(members || []).length && <div className="note" style={{ borderLeftColor: '#C0392B' }}><strong>No portal user on this file.</strong> Nobody is notified about mail, legal papers or orders. Give the client access on the Client access tab{e.contact_phone ? <>, and call {e.contact_phone} for anything urgent</> : ''}.</div>}
+    <p className="sub">Label the paper folder and the PMB line with <strong>{e.file_number}</strong>.{e.mail_service ? <> Mail handling: {HANDLING[prefs?.handling || 'notify']}.</> : ''}</p>
     <div className="grid">
       <section className="card"><h3 style={{ marginTop: 0 }}>Open orders</h3>{(() => { const open = (orders || []).filter(o => !['completed', 'delivered', 'cancelled', 'awaiting_payment'].includes(o.status)); return !open.length ? <p className="muted">Nothing open.</p> : <ul style={{ paddingLeft: 18, margin: 0 }}>{open.map(o => { const d = orderDeadline({ ...o, entities: { status: e.status } }); return <li key={o.id} style={{ marginBottom: 6 }}><strong>{o.service}</strong> · {statusLabel(o.status, o.kind)} <span className={`pill ${toneClass(d.tone)}`}>{d.text}</span></li>; })}</ul>; })()}<p style={{ marginBottom: 0 }}><Link href="/staff/pipeline">Work it in the Pipeline →</Link></p></section>
       <section className="card"><h3 style={{ marginTop: 0 }}>Latest mail</h3>{!mail?.length ? <p className="muted">No mail yet.</p> : <ul style={{ paddingLeft: 18, margin: 0 }}>{mail.slice(0, 6).map(m => <li key={m.id} style={{ marginBottom: 6 }}>{fmtDate(m.received_at)} · {m.urgent && <span className="pill urgent">Urgent</span>} {MAIL_CATEGORY[m.category]}{m.sender ? ` · ${m.sender}` : ''} · <span className="muted">{MAIL_STATUS[m.status] || m.status}</span></li>)}</ul>}<p style={{ marginBottom: 0 }}><Link href={T('mail')}>Mail log →</Link></p></section>
@@ -203,16 +205,20 @@ export default async function StaffEntity({ params, searchParams }) {
 
     {tab === 'orders' && <><h2 id="orders" style={{ scrollMarginTop: 70 }}>Orders</h2>
     <form className="row" action={createOrder} style={{ marginBottom: 14 }}><input type="hidden" name="entity_id" value={e.id} /><select name="kind" style={{ flex: '0 1 220px' }}><option value="">Other service</option>{Object.entries(KINDS).filter(([, v]) => !v.internal).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select><input name="service" placeholder="Name shown to client, e.g. Annual report 2027 (optional)" /><input name="note" placeholder="Note (optional)" /><button className="btn sec" style={{ flex: '0 0 auto' }}>Add order</button></form>
-    <div className="grid">{(orders || []).map(o => <div className="card" key={o.id}><h3>{o.service}</h3><p><span className="pill">{statusLabel(o.status, o.kind)}</span> <span className="muted">{fmtDate(o.created_at)}</span></p>
-      <OrderDetails d={o.details} kind={o.kind} orderId={o.id} />
-      <form className="stack" action={updateOrder}><input type="hidden" name="order_id" value={o.id} /><select name="status" defaultValue={STAFF_STATUSES.some(([k]) => k === o.status) ? o.status : 'received'}>{STAFF_STATUSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="note" placeholder="Note shown to client (optional)" /><label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="notify" defaultChecked style={{ minHeight: 'auto' }} /> Notify client</label><button className="btn small">Update status</button></form>
-      <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(ev => <li key={ev.id}><strong>{statusLabel(ev.status, o.kind)}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul></div>)}</div></>}
+    {searchParams?.err && <div className="note" style={{ borderLeftColor: '#C0392B' }}><strong>Not done.</strong> {searchParams.err}</div>}
+    <div className="stack" style={{ gap: 12 }}>{(orders || []).map(o => { const d = orderDeadline({ ...o, entities: { status: e.status } }); return <details className="card" key={o.id} open={searchParams?.open === o.id || !['completed', 'cancelled'].includes(o.status)} style={{ padding: 0 }}>
+      <summary style={{ cursor: 'pointer', listStyle: 'none', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', padding: '12px 16px' }}><strong>{KINDS[o.kind]?.name || o.service}</strong>{KINDS[o.kind] && o.service !== KINDS[o.kind].name && <span className="muted">{o.service}</span>}<span className="pill">{(STAFF_STATUSES.find(([k]) => k === o.status) || [, statusLabel(o.status, o.kind)])[1]}</span>{d.text && <span className={`pill ${toneClass(d.tone)}`}>{d.text}</span>}<span className="muted" style={{ marginLeft: 'auto', fontSize: 13 }}>ordered {fmtDay(o.created_at)} · updated {fmtDate(o.updated_at || o.created_at)}</span></summary>
+      <div style={{ padding: '0 16px 16px', display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(280px, 1fr)', gap: 20 }}>
+        <div><OrderDetails d={o.details} kind={o.kind} orderId={o.id} /></div>
+        <OrderWork o={o} entity={e} back={`/staff/e/${e.file_number}?tab=orders`} missing={o.status === 'final_review' ? qc[o.id] : null} staffNames={staffNames} />
+      </div></details>; })}</div></>}
 
     {tab === 'documents' && <><h2 id="documents" style={{ scrollMarginTop: 70 }}>Documents</h2>
     {!docs?.length ? <p className="muted">No documents.</p> : <ul>{docs.map(d => <li key={d.id}><Preview src={`/api/file?type=document&id=${d.id}&view=1`} pdf title="Preview">{d.title}</Preview> (<a href={`/api/file?type=document&id=${d.id}`}>download</a>) <span className="muted">· {DOC_CATEGORY[d.category]} · {fmtDay(d.created_at)}</span></li>)}</ul>}</>}
 
     {tab === 'access' && <><h2 id="access" style={{ scrollMarginTop: 70 }}>Client access</h2>
-    <ul>{(members || []).map(m => <li key={m.user_id}>{m.profiles?.email} {m.profiles?.phone && <span className="muted">· {m.profiles.phone}{m.profiles.sms_opt_in ? ' (texts on)' : ''}</span>} <form action={removeMember} style={{ display: 'inline' }}><input type="hidden" name="entity_id" value={e.id} /><input type="hidden" name="user_id" value={m.user_id} /><button className="btn small sec">Remove</button></form></li>)}
+    {!(members || []).length && !(invites || []).length && <p className="muted">No one has access yet. Add the client's email below.</p>}
+    <ul>{(members || []).map(m => <li key={m.user_id}>{m.profiles?.full_name ? `${m.profiles.full_name} · ` : ''}{m.profiles?.email} {m.profiles?.phone && <span className="muted">· {m.profiles.phone}{m.profiles.sms_opt_in ? ' (texts on)' : ''}</span>} <form action={removeMember} style={{ display: 'inline' }}><input type="hidden" name="entity_id" value={e.id} /><input type="hidden" name="user_id" value={m.user_id} /><button className="btn small sec">Remove</button></form></li>)}
       {(invites || []).map(i => <li key={i.email}>{i.email} <span className="pill warn">Invited, hasn't signed in</span> <form action={removeMember} style={{ display: 'inline' }}><input type="hidden" name="entity_id" value={e.id} /><input type="hidden" name="email" value={i.email} /><button className="btn small sec">Remove</button></form></li>)}</ul>
     <form className="row" action={addMember}><input type="hidden" name="entity_id" value={e.id} /><input name="email" type="email" placeholder="client@example.com" required /><button className="btn sec" style={{ flex: '0 0 auto' }}>Give access</button></form>
     <p className="muted">The client signs in at app.thebusinessclerk.com with this email. Access is linked automatically on first sign-in. Clients manage their own team and notifications on their Team tab.</p></>}
@@ -224,7 +230,9 @@ export default async function StaffEntity({ params, searchParams }) {
       <div className="row"><label>Type<select name="entity_type" defaultValue={e.entity_type}><option>LLC</option><option>Corporation</option><option>Nonprofit</option><option>Other</option></select></label>
         <label>Status<select name="status" defaultValue={e.status}><option value="active">Active</option><option value="pending">Pending</option><option value="inactive">Inactive</option><option value="dissolved">Dissolved</option></select></label></div>
       <div className="row"><label>Florida document #<input name="sunbiz_doc_number" defaultValue={e.sunbiz_doc_number || ''} /></label><label>Formation date<input name="formation_date" type="date" defaultValue={e.formation_date || ''} /></label><label>EIN<input name="ein" defaultValue={e.ein || ''} placeholder="12-3456789" /></label></div>
-      <label>Sunbiz page link: open the company's detail page on Sunbiz (<a href={`/api/sunbiz?entity=${e.id}`} target="_blank" rel="noopener noreferrer">find it</a>), click the company, copy the address bar and paste it here. The client's "View on Sunbiz" button then opens it directly.<input name="sunbiz_url" defaultValue={e.sunbiz_url || ''} placeholder="https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResultDetail?..." /></label>
+      <label>Sunbiz page link <span className="muted" style={{ fontWeight: 400 }}>(open the company on Sunbiz, copy the address bar, paste here)</span><div className="row" style={{ gap: 8 }}><input name="sunbiz_url" defaultValue={e.sunbiz_url || ''} placeholder="https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResultDetail?..." /><a className="btn small sec" style={{ flex: '0 0 auto' }} href={`/api/sunbiz?entity=${e.id}`} target="_blank" rel="noopener noreferrer">Find on Sunbiz</a></div></label>
+      <div className="row"><label>Principal address<input name="principal_address" defaultValue={e.principal_address || ''} /></label><label>Mailing address<input name="mailing_address" defaultValue={e.mailing_address || ''} /></label></div>
+      <p className="muted" style={{ margin: 0 }}>PMB: <strong>{e.file_number}</strong>{e.registered_agent && <> · Annual report due May 1, {new Date().getMonth() > 4 || (new Date().getMonth() === 4 && new Date().getDate() > 1) ? new Date().getFullYear() + 1 : new Date().getFullYear()}</>} · Registered agent renewal: see the client's Billing tab (Stripe).</p>
       <div className="row"><label>Contact name<input name="contact_name" defaultValue={e.contact_name || ''} /></label><label>Contact email<input name="contact_email" type="email" defaultValue={e.contact_email || ''} /></label><label>Contact phone<input name="contact_phone" defaultValue={e.contact_phone || ''} /></label></div>
       <label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="registered_agent" defaultChecked={e.registered_agent} style={{ minHeight: 'auto' }} /> Registered agent service</label>
       <label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="mail_service" defaultChecked={e.mail_service} style={{ minHeight: 'auto' }} /> Business address & mail service</label>

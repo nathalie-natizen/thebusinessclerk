@@ -1,14 +1,14 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import Shell from '@/components/Shell';
-import { requireStaff } from '@/lib/auth';
+import { requireStaff, requireAdmin } from '@/lib/auth';
 import { closeMonth, previousMonth, money } from '@/lib/billing';
 
 const dollars = v => Math.round(parseFloat(String(v || '0').replace(/[^0-9.]/g, '')) * 100) || 0;
 
 async function savePricing(fd) {
   'use server';
-  const { sb } = await requireStaff();
+  const { sb } = await requireAdmin();
   const scan_levels = [1, 2, 3, 4, 5, 6].map(i => ({ name: String(fd.get(`l${i}_name`) || '').trim(), cents: dollars(fd.get(`l${i}_price`)), included: parseInt(fd.get(`l${i}_inc`)) || 0, extra_cents: dollars(fd.get(`l${i}_extra`)) })).filter(l => l.name && l.extra_cents > 0);
   await sb.from('mail_pricing').update({
     base_cents: dollars(fd.get('base')), included_items: parseInt(fd.get('included')) || 0, over_item_cents: dollars(fd.get('over')),
@@ -19,9 +19,9 @@ async function savePricing(fd) {
 }
 async function runClose(fd) {
   'use server';
-  await requireStaff();
+  await requireAdmin();
   const [y, m] = String(fd.get('period')).split('-').map(Number);
-  if (!y || !m) return;
+  if (!y || !m || fd.get('confirm') !== 'on') redirect('/staff/billing?confirm=1');
   const r = await closeMonth(y, m);
   redirect(`/staff/billing?closed=${r.length}`);
 }
@@ -33,32 +33,45 @@ export default async function StaffBilling({ searchParams }) {
   const prev = previousMonth(); const def = `${prev.year}-${String(prev.month).padStart(2, '0')}`;
   const levels = [...(p?.scan_levels || [])].sort((a, b) => a.included - b.included);
   const d = c => (c / 100).toFixed(2);
+  const admin = profile?.role === 'admin';
+  const { count: mailCos } = await sb.from('entities').select('id', { count: 'exact', head: true }).eq('mail_service', true);
+  const { data: failed } = await sb.from('entities').select('file_number, legal_name, payment_issue').not('payment_issue', 'is', null);
   return (<Shell profile={profile}>
-    <h1>Mail billing</h1>
+    <h1>Billing</h1>
     <p className="sub">On the 1st of each month the system closes the previous month for every company with mail service: it counts the mail log, scans, packages, forwarding and postage, picks the cheapest scan level, subtracts the monthly plan already paid, and charges the difference to that company's card with an itemized invoice. Registered agent legal papers and state notices are never counted.</p>
     {searchParams?.saved && <p className="ok-msg">Price list saved.</p>}
     {searchParams?.closed && <p className="ok-msg">Month closed for {searchParams.closed} companies.</p>}
+    {searchParams?.confirm && <p className="err">Tick the confirmation box to close the month.</p>}
+    <h2>Failed payments</h2>
+    {!failed?.length ? <p className="muted">None. Clients and staff are alerted the moment a payment fails.</p> : <div className="scroll" style={{ marginBottom: 18 }}><table><thead><tr><th>Company</th><th>Amount</th><th>For</th><th>Since</th></tr></thead><tbody>{failed.map(f => <tr key={f.file_number}><td><Link className="file" href={`/staff/e/${f.file_number}`}>{f.file_number}</Link> {f.legal_name}</td><td>${((f.payment_issue.amount || 0) / 100).toFixed(2)}</td><td>{f.payment_issue.what}</td><td>{new Date(f.payment_issue.at).toLocaleDateString('en-US')}</td></tr>)}</tbody></table></div>}
+    <p className="muted">One-off service charges and receipts for each company are on that company's file (Orders, and the client's Billing tab). This page is the monthly mail billing.</p>
 
-    <form action={savePricing} className="card stack" style={{ marginBottom: 20 }}>
-      <h2 style={{ margin: 0 }}>Price list</h2>
+    <form action={savePricing} className="card stack" style={{ marginBottom: 20 }}><fieldset disabled={!admin} style={{ border: 0, padding: 0, margin: 0, display: 'contents' }}>
+      <h2 style={{ margin: 0 }}>Price list{!admin && <span className="muted" style={{ fontSize: 14, fontWeight: 400 }}> · read-only (admin can edit)</span>}</h2>
+      <p className="muted" style={{ margin: 0 }}>Must match the website and the manual (section 6). Change prices everywhere at once.</p>
       <h3>Business address &amp; mail (base)</h3>
       <div className="row"><label>Monthly plan ($, charged by subscription)<input name="base" defaultValue={d(p?.base_cents || 0)} /></label><label>Items logged per month included<input name="included" type="number" defaultValue={p?.included_items ?? 30} /></label><label>Each item above that ($)<input name="over" defaultValue={d(p?.over_item_cents || 0)} /></label></div>
       <div className="row"><label>Forwarding per item ($, postage at cost on top)<input name="forward" defaultValue={d(p?.forward_cents || 0)} /></label><label>Per package received ($)<input name="package" defaultValue={d(p?.package_cents || 0)} /></label></div>
       <h3>Open, scan &amp; upload</h3>
       <div className="row"><label>Pages included per scan<input name="scan_pages" type="number" defaultValue={p?.scan_pages ?? 10} /></label><label>Each extra page ($)<input name="page" defaultValue={d(p?.page_cents || 0)} /></label></div>
       <p className="muted">Scan levels. Clients don't choose one: at month end the system prices that month's scans under every level and charges the cheapest. Keep a "Pay as you go" level with $0 monthly price and 0 included.</p>
-      {[0, 1, 2, 3, 4, 5].map(i => { const l = levels[i]; return <div className="row" key={i}>
-        <label>Level name<input name={`l${i + 1}_name`} defaultValue={l?.name || ''} /></label>
-        <label>Monthly price ($)<input name={`l${i + 1}_price`} defaultValue={l ? d(l.cents) : ''} /></label>
-        <label>Scans included<input name={`l${i + 1}_inc`} type="number" defaultValue={l?.included ?? ''} /></label>
-        <label>Each extra scan ($)<input name={`l${i + 1}_extra`} defaultValue={l ? d(l.extra_cents) : ''} /></label></div>; })}
-      <button className="btn">Save price list</button>
-    </form>
+      <table><thead><tr><th>Level name</th><th>Monthly price ($)</th><th>Scans included</th><th>Each extra scan ($)</th></tr></thead><tbody>
+      {[0, 1, 2, 3, 4, 5].map(i => { const l = levels[i]; return <tr key={i}>
+        <td><input aria-label="Level name" name={`l${i + 1}_name`} defaultValue={l?.name || ''} /></td>
+        <td><input aria-label="Monthly price" name={`l${i + 1}_price`} defaultValue={l ? d(l.cents) : ''} /></td>
+        <td><input aria-label="Scans included" name={`l${i + 1}_inc`} type="number" defaultValue={l?.included ?? ''} /></td>
+        <td><input aria-label="Each extra scan" name={`l${i + 1}_extra`} defaultValue={l ? d(l.extra_cents) : ''} /></td></tr>; })}
+      </tbody></table>
+      {admin && <button className="btn">Save price list</button>}
+    </fieldset></form>
 
-    <form action={runClose} className="row card" style={{ marginBottom: 20 }}>
-      <label>Close a month now (it also runs automatically on the 1st)<input name="period" type="month" defaultValue={def} /></label>
-      <button className="btn sec" style={{ flex: '0 0 auto' }}>Close month and charge</button>
-    </form>
+    {admin && <form action={runClose} className="card stack" style={{ marginBottom: 20 }}>
+      <h2 style={{ margin: 0 }}>Close a month manually</h2>
+      <p className="muted" style={{ margin: 0 }}>This runs automatically on the 1st. Running it now charges every company with mail service ({mailCos || 0}) for the month you pick. A month already invoiced or paid is skipped.</p>
+      <div className="row"><label>Month<input name="period" type="month" defaultValue={def} /></label></div>
+      <label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="confirm" required style={{ minHeight: 'auto' }} /> I checked the mail logs for this month and want to charge {mailCos || 0} compan{mailCos === 1 ? 'y' : 'ies'} now</label>
+      <button className="btn sec" style={{ alignSelf: 'flex-start' }}>Close month and charge</button>
+    </form>}
 
     <h2>Statements</h2>
     {!sts?.length ? <p className="muted">No statements yet.</p> : <div className="scroll"><table><thead><tr><th>Month</th><th>Company</th><th>Items</th><th>Charged</th><th>Status</th><th></th></tr></thead><tbody>

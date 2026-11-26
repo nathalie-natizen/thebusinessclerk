@@ -36,16 +36,20 @@ async function completeScan(fd) {
   return { message: 'Scan uploaded and client notified.' };
 }
 
+const addrOk = p => !!(p?.forward_line1 && p?.forward_city && p?.forward_postal);
+const addrLines = (p, e) => [p.forward_name || e?.legal_name, p.forward_line1, p.forward_line2, [p.forward_city, p.forward_state, p.forward_postal].filter(Boolean).join(', '), p.forward_country].filter(Boolean);
+const ok1583 = m => { const c = m.entities?.cmra_applications; const st = (Array.isArray(c) ? c[0] : c)?.status; return ['verified', 'filed'].includes(st); };
+
 export default async function Queue() {
   const { sb, profile } = await requireStaff();
-  const { data: mailAll } = await sb.from('mail_items').select('*, entities(file_number, legal_name, mail_preferences(*))').in('status', ['forward_requested', 'shred_requested']).order('received_at');
+  const { data: mailAll } = await sb.from('mail_items').select('*, entities(file_number, legal_name, mail_preferences(*), cmra_applications(status))').in('status', ['forward_requested', 'shred_requested']).order('received_at');
   const mail = (mailAll || []).filter(m => !isBatchRequest(m.client_request));
   const batched = (mailAll || []).length - mail.length;
   const { data: cmra } = await sb.from('cmra_applications').select('entity_id, applicant_name, witness_method, submitted_at, entities(file_number, legal_name)').eq('status', 'submitted').order('submitted_at');
   const { data: scans } = await sb.from('mail_items').select('*, entities(id, file_number, legal_name)').eq('status', 'scan_requested').order('received_at');
   const { data: expired } = await sb.from('mail_items').select('*, entities(file_number, legal_name)').eq('status', 'received').eq('category', 'general').lt('hold_notice_at', new Date(Date.now() - 15 * 864e5).toISOString()).order('received_at');
   return (<Shell profile={profile}>
-    <h1>Queue</h1>
+    <h1>Mail queue</h1>
     <p><a className="btn" href="/staff/record">+ Record new mail</a></p>
     <h2>Forward and shred requests</h2>
     {batched > 0 && <p className="muted">{batched} item{batched > 1 ? 's are' : ' is'} waiting for a scheduled weekly, every-two-weeks or monthly shipment. A forwarding task opens in the Pipeline on each client’s shipping day.</p>}
@@ -54,8 +58,8 @@ export default async function Queue() {
         <td><Link className="file" href={`/staff/e/${m.entities.file_number}`}>{m.entities.file_number}</Link><div className="muted">{m.entities.legal_name}</div></td>
         <td>{MAIL_CATEGORY[m.category]}<div className="muted">{m.sender} · {fmtDate(m.received_at)}</div></td>
         <td><span className="pill warn">{MAIL_STATUS[m.status]}</span> {(() => { const d = mailDeadline(m); return <span className={`pill ${toneClass(d.tone)}`}>{d.text}</span>; })()}{m.status === 'forward_requested' && <div><strong>{SHIPPING[m.forward_shipping || 'first_class']}</strong>{m.client_request && m.client_request !== 'forward' && <div className="muted">{m.client_request}</div>}</div>}</td>
-        <td className="muted">{m.status === 'forward_requested' && pr ? [pr.forward_name, pr.forward_line1, pr.forward_line2, [pr.forward_city, pr.forward_state, pr.forward_postal].filter(Boolean).join(', '), pr.forward_country].filter(Boolean).map((l, i) => <div key={i}>{l}</div>) : (pr ? HANDLING[pr.handling] : '')}</td>
-        <td>{m.status === 'forward_requested' ? <UploadForm bucket="mail" entityId={m.entity_id} action={complete} submitLabel="Mark forwarded"><input type="hidden" name="id" value={m.id} /><input type="hidden" name="status" value="forwarded" /><div className="row" style={{ gap: 6 }}><select name="carrier" required defaultValue={['courier_overnight'].includes(m.forward_shipping) ? 'UPS' : 'USPS'}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" placeholder="Tracking # *" required /><input name="postage" placeholder="Postage $ *" inputMode="decimal" required style={{ maxWidth: 120 }} /></div><label style={{ fontSize: 13 }}>Label / postage receipt (photo or PDF)<input name="label_file" type="file" accept="image/*,application/pdf" /></label></UploadForm> : <form action={complete}><input type="hidden" name="id" value={m.id} /><button className="btn small" name="status" value="shredded">Mark shredded</button></form>}
+        <td>{m.status === 'forward_requested' ? (addrOk(pr) ? <div style={{ userSelect: 'all', lineHeight: 1.4 }}>{addrLines(pr, m.entities).map((l, i) => <div key={i}>{l}</div>)}</div> : <span className="pill urgent">No forwarding address on file</span>) : <span className="muted">{pr ? HANDLING[pr.handling] : ''}</span>}</td>
+        <td>{m.status === 'forward_requested' ? (!ok1583(m) ? <span className="pill urgent">Hold: Form 1583 not approved</span> : !addrOk(pr) ? <span className="muted">Ask the client to add the address in Mail settings</span> : <UploadForm bucket="mail" entityId={m.entity_id} action={complete} submitLabel="Mark forwarded"><input type="hidden" name="id" value={m.id} /><input type="hidden" name="status" value="forwarded" /><div className="row" style={{ gap: 6 }}><select name="carrier" required defaultValue={['courier_overnight'].includes(m.forward_shipping) ? 'UPS' : 'USPS'}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" placeholder="Tracking # *" required /><input name="postage" placeholder="Postage $ *" inputMode="decimal" required style={{ maxWidth: 120 }} /></div><label style={{ fontSize: 13 }}>Label / postage receipt (photo or PDF)<input name="label_file" type="file" accept="image/*,application/pdf" /></label></UploadForm>) : <form action={complete}><input type="hidden" name="id" value={m.id} /><button className="btn small" name="status" value="shredded">Mark shredded</button></form>}
         </td></tr>; })}
     </tbody></table></div>}
     {expired?.length > 0 && <><h2>Ready to shred (no instruction after notice)</h2>

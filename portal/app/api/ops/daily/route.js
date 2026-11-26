@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { setOrderStatus } from '@/lib/orders';
 import { AUTO_APPROVE_DAYS } from '@/lib/guidelines';
-import { notifyEntity } from '@/lib/notify';
+import { notifyEntity, notifyStaff } from '@/lib/notify';
+import { unopenedLegal } from '@/lib/escalations';
 import { createDueBatches } from '@/lib/batches';
 
 const APP = process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com';
@@ -40,5 +41,7 @@ export async function GET(req) {
     await db2.from('mail_items').update({ hold_notice_at: new Date().toISOString() }).in('id', ids);
   }
   const batches = await createDueBatches();
-  return NextResponse.json({ autoApproved: (data || []).length, reminded, holdNotices: Object.keys(byEnt).length, batches });
+  const legal = await unopenedLegal();
+  if (legal.length) await notifyStaff({ subject: `Call clients: ${legal.length} legal item(s) unopened after 1 business day`, text: legal.map(m => `${m.entities?.file_number} ${m.entities?.legal_name}: ${m.category === 'service_of_process' ? 'lawsuit papers' : 'state notice'} received ${new Date(m.received_at).toLocaleDateString('en-US')} · ${m.entities?.contact_phone || 'no phone on file'}`).join('\n') + `\n\n${APP}/staff/pipeline` }).catch(() => {});
+  return NextResponse.json({ legalEscalations: legal.length,  autoApproved: (data || []).length, reminded, holdNotices: Object.keys(byEnt).length, batches });
 }

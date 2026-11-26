@@ -22,7 +22,13 @@ export default async function ManageResources({ searchParams }) {
   const { sb, profile } = await requireStaff();
   const { data: rows } = await sb.from('resources').select('*').order('audience').order('sort');
   return (<Shell profile={profile}>
-    <h1>Resource links</h1>
+    <h1>Resources</h1>
+    <section className="card" style={{ marginBottom: 18 }}><h3 style={{ marginTop: 0 }}>Staff quick links</h3><ul style={{ margin: 0, paddingLeft: 18 }}>
+      <li><a href="https://search.sunbiz.org/Inquiry/CorporationSearch/ByName" target="_blank" rel="noopener noreferrer">Sunbiz name search</a> (name availability, company records)</li>
+      <li><a href="https://dos.fl.gov/sunbiz/" target="_blank" rel="noopener noreferrer">Sunbiz home</a> (e-filing, forms, fees)</li>
+      <li><a href="https://www.irs.gov/businesses/small-businesses-self-employed/get-an-employer-identification-number" target="_blank" rel="noopener noreferrer">IRS: get an EIN</a> (online application and SS-4)</li>
+    </ul><p className="muted" style={{ marginBottom: 0 }}>Add the Sunbiz prepaid account login page, the USPS CMRA customer database and your county court lookups below as "Staff only".</p></section>
+    <h2>Manage links</h2>
     <p className="sub">"Clients and staff" links show on everyone's Resources page. "Staff only" links show only to staff.</p>
     {searchParams?.error && <div className="note">{searchParams.error}</div>}
     <form action={add} className="card" style={{ marginBottom: 18 }}>
