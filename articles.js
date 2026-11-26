@@ -7,7 +7,7 @@ const updated = new Date().toISOString().slice(0, 10);
 const A = [
 {
   slug: 'what-is-a-registered-agent-florida', cat: 'Registered agent',
-  title: 'What Is a Registered Agent in Florida? Requirements, Hours & Costs',
+  title: 'What Is a Registered Agent in Florida?',
   h1: 'What is a registered agent in Florida?',
   desc: 'What a Florida registered agent does, who can serve, the required office hours, and whether you should be your own agent.',
   summary: 'Who can serve, what the job involves, the hours Florida requires and what it costs.',
@@ -87,7 +87,7 @@ Our clients never have to remember the deadline: with auto-renew, we file your a
 },
 {
   slug: 'florida-llc-for-non-residents', cat: 'International',
-  title: 'Florida LLC for Non-Residents: Complete Guide for Foreign Founders',
+  title: 'Florida LLC for Non-Residents: Complete Guide',
   h1: 'Florida LLC for non-residents: a guide for international founders',
   desc: 'Can a foreigner open an LLC in Florida? Yes. Here\'s what non-U.S. residents need: registered agent, address, EIN without SSN, bank account and tax filings.',
   summary: 'Registered agent, EIN without an SSN, banking and the Form 5472 filing.',
@@ -110,7 +110,7 @@ We form your LLC, act as your registered agent, apply for your EIN and provide a
 },
 {
   slug: 'registered-agent-vs-virtual-address', cat: 'Registered agent',
-  title: 'Registered Agent vs. Virtual Business Address: What\'s the Difference?',
+  title: 'Registered Agent vs. Virtual Address: The Difference',
   h1: 'Registered agent vs. virtual business address',
   desc: 'A registered agent receives legal and state notices; a virtual business address handles everyday mail. Learn the difference and when you need both.',
   summary: 'Two different services with two different jobs. When you need one, the other or both.',
@@ -201,7 +201,7 @@ ${ctaBand(rel, null, null, lang)}` }) };
 }
 
 module.exports = buildGuides(A, 'en', 'resources', {
-  title: 'Florida Business Guides: Registered Agents, LLCs & Annual Reports | The Business Clerk',
+  title: 'Florida Business Guides: Agents, LLCs & Reports | The Business Clerk',
   desc: 'Plain-English guides to Florida registered agents, LLC formation, annual reports, reinstatement and starting a U.S. company from abroad.',
   h1: 'Florida business guides', lead: 'Plain-English answers about forming and maintaining a Florida company.',
   asideText: 'Florida LLC formation, state fee and first-year registered agent included.',

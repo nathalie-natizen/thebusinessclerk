@@ -118,7 +118,7 @@ ${ctaBand(rel)}`;
 module.exports = () => page({
   path: 'index.html',
   title: `Florida Registered Agent, Business Formation & Filings | The Business Clerk`,
-  desc: `Florida registered agent with same-day mail scans, registered agent $${C.prices.raAnnual}/yr, LLC formation $${C.prices.formation} (state fee included), annual report filing, business address and mail forwarding.`,
+  desc: `Florida registered agent for $${C.prices.raAnnual}/yr with same-day mail scans. LLC formation $${C.prices.formation} with state fee, annual reports, business address and mail.`,
   schema: [org, faqSchema(faqs), { '@context': 'https://schema.org', '@type': 'WebSite', name: C.brand, url: C.domain }],
   body,
 });

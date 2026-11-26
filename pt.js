@@ -6,8 +6,8 @@ const homeL = require('./homeL');
 const $ = n => `US$ ${n}`;
 
 const home = homeL('pt', {
-  title: 'Agente Registrado na Flórida e Abertura de LLC | The Business Clerk',
-  desc: `Abra sua LLC na Flórida por ${$(P.formation)} com a taxa estadual incluída. Agente registrado por ${$(P.raAnnual)}/ano, relatório anual automático e endereço comercial. Atendimento em português.`,
+  title: 'Agente Registrado na Flórida e Abertura de Empresas | The Business Clerk',
+  desc: `Abra sua LLC na Flórida por ${$(P.formation)} com taxa estadual incluída. Agente registrado por ${$(P.raAnnual)}/ano, relatório anual e endereço comercial. Em português.`,
   kicker: 'Agente registrado e abertura de empresas na Flórida',
   h1: 'Sua empresa na Flórida: aberta, registrada e pronta para começar.',
   lead: 'Abrimos sua LLC, atuamos como seu agente registrado, enviamos seu relatório anual e damos à sua empresa um endereço real na Flórida. Um só escritório, preços claros e gente de verdade que responde em português.',
@@ -132,7 +132,7 @@ const intl = servicePage({
 
 const pricing = servicePage({
   lang: 'pt', path: 'pt/precos.html',
-  title: 'Preços: Agente Registrado, Abertura de LLC e Registros na Flórida | The Business Clerk',
+  title: 'Preços: Agente Registrado e LLC na Flórida | The Business Clerk',
   desc: `Preços publicados: agente registrado ${$(P.raAnnual)}/ano, LLC na Flórida ${$(P.formation)} com taxa estadual, relatório anual ${$(P.annualReport)}, correspondência ${$(P.mailBasic)}/mês.`,
   kicker: 'Preços', h1: 'Preços simples e publicados', crumb: 'Preços',
   lead: 'Nossas taxas de serviço e as taxas do estado da Flórida aparecem sempre separadas, exceto quando o pacote diz que a taxa estadual está incluída.',
@@ -186,7 +186,7 @@ const start = servicePage({
 const guides = buildGuides([
 {
   slug: 'o-que-e-agente-registrado', cat: 'Agente registrado',
-  title: 'O Que É Agente Registrado na Flórida? Requisitos, Horários e Custos',
+  title: 'O Que É Agente Registrado na Flórida?',
   h1: 'O que é um agente registrado na Flórida?',
   desc: 'O que faz um agente registrado (registered agent) na Flórida, quem pode ser, os horários exigidos e se vale a pena ser seu próprio agente.',
   summary: 'Quem pode ser, o que faz, os horários que a Flórida exige e quanto custa.',
@@ -211,7 +211,7 @@ Agentes registrados comerciais na Flórida costumam cobrar entre US$ 49 e US$ 30
   slug: 'como-abrir-llc-na-florida', cat: 'Abertura de empresa',
   title: 'Como Abrir uma LLC na Flórida: Passo a Passo',
   h1: 'Como abrir uma LLC na Flórida: passo a passo',
-  desc: `Passo a passo para abrir uma LLC na Flórida: escolher o nome, nomear o agente registrado, registrar os Articles of Organization (US$ ${F.llcArticles}), tirar o EIN e manter a empresa em dia.`,
+  desc: `Como abrir uma LLC na Flórida passo a passo: nome, agente registrado, Articles of Organization (US$ ${F.llcArticles}), EIN e relatório anual.`,
   summary: 'Nome, agente registrado, Articles of Organization, EIN e o que vem depois.',
   body: `
 Abrir uma LLC na Flórida é um processo simples. Veja cada etapa e quanto custa.
@@ -234,7 +234,7 @@ Nosso pacote de **${$(P.formation)}** inclui a taxa estadual, o registro e o pri
 },
 {
   slug: 'llc-na-florida-para-nao-residentes', cat: 'Internacional',
-  title: 'LLC na Flórida para Não Residentes: Guia para Brasileiros e Estrangeiros',
+  title: 'LLC na Flórida para Não Residentes: Guia Completo',
   h1: 'LLC na Flórida para não residentes: guia para estrangeiros',
   desc: 'Estrangeiro pode abrir LLC na Flórida? Sim. Veja o que você precisa: agente registrado, endereço, EIN sem SSN, conta bancária e obrigações fiscais.',
   summary: 'Agente registrado, EIN sem SSN, conta bancária e o Formulário 5472.',

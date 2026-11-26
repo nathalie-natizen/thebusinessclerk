@@ -153,6 +153,7 @@ footer .brand{color:#fff}footer .mark{color:#E3EEEC}
 const urlOf = p => C.domain + '/' + p.replace(/index\.html$/, '').replace(/\.html$/, '');
 
 function head({ title, desc, path, schema = [], rel, lang }) {
+  if (title.length > 62) title = title.replace(' | The Business Clerk', '');
   const url = urlOf(path), alts = altsFor(path);
   const hl = alts ? Object.entries(alts).map(([l, p]) => `<link rel="alternate" hreflang="${l}" href="${urlOf(p)}">`).join('\n') + `\n<link rel="alternate" hreflang="x-default" href="${urlOf(alts.en)}">` : '';
   return `<!DOCTYPE html>
@@ -166,7 +167,8 @@ function head({ title, desc, path, schema = [], rel, lang }) {
 ${hl}
 <meta property="og:type" content="website"><meta property="og:site_name" content="${C.brand}"><meta property="og:locale" content="${L[lang].locale}">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${url}">
-<meta name="twitter:card" content="summary_large_image">
+<meta property="og:image" content="${C.domain}/og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="${C.domain}/og-image.png">
 <meta name="theme-color" content="#0F4C5C">
 <link rel="icon" href="${rel}favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -221,7 +223,7 @@ function page({ path, title, desc, schema = [], body, lang = 'en' }) {
 
 const org = {
   '@context': 'https://schema.org', '@type': 'ProfessionalService', name: C.name, alternateName: C.brand,
-  url: C.domain, email: C.email, areaServed: { '@type': 'State', name: 'Florida' },
+  url: C.domain, logo: C.domain + '/og-image.png', image: C.domain + '/og-image.png', email: C.email, areaServed: { '@type': 'State', name: 'Florida' },
   description: 'Florida registered agent, LLC and corporation formation, annual report filing, business address and mail forwarding, and business launch services.',
   knowsLanguage: ['en', 'pt', 'es'],
 };

@@ -144,7 +144,7 @@ Florida corporations file an annual report between January 1 and May 1 (state fe
 // ---------- Filings ----------
 pages.push(servicePage({
   path: 'florida-annual-report.html', service: 'Florida Annual Report Filing', offer: P.annualReport,
-  title: 'Florida Annual Report Filing Service – Avoid the $400 Late Fee | The Business Clerk',
+  title: 'Florida Annual Report Filing – Avoid the $400 Late Fee | The Business Clerk',
   desc: `We file your Florida annual report before the May 1 deadline for $${P.annualReport} plus the state fee ($${F.llcAnnual} for LLCs; $${F.llcAnnualLate} after May 1).`,
   kicker: 'Compliance', h1: 'Florida annual report filing', crumb: 'Annual Report Filing',
   lead: 'Every Florida LLC and corporation must file an annual report between January 1 and May 1. We file it accurately and on time, so you never pay the late fee.',
@@ -169,7 +169,7 @@ Companies that still haven't filed are administratively dissolved later in the y
 
 pages.push(servicePage({
   path: 'business-filings.html', service: 'Florida Business Filings',
-  title: 'Florida Business Filings: Amendments, Reinstatement, Dissolution | The Business Clerk',
+  title: 'Florida Business Filings: Amendments & Reinstatement | The Business Clerk',
   desc: 'Florida amendments, change of registered agent, reinstatement, dissolution, DBA, certificates of status and certified copies, filed for you at fixed prices.',
   kicker: 'Filings', h1: 'Florida business filings, done right', crumb: 'Business Filings',
   lead: 'Changing your company name, adding a member, closing a business or bringing a dissolved company back? Order any filing individually, at a fixed price.',
@@ -181,7 +181,7 @@ pages.push(servicePage({
 - **Change of registered agent**, see [switching agents](florida-change-registered-agent.html)
 - **Reinstatement** of an administratively dissolved company, see the [reinstatement guide](resources/florida-llc-reinstatement.html)
 - **Dissolution** when you close your company
-- **DBA / fictitious name** registration
+- **DBA / fictitious name** registration (Florida requires a newspaper notice first; the notice cost is additional)
 - **Foreign qualification**: register an out-of-state company to do business in Florida
 - **Certificate of Status** and **certified copies** for banks, licenses and contracts
 Our service fees are listed below. Florida state fees are additional and billed at cost.`,
@@ -215,7 +215,7 @@ They are different services. Your **registered agent** address receives legal an
 pages.push(servicePage({
   path: 'launch-pack.html', service: 'Business Launch Pack', offer: P.launch,
   title: `Launch Pack: Domain, Business Email & Website from $${P.launch} | The Business Clerk`,
-  desc: 'Get your new company online: name and trademark search, domain, professional email with Google Workspace or Microsoft 365, and a website of up to 5 pages, all in your name.',
+  desc: 'Get your company online: name and trademark search, domain, Google Workspace or Microsoft 365 email, and a website of up to 5 pages, all in your name.',
   kicker: 'Launch', h1: 'Launch Pack: get your company online', crumb: 'Launch Pack',
   lead: 'Your company is filed. Now look the part. We check your name, set up your domain and professional email and build your website, in your name, so you own everything from day one.',
   cta: 'Add a Launch Pack',
@@ -325,7 +325,7 @@ We are not a law firm, a CPA firm or a government agency, and we are not affilia
 }));
 
 pages.push(servicePage({
-  path: 'faq.html', title: 'FAQ – Florida Registered Agent, LLC & Annual Report Questions | The Business Clerk',
+  path: 'faq.html', title: 'FAQ: Florida Registered Agent, LLC & Annual Reports | The Business Clerk',
   desc: 'Answers about Florida registered agents, forming an LLC, annual reports, business addresses and our services.',
   kicker: 'Help', h1: 'Frequently asked questions', crumb: 'FAQ',
   lead: 'Quick answers about Florida companies and how we work.',
@@ -391,7 +391,7 @@ pages.push(servicePage({
 // ---------- Legal ----------
 const legal = (path, h1, desc, content) => pages.push(servicePage({ path, h1, crumb: h1, title: `${h1} | The Business Clerk`, desc, noCta: true, lead: `Last updated: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`, content }));
 
-legal('terms.html', 'Terms of Service', 'Terms of service for The Business Clerk LLC.', `
+legal('terms.html', 'Terms of Service', 'Terms of service for THE BUSINESS CLERK LLC: registered agent, business filing, mail and launch services, fees, auto-renewal and limits of liability.', `
 ## 1. Who we are
 These terms govern your use of the services of THE BUSINESS CLERK LLC ("we", "us"), a Florida limited liability company. By ordering a service you agree to these terms.
 ## 2. Our services
@@ -413,7 +413,7 @@ These terms are governed by the laws of the State of Florida.
 ## 10. Contact
 Questions: ${C.email}.`);
 
-legal('privacy.html', 'Privacy Policy', 'How The Business Clerk collects, uses and protects your information.', `
+legal('privacy.html', 'Privacy Policy', 'How THE BUSINESS CLERK LLC collects, uses, shares and protects your personal and business information, and the choices you have.', `
 ## Information we collect
 - Contact details: name, email, phone, address
 - Company information you provide for filings
@@ -429,7 +429,7 @@ Documents are stored in access-restricted systems. We keep records as long as ne
 ## Your choices
 You may request a copy, correction or deletion of your information, subject to legal retention requirements, by emailing ${C.email}.`);
 
-legal('refund-policy.html', 'Refund Policy', 'Refund policy for The Business Clerk services.', `
+legal('refund-policy.html', 'Refund Policy', 'Refund policy for THE BUSINESS CLERK LLC: cancellations before filing, state fees, recurring services and rejected filings.', `
 ## Before we file
 If you cancel before we submit anything to a government agency, we refund your service fee in full.
 ## After we file
@@ -441,7 +441,7 @@ If a filing is rejected because of our error, we correct and refile it at no cha
 ## Questions
 Email ${C.email}.`);
 
-legal('disclaimer.html', 'Disclaimer', 'Legal disclaimer for The Business Clerk.', `
+legal('disclaimer.html', 'Disclaimer', 'THE BUSINESS CLERK LLC is not a law firm, CPA firm or government agency. Information on this site is general, not legal or tax advice.', `
 THE BUSINESS CLERK LLC is not a law firm, CPA firm or government agency, and is not affiliated with the Florida Department of State, the Division of Corporations or Sunbiz.
 The information on this website is general information, not legal, tax or financial advice. Laws and fees change; confirm current requirements with the relevant agency or a licensed professional before acting.
 Any referrals we make to attorneys, accountants or other professionals are to independent providers who are responsible for their own services.`);

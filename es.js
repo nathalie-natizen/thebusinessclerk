@@ -6,8 +6,8 @@ const homeL = require('./homeL');
 const $ = n => `US$ ${n}`;
 
 const home = homeL('es', {
-  title: 'Agente Registrado en Florida y Formación de LLC | The Business Clerk',
-  desc: `Abre tu LLC en Florida por ${$(P.formation)} con la tarifa estatal incluida. Agente registrado por ${$(P.raAnnual)}/año, reporte anual automático y dirección comercial. Atención en español.`,
+  title: 'Agente Registrado en Florida y Formación de Empresas | The Business Clerk',
+  desc: `Abre tu LLC en Florida por ${$(P.formation)} con tarifa estatal incluida. Agente registrado por ${$(P.raAnnual)}/año, reporte anual y dirección comercial. En español.`,
   kicker: 'Agente registrado y formación de empresas en Florida',
   h1: 'Tu empresa en Florida: registrada, al día y lista para crecer.',
   lead: 'Formamos tu LLC, somos tu agente registrado, presentamos tu reporte anual y le damos a tu empresa una dirección real en Florida. Una sola oficina, precios claros y personas reales que te responden en español.',
@@ -77,7 +77,7 @@ Hacemos el cambio por ti sin costo de servicio al contratarnos como agente. La t
 const llc = servicePage({
   lang: 'es', path: 'es/abrir-llc-en-florida.html', service: 'Formación de LLC en Florida', offer: P.formation,
   title: `Abrir una LLC en Florida por ${$(P.formation)} con Tarifa Estatal | The Business Clerk`,
-  desc: `Abre tu LLC en Florida por ${$(P.formation)}: presentación de los Articles of Organization, tarifa estatal de US$ ${F.llcArticles} y primer año de agente registrado. Atención en español.`,
+  desc: `Abre tu LLC en Florida por ${$(P.formation)}: Articles of Organization, tarifa estatal de US$ ${F.llcArticles} y primer año de agente registrado. En español.`,
   kicker: 'Formación de empresas', h1: 'Abre tu LLC o corporación en Florida', crumb: 'Abrir LLC',
   lead: `Un solo precio, sin sorpresas: ${$(P.formation)} incluyen la presentación, la tarifa del estado de Florida y el primer año de agente registrado.`,
   cta: 'Abrir mi empresa',
@@ -109,7 +109,7 @@ Las presentaciones en línea en Florida suelen procesarse en pocos días hábile
 
 const intl = servicePage({
   lang: 'es', path: 'es/emprendedores-internacionales.html', service: 'Formación de LLC en Florida para no residentes', offer: P.formation,
-  title: 'Abrir una Empresa en EE. UU. desde el Extranjero: LLC en Florida | The Business Clerk',
+  title: 'Abrir una Empresa en EE. UU. desde el Extranjero | The Business Clerk',
   desc: 'Abre una LLC en Florida desde cualquier país. Agente registrado, dirección en EE. UU., EIN sin SSN y atención en español.',
   kicker: 'Emprendedores internacionales', h1: 'Abre tu empresa en EE. UU. desde cualquier lugar del mundo', crumb: 'Emprendedores Internacionales',
   lead: 'No necesitas vivir en EE. UU. ni tener Seguro Social para ser dueño de una LLC en Florida. Nos encargamos de los trámites, la dirección y el papeleo, en español.',
@@ -132,7 +132,7 @@ const intl = servicePage({
 
 const pricing = servicePage({
   lang: 'es', path: 'es/precios.html',
-  title: 'Precios: Agente Registrado, Formación de LLC y Trámites en Florida | The Business Clerk',
+  title: 'Precios: Agente Registrado y LLC en Florida | The Business Clerk',
   desc: `Precios publicados: agente registrado ${$(P.raAnnual)}/año, LLC en Florida ${$(P.formation)} con tarifa estatal, reporte anual ${$(P.annualReport)}, correo ${$(P.mailBasic)}/mes.`,
   kicker: 'Precios', h1: 'Precios simples y publicados', crumb: 'Precios',
   lead: 'Nuestras tarifas de servicio y las tarifas del estado de Florida siempre se muestran por separado, excepto cuando el paquete indica que la tarifa estatal está incluida.',
@@ -186,7 +186,7 @@ const start = servicePage({
 const guides = buildGuides([
 {
   slug: 'que-es-un-agente-registrado', cat: 'Agente registrado',
-  title: '¿Qué Es un Agente Registrado en Florida? Requisitos, Horarios y Costos',
+  title: '¿Qué Es un Agente Registrado en Florida?',
   h1: '¿Qué es un agente registrado en Florida?',
   desc: 'Qué hace un agente registrado (registered agent) en Florida, quién puede serlo, el horario que exige la ley y si conviene ser tu propio agente.',
   summary: 'Quién puede serlo, qué hace, el horario que exige Florida y cuánto cuesta.',
@@ -211,7 +211,7 @@ Los agentes registrados comerciales en Florida suelen cobrar entre US$ 49 y US$ 
   slug: 'como-abrir-una-llc-en-florida', cat: 'Formación de empresas',
   title: 'Cómo Abrir una LLC en Florida: Paso a Paso',
   h1: 'Cómo abrir una LLC en Florida: paso a paso',
-  desc: `Paso a paso para abrir una LLC en Florida: elegir el nombre, designar un agente registrado, presentar los Articles of Organization (US$ ${F.llcArticles}), obtener el EIN y mantener la empresa al día.`,
+  desc: `Cómo abrir una LLC en Florida paso a paso: nombre, agente registrado, Articles of Organization (US$ ${F.llcArticles}), EIN y reporte anual.`,
   summary: 'Nombre, agente registrado, Articles of Organization, EIN y lo que sigue.',
   body: `
 Abrir una LLC en Florida es un proceso sencillo. Aquí tienes cada paso y lo que cuesta.
