@@ -4,12 +4,21 @@ import { useFormState, useFormStatus } from 'react-dom';
 import { submitIntake } from './actions';
 import ServiceTerms from '@/components/ServiceTerms';
 import { headings } from '@/lib/guidelines';
+import { buildAgreement } from '@/lib/agreement';
+import AgreementBox from '@/components/AgreementBox';
+
+const AG = {
+  en: { h: 'Client Service Agreement', lead: 'It includes our general terms and a schedule for each service you chose.', sign: 'Type your full name to sign', ack: 'I have read and agree to the Client Service Agreement above.', note: '' },
+  pt: { h: 'Contrato de Prestação de Serviços', lead: 'Inclui nossos termos gerais e um anexo para cada serviço escolhido. O contrato é em inglês, que é a versão válida; o resumo em português está acima.', sign: 'Digite seu nome completo para assinar', ack: 'Li e concordo com o Contrato de Prestação de Serviços acima.', note: 'Resumo dos termos dos serviços escolhidos' },
+  es: { h: 'Contrato de Servicios', lead: 'Incluye nuestros términos generales y un anexo para cada servicio elegido. El contrato está en inglés, que es la versión válida; el resumen en español está arriba.', sign: 'Escriba su nombre completo para firmar', ack: 'He leído y acepto el Contrato de Servicios anterior.', note: 'Resumen de los términos de los servicios elegidos' },
+};
 
 function Submit({ label }) { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? '…' : label}</button>; }
 
 export default function IntakeForm({ t, lang, initial, payReady }) {
   const [service, setService] = useState(initial);
   const [addons, setAddons] = useState({});
+  const [company, setCompany] = useState('');
   const [state, action] = useFormState(submitIntake, null);
   const formation = service === 'llc' || service === 'corp';
   const existing = !formation && service !== 'mail' && service !== 'launch';
@@ -29,7 +38,7 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
     <h2>{t.company}</h2>
     {formation ? <>
       <p style={{ fontWeight: 600, margin: 0 }}>{t.names}</p><p className="muted" style={{ margin: 0 }}>{t.namesHelp} <a href="https://search.sunbiz.org/Inquiry/CorporationSearch/ByName" target="_blank" rel="noopener noreferrer">{t.checkSunbiz} ↗</a></p>
-      <label>{t.name1}{R}<input name="company" required maxLength={150} /></label>
+      <label>{t.name1}{R}<input name="company" required maxLength={150} value={company} onChange={e => setCompany(e.target.value)} /></label>
       <label>{t.name2}{R}<input name="name2" required maxLength={150} /></label>
       <label>{t.name3}<input name="name3" maxLength={150} /></label>
       <label>{t.ending}<select name="ending">{(service === 'corp' ? ['Inc.', 'Corp.', 'Corporation', 'Incorporated'] : ['LLC', 'L.L.C.', 'Limited Liability Company']).map(x => <option key={x}>{x}</option>)}</select></label>
@@ -42,7 +51,7 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
         <label>{t.scorp}<select name="s_corp">{t.scorpOpt.map(m => <option key={m}>{m}</option>)}</select></label>
       </>}
       <label>{t.effective}<input name="effective_date" type="date" /></label>
-    </> : <label>{existing ? t.nameExisting : t.name}{R}<input name="company" required maxLength={200} /></label>}
+    </> : <label>{existing ? t.nameExisting : t.name}{R}<input name="company" required maxLength={200} value={company} onChange={e => setCompany(e.target.value)} /></label>}
     {existing && <label>{t.doc}<input name="doc" maxLength={20} /></label>}
     {formation && <label>{t.purpose}<input name="purpose" maxLength={300} /></label>}
 
@@ -72,10 +81,13 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
     <label>{t.email}{R}<input name="email" type="email" required autoComplete="email" /></label>
     <label>{t.phone}<input name="phone" type="tel" autoComplete="tel" /></label>
     <label>{t.notes}<textarea name="notes" rows={3} maxLength={2000} /></label>
-    {(() => { const chosen = [service, ...(formation ? Object.keys(addons).filter(k => addons[k]) : [])]; const h = headings(lang);
+    {(() => { const chosen = [service, ...(formation ? Object.keys(addons).filter(k => addons[k]) : [])]; const a = AG[lang] || AG.en;
       const names = { ...Object.fromEntries(chosen.filter(k => t.a[k]).map(k => [k, t.a[k]])), [service]: t.s[service] };
-      return <><h2>{h.title}</h2><ServiceTerms kinds={chosen} names={names} lang={lang} open={chosen.length < 3} />
-        <label style={{ display: 'flex', gap: 10, fontWeight: 400, alignItems: 'flex-start' }}><input type="checkbox" name="service_terms" required style={{ minHeight: 'auto', marginTop: 4 }} /><span>{h.ack}{R}</span></label></>; })()}
+      return <>{lang !== 'en' && <><h2>{a.note}</h2><ServiceTerms kinds={chosen} names={names} lang={lang} open={false} /></>}
+        <h2>{a.h}</h2><p className="muted" style={{ margin: 0 }}>{a.lead}</p>
+        <AgreementBox text={buildAgreement({ clientName: company || '[company name]', kinds: chosen })} />
+        <label>{a.sign}{R}<input name="sign_name" required maxLength={120} autoComplete="name" /></label>
+        <label style={{ display: 'flex', gap: 10, fontWeight: 400, alignItems: 'flex-start' }}><input type="checkbox" name="service_terms" required style={{ minHeight: 'auto', marginTop: 4 }} /><span>{a.ack}{R}</span></label></>; })()}
     <label style={{ display: 'flex', gap: 10, fontWeight: 400, alignItems: 'flex-start' }}><input type="checkbox" name="terms" required style={{ minHeight: 'auto', marginTop: 4 }} />
       <span>{t.terms} (<a href="https://thebusinessclerk.com/terms" target="_blank" rel="noopener">Terms</a> · <a href="https://thebusinessclerk.com/privacy" target="_blank" rel="noopener">Privacy</a>){R}</span></label>
     <Submit label={payReady ? t.submitPay : t.submit} />

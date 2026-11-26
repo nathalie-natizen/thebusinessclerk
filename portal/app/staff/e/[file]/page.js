@@ -161,6 +161,7 @@ export default async function StaffEntity({ params, searchParams }) {
   return (<Shell profile={profile}>
     <p><Link href="/staff">← All entities</Link></p>
     <span className="file" style={{ fontSize: 16 }}>{e.file_number}</span><h1 style={{ marginTop: 8 }}>{e.legal_name}</h1>
+    <p><a href={`/e/${e.file_number}/agreement`}>Signed agreement &amp; addenda →</a></p>
     <p className="sub">Label the paper folder and the PMB line with <strong>{e.file_number}</strong>. Mail handling: {HANDLING[prefs?.handling || 'notify']}.</p>
     {searchParams?.saved && <p className="ok-msg">Saved.</p>}
 

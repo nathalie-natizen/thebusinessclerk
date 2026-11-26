@@ -6,6 +6,7 @@ import { stripe } from '@/lib/stripe';
 import { KINDS } from '@/lib/labels';
 import { needsQuestionnaire } from '@/lib/questionnaires';
 import { GUIDELINES_VERSION } from '@/lib/guidelines';
+import { recordAcceptance } from '@/lib/agreements';
 
 const FORMATION = ['llc', 'corp'];
 const clip = (v, n = 200) => String(v ?? '').trim().slice(0, n);
@@ -19,7 +20,7 @@ export async function submitIntake(_prev, fd) {
   const addons = FORMATION.includes(service) ? ['ein', 'mail', 'launch'].filter(k => fd.get('addon_' + k) === 'on') : [];
   const g = k => clip(fd.get(k));
   const email = g('email').toLowerCase();
-  if (!g('contact_name') || !/^\S+@\S+\.\S+$/.test(email) || !g('company') || fd.get('terms') !== 'on' || fd.get('service_terms') !== 'on') return { error: 'required' };
+  if (!g('contact_name') || !/^\S+@\S+\.\S+$/.test(email) || !g('company') || fd.get('terms') !== 'on' || fd.get('service_terms') !== 'on' || !g('sign_name')) return { error: 'required' };
   if (FORMATION.includes(service) && (!g('p1_name') || !g('name2') || !g('signer'))) return { error: 'required' };
 
   const people = [1, 2, 3, 4].map(i => ({ name: g(`p${i}_name`), title: g(`p${i}_title`), address: g(`p${i}_address`, 300) })).filter(p => p.name);
@@ -41,6 +42,7 @@ export async function submitIntake(_prev, fd) {
   }).select().single();
   if (error) return { error: 'server' };
   await db.from('mail_preferences').insert({ entity_id: entity.id });
+  await recordAcceptance(entity, [service, ...addons], { name: g('sign_name'), email });
 
   // Pay online only when every needed Stripe price is set up; otherwise we send a payment link later
   const kinds = [service, ...addons];
