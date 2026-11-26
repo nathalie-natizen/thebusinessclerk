@@ -232,7 +232,7 @@ For each piece of mail, you choose what we do:
 **Open & scan pricing by monthly volume** (applied automatically, whichever is lowest):
 ${P.scanLevels.map(([n, price, inc, extra]) => `- **${n}:** ${price ? `$${price}/month for ${inc} scans, then $${extra} each` : `$${extra} per scan`}`).join('\n')}
 
-You can also set a standing choice, such as "forward everything weekly" or "open and scan everything," in your portal. Each month you get one itemized statement listing every piece of mail and charge, billed to your card on file.
+You can also set a standing choice in your portal, such as "open and scan everything" or "forward everything weekly, every two weeks or monthly" on the weekday you pick; everything received until then ships in one package. Each month you get one itemized statement listing every piece of mail and charge, billed to your card on file.
 
 ## How it works
 1. Sign up and complete **USPS Form 1583**, which authorizes us to receive mail for you. You'll need two forms of ID: a government photo ID and one showing your home address. You can sign in our office, on a live video call with our staff, or in front of a notary.

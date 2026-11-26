@@ -30,15 +30,13 @@ export default async function Settings({ params, searchParams }) {
       <input type="hidden" name="entity_id" value={e.id} /><input type="hidden" name="file" value={e.file_number} />
       {searchParams?.saved && <p className="ok-msg">Mail settings saved.</p>}
       <h2 style={{ marginTop: 0 }}>What should we do with your mail?</h2>
-      <label>Default handling<select name="handling" defaultValue={v.handling}>{Object.entries(HANDLING).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
-      <label>Shipping day for weekly, every-two-weeks or monthly forwarding<select name="forward_day" defaultValue={v.forward_day || 5}>{Object.entries(WEEKDAYS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+      <div className="row"><label style={{ flex: '2 1 420px' }}>Default handling<select name="handling" defaultValue={v.handling}>{Object.entries(HANDLING).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+      <label>Shipping day for weekly, every-two-weeks or monthly forwarding<select name="forward_day" defaultValue={v.forward_day || 5}>{Object.entries(WEEKDAYS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label></div>
       {BATCH[v.handling] && <p className="note" style={{ margin: 0 }}>Your schedule: <strong>{scheduleLabel(v.handling, v.forward_day)}</strong>. Next shipment: <strong>{nextShipDay(v.handling, v.forward_day)?.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</strong> (only if mail is waiting). Everything we receive until then goes in one package.</p>}
       <label>Default carrier service for forwarding<select name="forward_shipping" defaultValue={v.forward_shipping || 'first_class'}>{Object.entries(SHIPPING).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
       <p className="muted">Legal papers and state notices are always scanned and sent to you the same business day. Forwarding is $2.50 per item plus postage at cost; opening and scanning is priced per item (the lowest rate for your monthly volume is applied automatically). You can pick a different speed for any single item on the Mail page.</p>
       <h2>Forwarding address</h2>
-      <label>Name<input name="forward_name" defaultValue={v.forward_name || ''} autoComplete="name" /></label>
-      <label>Address line 1<input name="forward_line1" defaultValue={v.forward_line1 || ''} autoComplete="address-line1" /></label>
-      <label>Address line 2<input name="forward_line2" defaultValue={v.forward_line2 || ''} autoComplete="address-line2" /></label>
+      <div className="row"><label>Name<input name="forward_name" defaultValue={v.forward_name || ''} autoComplete="name" /></label><label>Address line 1<input name="forward_line1" defaultValue={v.forward_line1 || ''} autoComplete="address-line1" /></label><label>Address line 2<input name="forward_line2" defaultValue={v.forward_line2 || ''} autoComplete="address-line2" /></label></div>
       <div className="row"><label>City<input name="forward_city" defaultValue={v.forward_city || ''} autoComplete="address-level2" /></label><label>State / province<input name="forward_state" defaultValue={v.forward_state || ''} autoComplete="address-level1" /></label></div>
       <div className="row"><label>Postal code<input name="forward_postal" defaultValue={v.forward_postal || ''} autoComplete="postal-code" /></label><label>Country<input name="forward_country" defaultValue={v.forward_country || ''} autoComplete="country-name" /></label></div>
       <button className="btn">Save mail settings</button>

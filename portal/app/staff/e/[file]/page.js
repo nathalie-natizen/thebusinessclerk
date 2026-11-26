@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
+import ClientView from '@/components/ClientView';
 import { orderDeadline, toneClass } from '@/lib/sla';
 import { scheduleLabel, nextShipDay, BATCH } from '@/lib/batches';
 import Preview from '@/components/Preview';
@@ -95,7 +96,7 @@ async function updateEntity(fd) {
     contact_name: clean(fd.get('contact_name')), contact_email: clean(fd.get('contact_email')), contact_phone: clean(fd.get('contact_phone'), 40),
   }).eq('id', id);
   await sb.from('entity_notes').upsert({ entity_id: id, notes: clean(fd.get('notes'), 2000), updated_at: new Date().toISOString() });
-  redirect(`/staff/e/${String(fd.get('file'))}?saved=1`);
+  redirect(`/staff/e/${String(fd.get('file'))}?saved=1&tab=details`);
 }
 
 async function addMember(fd) {
@@ -161,11 +162,14 @@ export default async function StaffEntity({ params, searchParams }) {
   ]);
   const { data: cmra } = await sb.from('cmra_applications').select('*').eq('entity_id', e.id).maybeSingle();
   const opts = o => Object.entries(o).map(([k, l]) => <option key={k} value={k}>{l}</option>);
+  const TABS = [['overview', 'Overview'], ['mail', 'Mail'], ['documents', 'Documents'], ['orders', 'Orders'], ...(e.mail_service ? [['compliance', 'Form 1583']] : []), ['access', 'Client access'], ['details', 'Company details']];
+  const tab = TABS.some(([k]) => k === searchParams?.tab) ? searchParams.tab : 'overview';
+  const T = k => `/staff/e/${e.file_number}?tab=${k}`;
   return (<Shell profile={profile}>
     <p><Link href="/staff">← All entities</Link></p>
-    <span className="file" style={{ fontSize: 16 }}>{e.file_number}</span><h1 style={{ marginTop: 8 }}>{e.legal_name}</h1>
-    <nav className="tabs" style={{ position: 'sticky', top: 0, zIndex: 5, background: 'var(--bg, #FBF7F0)', paddingTop: 6 }}>{[['#overview', 'Overview'], ['#record-mail', 'Record mail'], ['#add-document', 'Add document'], ['#mail-log', 'Mail log'], ['#orders', 'Orders'], ['#documents', 'Documents'], ['#compliance', 'Form 1583'], ['#access', 'Client access'], ['#details', 'Company details']].map(([h, l]) => <a key={h} href={h}>{l}</a>)}<a href={`/e/${e.file_number}/agreement`}>Agreement</a><a href={`/e/${e.file_number}/team`}>Team</a><a href={`/e/${e.file_number}`}>Client view</a></nav>
-    {(() => {
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}><div><span className="file" style={{ fontSize: 16 }}>{e.file_number}</span><h1 style={{ marginTop: 8 }}>{e.legal_name}</h1></div><ClientView file={e.file_number} /></div>
+    <nav className="tabs">{TABS.map(([k, l]) => <Link key={k} href={T(k)} aria-current={tab === k ? 'page' : undefined}>{l}</Link>)}</nav>
+    {tab === 'overview' && <>{(() => {
       const open = (orders || []).filter(o => !['completed', 'delivered', 'cancelled', 'awaiting_payment'].includes(o.status));
       const late = open.filter(o => orderDeadline({ ...o, entities: { status: e.status } }).tone === 'late').length;
       const waiting = (mail || []).filter(m => ['forward_requested', 'scan_requested', 'shred_requested'].includes(m.status)).length;
@@ -174,19 +178,23 @@ export default async function StaffEntity({ params, searchParams }) {
       const y = new Date().getFullYear(); const arDone = (orders || []).some(o => o.kind === 'annual_report' && new Date(o.created_at).getFullYear() === y && o.status !== 'cancelled');
       const tile = (label, value, sub, tone, href) => <a href={href} className="card" style={{ padding: 14, textDecoration: 'none', color: 'inherit', borderLeft: `4px solid ${tone === 'late' ? '#C0392B' : tone === 'warn' ? '#E0A100' : tone === 'ok' ? '#2E8B57' : 'var(--line, #ddd)'}` }}><div className="muted" style={{ fontSize: 13 }}>{label}</div><div style={{ fontSize: 22, fontWeight: 800 }}>{value}</div>{sub && <div className="muted" style={{ fontSize: 13 }}>{sub}</div>}</a>;
       return <div id="overview" style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', margin: '6px 0 16px' }}>
-        {tile('Company status', e.status === 'active' ? 'Active' : e.status === 'pending' ? 'Pending at the State' : e.status, e.sunbiz_doc_number ? `Doc # ${e.sunbiz_doc_number}` : 'No document number yet', e.status === 'active' ? 'ok' : 'warn', '#details')}
-        {tile('Open orders', open.length, late ? `${late} overdue` : open.length ? 'On time' : 'Nothing open', late ? 'late' : open.length ? 'warn' : 'ok', '#orders')}
-        {tile('Mail to act on', waiting, `${unread} without instructions${legal ? ` · ${legal} legal unread by client` : ''}`, legal ? 'late' : waiting ? 'warn' : 'ok', '#mail-log')}
-        {tile('Services', [e.registered_agent && 'Registered agent', e.mail_service && 'Mail'].filter(Boolean).join(' + ') || 'None', e.mail_service && BATCH[prefs?.handling] ? `${scheduleLabel(prefs.handling, prefs.forward_day)} · next ${nextShipDay(prefs.handling, prefs.forward_day)?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : (prefs?.handling ? HANDLING[prefs.handling].split('(')[0] : ''), 'info', '#details')}
-        {e.mail_service && tile('Form 1583', CMRA_STATUS[cmra?.status || 'not_started'] || 'Not started', 'Mail is held until approved', ['verified', 'filed'].includes(cmra?.status) ? 'ok' : cmra?.status === 'submitted' ? 'warn' : 'late', '#compliance')}
-        {e.registered_agent && tile(`Annual report ${y}`, arDone ? 'Ordered' : 'Not ordered', 'Due May 1', arDone ? 'ok' : new Date().getMonth() >= 2 ? 'warn' : 'info', '#orders')}
-        {e.payment_issue && tile('Payment', 'Failed', `$${((e.payment_issue.amount || 0) / 100).toFixed(2)} · client alerted`, 'late', '#details')}
+        {tile('Company status', e.status === 'active' ? 'Active' : e.status === 'pending' ? 'Pending at the State' : e.status, e.sunbiz_doc_number ? `Doc # ${e.sunbiz_doc_number}` : 'No document number yet', e.status === 'active' ? 'ok' : 'warn', T('details'))}
+        {tile('Open orders', open.length, late ? `${late} overdue` : open.length ? 'On time' : 'Nothing open', late ? 'late' : open.length ? 'warn' : 'ok', T('orders'))}
+        {tile('Mail to act on', waiting, `${unread} without instructions${legal ? ` · ${legal} legal unread by client` : ''}`, legal ? 'late' : waiting ? 'warn' : 'ok', T('mail'))}
+        {tile('Services', [e.registered_agent && 'Registered agent', e.mail_service && 'Mail'].filter(Boolean).join(' + ') || 'None', e.mail_service && BATCH[prefs?.handling] ? `${scheduleLabel(prefs.handling, prefs.forward_day)} · next ${nextShipDay(prefs.handling, prefs.forward_day)?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : (prefs?.handling ? HANDLING[prefs.handling].split('(')[0] : ''), 'info', T('details'))}
+        {e.mail_service && tile('Form 1583', CMRA_STATUS[cmra?.status || 'not_started'] || 'Not started', 'Mail is held until approved', ['verified', 'filed'].includes(cmra?.status) ? 'ok' : cmra?.status === 'submitted' ? 'warn' : 'late', T('compliance'))}
+        {e.registered_agent && tile(`Annual report ${y}`, arDone ? 'Ordered' : 'Not ordered', 'Due May 1', arDone ? 'ok' : new Date().getMonth() >= 2 ? 'warn' : 'info', T('orders'))}
+        {e.payment_issue && tile('Payment', 'Failed', `$${((e.payment_issue.amount || 0) / 100).toFixed(2)} · client alerted`, 'late', T('details'))}
       </div>; })()}
     <p className="sub">Label the paper folder and the PMB line with <strong>{e.file_number}</strong>. Mail handling: {HANDLING[prefs?.handling || 'notify']}.</p>
+    <div className="grid">
+      <section className="card"><h3 style={{ marginTop: 0 }}>Open orders</h3>{(() => { const open = (orders || []).filter(o => !['completed', 'delivered', 'cancelled', 'awaiting_payment'].includes(o.status)); return !open.length ? <p className="muted">Nothing open.</p> : <ul style={{ paddingLeft: 18, margin: 0 }}>{open.map(o => { const d = orderDeadline({ ...o, entities: { status: e.status } }); return <li key={o.id} style={{ marginBottom: 6 }}><strong>{o.service}</strong> · {statusLabel(o.status, o.kind)} <span className={`pill ${toneClass(d.tone)}`}>{d.text}</span></li>; })}</ul>; })()}<p style={{ marginBottom: 0 }}><Link href="/staff/pipeline">Work it in the Pipeline →</Link></p></section>
+      <section className="card"><h3 style={{ marginTop: 0 }}>Latest mail</h3>{!mail?.length ? <p className="muted">No mail yet.</p> : <ul style={{ paddingLeft: 18, margin: 0 }}>{mail.slice(0, 6).map(m => <li key={m.id} style={{ marginBottom: 6 }}>{fmtDate(m.received_at)} · {m.urgent && <span className="pill urgent">Urgent</span>} {MAIL_CATEGORY[m.category]}{m.sender ? ` · ${m.sender}` : ''} · <span className="muted">{MAIL_STATUS[m.status] || m.status}</span></li>)}</ul>}<p style={{ marginBottom: 0 }}><Link href={T('mail')}>Mail log →</Link></p></section>
+      <section className="card"><h3 style={{ marginTop: 0 }}>Contact</h3><p style={{ margin: 0 }}>{e.contact_name || '—'}<br />{e.contact_email || ''}{e.contact_phone ? <><br />{e.contact_phone}</> : ''}</p><p className="muted" style={{ marginBottom: 0 }}>{(members || []).length} portal user{(members || []).length === 1 ? '' : 's'}{(invites || []).length ? ` · ${(invites || []).length} invited` : ''}</p></section>
+    </div></>}
     {searchParams?.saved && <p className="ok-msg">Saved.</p>}
 
-    <div className="grid">
-      <section className="card" id="record-mail"><h2 style={{ marginTop: 0 }}>Record mail</h2>
+    {tab === 'mail' && <section className="card" id="record-mail" style={{ marginBottom: 18 }}><h2 style={{ marginTop: 0 }}>Record mail</h2>
         <UploadForm bucket="mail" entityId={e.id} action={recordMail} submitLabel="Save and notify client">
           <input type="hidden" name="entity_id" value={e.id} />
           <div className="row"><label>Type<select name="category" defaultValue="general">{opts(MAIL_CATEGORY)}</select></label><label>From (sender)<input name="sender" placeholder="e.g. Florida Department of State" /></label></div>
@@ -195,8 +203,8 @@ export default async function StaffEntity({ params, searchParams }) {
           <p className="muted" style={{ margin: 0 }}>Client's standing choice: <strong>{HANDLING[prefs?.handling || 'notify']}</strong>. It is applied automatically when you save.</p>
           <label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="urgent" style={{ minHeight: 'auto' }} /> Urgent (lawsuits and state notices are always urgent)</label>
         </UploadForm>
-      </section>
-      <section className="card" id="add-document"><h2 style={{ marginTop: 0 }}>Add document</h2>
+      </section>}
+      {tab === 'documents' && <section className="card" id="add-document" style={{ marginBottom: 18 }}><h2 style={{ marginTop: 0 }}>Add document</h2>
         <UploadForm bucket="documents" entityId={e.id} action={recordDocument} submitLabel="Add document" requireFile>
           <input type="hidden" name="entity_id" value={e.id} />
           <label>Title<input name="title" placeholder="e.g. Filed Articles of Organization" required /></label>
@@ -204,10 +212,9 @@ export default async function StaffEntity({ params, searchParams }) {
           <label>File<input name="file" type="file" accept="application/pdf,image/*" /></label>
           <label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="notify" defaultChecked style={{ minHeight: 'auto' }} /> Notify client</label>
         </UploadForm>
-      </section>
-    </div>
+      </section>}
 
-    <h2 id="compliance" style={{ scrollMarginTop: 70 }}>Compliance: USPS Form 1583</h2>
+    {tab === 'compliance' && <><h2 id="compliance" style={{ scrollMarginTop: 70 }}>Compliance: USPS Form 1583</h2>
     <section className="card" style={{ marginBottom: 18 }}>
       <p>Status: <span className={`pill ${['verified', 'filed'].includes(cmra?.status) ? 'ok' : cmra?.status === 'submitted' ? 'warn' : ''}`}>{CMRA_STATUS[cmra?.status || 'not_started']}</span>{cmra?.witness_method && <span className="muted"> · Signing: {WITNESS[cmra.witness_method]}</span>}</p>
       {cmra && <table style={{ fontSize: 14 }}><tbody>
@@ -227,32 +234,32 @@ export default async function StaffEntity({ params, searchParams }) {
         <label>Upload the final signed form (after the video/in-person signing), optional<input name="file" type="file" accept="application/pdf,image/*" /></label>
       </UploadForm>
       <p className="muted" style={{ marginTop: 8 }}>Checklist: both IDs current and matching the name; second ID shows the home address; a driver's/state ID used for only one of the two; the form is notarized (or you watched the client sign in person); you signed item 14 as CMRA agent; then enter it in the USPS CMRA Customer Registration Database and mark "Complete".</p>
-    </section>
+    </section></>}
 
-    <h2 id="mail-log" style={{ scrollMarginTop: 70 }}>Mail log</h2>
+    {tab === 'mail' && <><h2 id="mail-log" style={{ scrollMarginTop: 70 }}>Mail log</h2>
     {!mail?.length ? <p className="muted">No mail yet.</p> : <div className="scroll"><table><thead><tr><th>Received</th><th>Type</th><th>From</th><th>Client</th><th>Status</th></tr></thead><tbody>
       {mail.map(m => <tr key={m.id}><td>{fmtDate(m.received_at)}</td><td>{m.urgent && <span className="pill urgent">Urgent</span>} {MAIL_CATEGORY[m.category]}{m.file_path && <div><Preview src={`/api/file?type=mail&id=${m.id}&view=1`} pdf title="Preview">Envelope</Preview></div>}{m.content_path && <div><Preview src={`/api/file?type=mail&id=${m.id}&part=content&view=1`} pdf title="Preview">Scan ({m.pages || '?'} p.)</Preview></div>}</td><td>{m.sender || '—'}</td>
         <td className="muted">{m.notified_at ? `Notified ${fmtDate(m.notified_at)}` : 'Not notified'}<br />{m.viewed_at ? `Viewed ${fmtDate(m.viewed_at)}` : 'Not viewed'}</td>
         <td><form action={setMailStatus} className="row" style={{ gap: 6 }}><input type="hidden" name="id" value={m.id} /><select name="status" defaultValue={m.status}>{opts(MAIL_STATUS)}</select><select name="carrier" defaultValue={m.carrier || 'USPS'} style={{ width: 'auto' }}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" defaultValue={m.tracking_number || ''} placeholder="Tracking #" /><button className="btn small sec">Update</button>{m.tracking_status && <div className="muted" style={{ flexBasis: '100%' }}>{TRACKING_STATUS[m.tracking_status] || m.tracking_status}{m.tracking_url && <> · <a href={m.tracking_url} target="_blank" rel="noopener noreferrer">Track</a></>}</div>}</form></td></tr>)}
-    </tbody></table></div>}
+    </tbody></table></div>}</>}
 
-    <h2 id="orders" style={{ scrollMarginTop: 70 }}>Orders</h2>
+    {tab === 'orders' && <><h2 id="orders" style={{ scrollMarginTop: 70 }}>Orders</h2>
     <form className="row" action={createOrder} style={{ marginBottom: 14 }}><input type="hidden" name="entity_id" value={e.id} /><select name="kind" style={{ flex: '0 1 220px' }}><option value="">Other service</option>{Object.entries(KINDS).filter(([, v]) => !v.internal).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select><input name="service" placeholder="Name shown to client, e.g. Annual report 2027 (optional)" /><input name="note" placeholder="Note (optional)" /><button className="btn sec" style={{ flex: '0 0 auto' }}>Add order</button></form>
     <div className="grid">{(orders || []).map(o => <div className="card" key={o.id}><h3>{o.service}</h3><p><span className="pill">{statusLabel(o.status, o.kind)}</span> <span className="muted">{fmtDate(o.created_at)}</span></p>
       <OrderDetails d={o.details} kind={o.kind} orderId={o.id} />
       <form className="stack" action={updateOrder}><input type="hidden" name="order_id" value={o.id} /><select name="status" defaultValue={STAFF_STATUSES.some(([k]) => k === o.status) ? o.status : 'received'}>{STAFF_STATUSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="note" placeholder="Note shown to client (optional)" /><label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="notify" defaultChecked style={{ minHeight: 'auto' }} /> Notify client</label><button className="btn small">Update status</button></form>
-      <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(ev => <li key={ev.id}><strong>{statusLabel(ev.status, o.kind)}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul></div>)}</div>
+      <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(ev => <li key={ev.id}><strong>{statusLabel(ev.status, o.kind)}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul></div>)}</div></>}
 
-    <h2 id="documents" style={{ scrollMarginTop: 70 }}>Documents</h2>
-    {!docs?.length ? <p className="muted">No documents.</p> : <ul>{docs.map(d => <li key={d.id}><Preview src={`/api/file?type=document&id=${d.id}&view=1`} pdf title="Preview">{d.title}</Preview> (<a href={`/api/file?type=document&id=${d.id}`}>download</a>) <span className="muted">· {DOC_CATEGORY[d.category]} · {fmtDay(d.created_at)}</span></li>)}</ul>}
+    {tab === 'documents' && <><h2 id="documents" style={{ scrollMarginTop: 70 }}>Documents</h2>
+    {!docs?.length ? <p className="muted">No documents.</p> : <ul>{docs.map(d => <li key={d.id}><Preview src={`/api/file?type=document&id=${d.id}&view=1`} pdf title="Preview">{d.title}</Preview> (<a href={`/api/file?type=document&id=${d.id}`}>download</a>) <span className="muted">· {DOC_CATEGORY[d.category]} · {fmtDay(d.created_at)}</span></li>)}</ul>}</>}
 
-    <h2 id="access" style={{ scrollMarginTop: 70 }}>Client access</h2>
+    {tab === 'access' && <><h2 id="access" style={{ scrollMarginTop: 70 }}>Client access</h2>
     <ul>{(members || []).map(m => <li key={m.user_id}>{m.profiles?.email} {m.profiles?.phone && <span className="muted">· {m.profiles.phone}{m.profiles.sms_opt_in ? ' (texts on)' : ''}</span>} <form action={removeMember} style={{ display: 'inline' }}><input type="hidden" name="entity_id" value={e.id} /><input type="hidden" name="user_id" value={m.user_id} /><button className="btn small sec">Remove</button></form></li>)}
       {(invites || []).map(i => <li key={i.email}>{i.email} <span className="pill warn">Invited, hasn't signed in</span> <form action={removeMember} style={{ display: 'inline' }}><input type="hidden" name="entity_id" value={e.id} /><input type="hidden" name="email" value={i.email} /><button className="btn small sec">Remove</button></form></li>)}</ul>
     <form className="row" action={addMember}><input type="hidden" name="entity_id" value={e.id} /><input name="email" type="email" placeholder="client@example.com" required /><button className="btn sec" style={{ flex: '0 0 auto' }}>Give access</button></form>
-    <p className="muted">The client signs in at app.thebusinessclerk.com with this email. Access is linked automatically on first sign-in.</p>
+    <p className="muted">The client signs in at app.thebusinessclerk.com with this email. Access is linked automatically on first sign-in. Clients manage their own team and notifications on their Team tab.</p></>}
 
-    <h2 id="details" style={{ scrollMarginTop: 70 }}>Company details</h2>
+    {tab === 'details' && <><h2 id="details" style={{ scrollMarginTop: 70 }}>Company details</h2>
     <form className="stack" action={updateEntity}>
       <input type="hidden" name="entity_id" value={e.id} /><input type="hidden" name="file" value={e.file_number} />
       <label>Legal name<input name="legal_name" defaultValue={e.legal_name} required /></label>
@@ -266,6 +273,6 @@ export default async function StaffEntity({ params, searchParams }) {
       <label>Stripe customer ID<input name="stripe_customer_id" defaultValue={e.stripe_customer_id || ''} /></label>
       <label>Internal notes (staff only)<textarea name="notes" defaultValue={noteRow?.notes || ''} /></label>
       <button className="btn">Save details</button>
-    </form>
+    </form></>}
   </Shell>);
 }
