@@ -183,7 +183,7 @@ function header(path, rel, lang) {
   const section = p => p.split('/').slice(0, -1).join('/');
   return `<a class="skip" href="#main">${T.skip}</a>
 <header class="top"><div class="wrap">
-<a class="brand" href="${rel}${home[lang]}">${logo}<span>THE BUSINESS CLERK LLC<small>${esc(T.subtitle)}</small></span></a>
+<a class="brand" href="${rel}${home[lang]}">${logo}<span>THE BUSINESS CLERK<small>${esc(T.subtitle)}</small></span></a>
 <nav class="main" id="nav" aria-label="Main">${''}${T.nav.map(([h, t]) => `<a href="${rel}${h}"${path === h || (h.endsWith('index.html') && h !== home[lang] && section(h) && path.startsWith(section(h) + '/')) ? ' aria-current="page"' : ''}>${t}</a>`).join('')}<div class="navlangs">${sw}</div></nav>
 <div class="langs" aria-label="Language">${sw}</div>
 <button class="menu" aria-expanded="false" aria-controls="nav">${T.menu}</button>
@@ -195,7 +195,7 @@ function footer(rel, lang) {
   const T = L[lang];
   const col = (t, links) => `<div><h4>${t}</h4><ul>${links.map(([h, x]) => `<li><a href="${rel}${h}">${x}</a></li>`).join('')}</ul></div>`;
   return `<footer class="band"><div class="wrap">
-<div><a class="brand" href="${rel}${lang === 'en' ? '' : lang + '/'}index.html">${logo}<span>THE BUSINESS CLERK LLC</span></a>
+<div><a class="brand" href="${rel}${lang === 'en' ? '' : lang + '/'}index.html">${logo}<span>THE BUSINESS CLERK</span></a>
 <p style="margin-top:14px">${esc(T.subtitle)}</p><p>${T.footAbout}</p>
 <p>${T.email}: <a href="mailto:${C.email}">${C.email}</a></p></div>
 ${col(T.fServices, T.services)}
