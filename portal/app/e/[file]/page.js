@@ -20,8 +20,7 @@ export default async function Entity({ params }) {
       <div className="card"><h3>Company</h3>
         <p className="muted" style={{ marginBottom: 8 }}>Type: {e.entity_type}<br />Status: {e.status}<br />Florida document #: {e.sunbiz_doc_number || 'pending'}<br />Formed: {fmtDay(e.formation_date)}{e.ein ? <><br />EIN: {e.ein}</> : null}</p>
         <p style={{ margin: '0 0 6px' }}>File number: <span className="file">{e.file_number}</span></p>
-        {e.sunbiz_url ? <a className="btn small sec" href={e.sunbiz_url} target="_blank" rel="noopener noreferrer">View my company on Sunbiz ↗</a>
-          : e.sunbiz_doc_number ? <><a className="btn small sec" href="https://search.sunbiz.org/Inquiry/CorporationSearch/ByDocumentNumber" target="_blank" rel="noopener noreferrer">View on Sunbiz ↗</a><p className="muted" style={{ marginTop: 6 }}>Enter document # {e.sunbiz_doc_number} on the Sunbiz page.</p></> : null}
+        {(e.sunbiz_url || e.sunbiz_doc_number) && <a className="btn small sec" href={`/api/sunbiz?entity=${e.id}`} target="_blank" rel="noopener noreferrer">View my company on Sunbiz ↗</a>}
         {e.mail_service && <><p style={{ margin: '14px 0 4px', fontWeight: 600 }}>Your business mailing address</p>
           <address style={{ fontStyle: 'normal', background: 'var(--sand)', borderRadius: 8, padding: '10px 12px', lineHeight: 1.5 }}>
             {e.legal_name}<br />{OFFICE.street ? <>{OFFICE.street}, PMB {e.file_number}<br />{OFFICE.city}, {OFFICE.state} {OFFICE.zip}</> : <>[Our office street address], PMB {e.file_number}<br />[City], FL [ZIP]</>}
