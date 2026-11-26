@@ -49,7 +49,7 @@ export default async function Queue() {
   const { data: scans } = await sb.from('mail_items').select('*, entities(id, file_number, legal_name)').eq('status', 'scan_requested').order('received_at');
   const { data: expired } = await sb.from('mail_items').select('*, entities(file_number, legal_name)').eq('status', 'received').eq('category', 'general').lt('hold_notice_at', new Date(Date.now() - 15 * 864e5).toISOString()).order('received_at');
   return (<Shell profile={profile}>
-    <h1>Mail queue</h1>
+    <h1>Mail</h1>
     <p><a className="btn" href="/staff/record">+ Record new mail</a></p>
     <h2>Forward and shred requests</h2>
     {batched > 0 && <p className="muted">{batched} item{batched > 1 ? 's are' : ' is'} waiting for a scheduled weekly, every-two-weeks or monthly shipment. A forwarding task opens in the Pipeline on each client’s shipping day.</p>}
