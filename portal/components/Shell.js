@@ -18,6 +18,6 @@ export default function Shell({ profile, children }) {
 }
 
 export function EntityTabs({ file, active }) {
-  const t = [['', 'Overview'], ['mail', 'Mail & legal notices'], ['documents', 'Documents'], ['orders', 'Orders'], ['settings', 'Mail settings'], ['compliance', 'Compliance']];
+  const t = [['', 'Overview'], ['mail', 'Mail & legal notices'], ['documents', 'Documents'], ['orders', 'Orders'], ['billing', 'Billing'], ['settings', 'Mail settings'], ['compliance', 'Compliance']];
   return <nav className="tabs">{t.map(([p, l]) => <Link key={p} href={`/e/${file}${p ? '/' + p : ''}`} aria-current={active === p ? 'page' : undefined}>{l}</Link>)}</nav>;
 }

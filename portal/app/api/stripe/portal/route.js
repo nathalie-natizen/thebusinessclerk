@@ -8,6 +8,6 @@ export async function POST(req) {
   const sb = supabaseServer();
   const { data: e } = await sb.from('entities').select('stripe_customer_id').eq('id', entityId).single(); // RLS: members only
   if (!e?.stripe_customer_id) return NextResponse.redirect(new URL('/billing?missing=1', req.url), 303);
-  const s = await stripe().billingPortal.sessions.create({ customer: e.stripe_customer_id, return_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing` });
+  const s = await stripe().billingPortal.sessions.create({ customer: e.stripe_customer_id, return_url: `${process.env.NEXT_PUBLIC_APP_URL}${String(form.get('return') || '/billing').startsWith('/') ? String(form.get('return') || '/billing') : '/billing'}` });
   return NextResponse.redirect(s.url, 303);
 }
