@@ -8,7 +8,7 @@ export async function GET(req) {
   const url = new URL(req.url); const type = url.searchParams.get('type'); const id = url.searchParams.get('id');
   // Compliance files (IDs, signed Form 1583): ?type=compliance&id=<entity id>&part=id1|id2|form
   if (type === 'compliance') {
-    const part = { id1: 'id1_path', id2: 'id2_path', form: 'form_path' }[url.searchParams.get('part')];
+    const part = { id1: 'id1_path', id1_back: 'id1_back_path', id2: 'id2_path', selfie: 'selfie_path', form: 'form_path' }[url.searchParams.get('part')];
     const sb = supabaseServer();
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return NextResponse.redirect(new URL('/login', req.url));

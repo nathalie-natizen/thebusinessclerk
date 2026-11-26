@@ -6,6 +6,8 @@ import { canActFor, upsertCmra } from '@/lib/compliance';
 import { PRIMARY_IDS, SECONDARY_IDS, CMRA_STATUS, WITNESS, fmtDay } from '@/lib/labels';
 import { officeLine } from '@/lib/office';
 import { supabaseServer } from '@/lib/supabase/server';
+import { newCaptureToken } from '@/lib/capture';
+import QRCode from 'qrcode';
 
 const c = (v, n = 300) => String(v ?? '').trim().slice(0, n) || null;
 const locked = s => ['submitted', 'verified', 'filed'].includes(s);
@@ -31,7 +33,10 @@ async function saveId(fd) {
   'use server';
   await requireUser(); const id = String(fd.get('entity_id')); const which = fd.get('which') === 'id2' ? 'id2' : 'id1';
   if (!(await canActFor(id))) return { error: 'Not allowed.' };
-  const path = c(fd.get('file_path')); if (!path?.startsWith(id + '/')) return { error: 'Choose a clear photo or scan of the ID (front and back if it has an address on the back).' };
+  const path = c(fd.get('file_path'));
+  const { data: have } = await supabaseServer().from('cmra_applications').select('id1_path, id2_path').eq('entity_id', id).maybeSingle();
+  if (path && !path.startsWith(id + '/')) return { error: 'Upload failed. Try again.' };
+  if (!path && !have?.[`${which}_path`]) return { error: 'Take a photo with your phone (above) or upload a clear photo or scan of the ID.' };
   const list = which === 'id1' ? PRIMARY_IDS : SECONDARY_IDS;
   if (!list.includes(String(fd.get('type')))) return { error: 'Choose the type of ID.' };
   const exp = c(fd.get('expires'), 10);
@@ -40,9 +45,17 @@ async function saveId(fd) {
   const { data: cur } = await supabaseServer().from('cmra_applications').select('id1_type, id2_type').eq('entity_id', id).maybeSingle();
   const DL = PRIMARY_IDS[0];
   if (t === DL && cur?.[which === 'id1' ? 'id2_type' : 'id1_type'] === DL) return { error: "USPS allows a driver's/state ID for only one of the two IDs. Choose a different type." };
-  await upsertCmra(id, { status: 'in_progress', [`${which}_type`]: t, [`${which}_issuer`]: c(fd.get('issuer')), [`${which}_expires`]: exp, [`${which}_path`]: path, ...(which === 'id1' ? { id1_number: c(fd.get('number'), 40) } : {}) });
+  await upsertCmra(id, { status: 'in_progress', [`${which}_type`]: t, [`${which}_issuer`]: c(fd.get('issuer')), [`${which}_expires`]: exp, ...(path ? { [`${which}_path`]: path } : {}), ...(which === 'id1' ? { id1_number: c(fd.get('number'), 40) } : {}) });
   return { message: 'ID saved.' };
 }
+async function phoneLink(fd) {
+  'use server';
+  const { user } = await requireUser(); const id = String(fd.get('entity_id'));
+  if (!(await canActFor(id))) return;
+  const token = await newCaptureToken(id, user.id);
+  redirect(`/e/${fd.get('file')}/compliance?qr=${token}#phone`);
+}
+
 async function saveForm(fd) {
   'use server';
   await requireUser(); const id = String(fd.get('entity_id'));
@@ -56,7 +69,7 @@ async function submit(fd) {
   const { sb } = await requireUser(); const id = String(fd.get('entity_id'));
   if (!(await canActFor(id))) return;
   const { data: a } = await sb.from('cmra_applications').select('*').eq('entity_id', id).maybeSingle();
-  const missing = !a?.last_name || !a?.first_name || !a?.home_street || !a?.id1_path || !a?.id1_number || !a?.id2_path || !a?.witness_method || (['notary', 'ron'].includes(a.witness_method) && !a.form_path);
+  const missing = !a?.last_name || !a?.first_name || !a?.home_street || !a?.id1_path || !a?.id1_number || !a?.id1_type || !a?.id2_path || !a?.id2_type || !a?.witness_method || (['notary', 'ron'].includes(a.witness_method) && !a.form_path);
   if (missing) redirect(`/e/${fd.get('file')}/compliance?missing=1`);
   await upsertCmra(id, { status: 'submitted', submitted_at: new Date().toISOString(), client_note: c(fd.get('client_note'), 1000) });
   redirect(`/e/${fd.get('file')}/compliance?submitted=1`);
@@ -68,6 +81,9 @@ export default async function Compliance({ params, searchParams }) {
   const { data: a0 } = await sb.from('cmra_applications').select('*').eq('entity_id', e.id).maybeSingle();
   const a = a0 || { status: 'not_started', business_name: e.legal_name, applicant_email: profile?.email };
   const ro = locked(a.status);
+  const app = process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com';
+  const qrUrl = searchParams?.qr && /^[A-Za-z0-9_-]{20,64}$/.test(searchParams.qr) ? `${app}/m/${searchParams.qr}` : null;
+  const qrSvg = qrUrl ? await QRCode.toString(qrUrl, { type: 'svg', margin: 1, width: 200, color: { dark: '#0F4C5C', light: '#FFFFFF' } }) : null;
   const Step = ({ n, done, title, children }) => <section className="card" style={{ marginBottom: 16 }}><h2 style={{ marginTop: 0 }}>{done ? '✓' : n + '.'} {title}</h2>{children}</section>;
   const H = ({ name, value }) => <input type="hidden" name={name} value={value} />;
   return (<Shell profile={profile}>
@@ -98,13 +114,25 @@ export default async function Compliance({ params, searchParams }) {
       </form>
     </Step>
 
+    {!ro && <section id="phone" className="card" style={{ marginBottom: 16 }}>
+      <h2 style={{ marginTop: 0 }}>Take your ID photos with your phone</h2>
+      {qrSvg ? <div className="row" style={{ alignItems: 'center' }}>
+        <div style={{ flex: '0 0 200px' }} dangerouslySetInnerHTML={{ __html: qrSvg }} />
+        <div><p>Scan this code with your phone's camera, or open this link on your phone:</p><p style={{ wordBreak: 'break-all' }}><a href={qrUrl}>{qrUrl}</a></p>
+          <p className="muted">The link works for 30 minutes. It opens your camera to photograph your photo ID (front and back), your address ID and a selfie holding your ID. Then <a href={`/e/${e.file_number}/compliance`}>refresh this page</a>.</p></div>
+      </div> : <form action={phoneLink}><H name="entity_id" value={e.id} /><H name="file" value={e.file_number} />
+        <p className="muted">Fastest way: we show you a QR code, you scan it with your phone, and your camera opens to take each photo. Nothing to download.</p>
+        <button className="btn">Show QR code</button></form>}
+      <p className="muted" style={{ marginTop: 10 }}>Photos received: {[['id1', 'photo ID front'], ['id1_back', 'back'], ['id2', 'address ID'], ['selfie', 'selfie']].map(([k, l]) => a[`${k}_path`] ? <a key={k} style={{ marginRight: 10 }} href={`/api/file?type=compliance&id=${e.id}&part=${k}&view=1`} target="_blank" rel="noopener noreferrer">✓ {l}</a> : <span key={k} style={{ marginRight: 10 }}>○ {l}</span>)}</p>
+    </section>}
+
     {['id1', 'id2'].map((w, i) => <Step key={w} n={i + 2} done={!!a[`${w}_path`]} title={i === 0 ? 'Photo ID (primary)' : 'Second ID showing your home address'}>
       {a[`${w}_path`] && <p className="muted">On file: {a[`${w}_type`]}{a[`${w}_expires`] ? `, expires ${fmtDay(a[`${w}_expires`] + 'T12:00:00')}` : ''} · <a href={`/api/file?type=compliance&id=${e.id}&part=${w}&view=1`} target="_blank" rel="noopener noreferrer">View</a></p>}
-      {!ro && <UploadForm bucket="compliance" entityId={e.id} action={saveId} submitLabel={a[`${w}_path`] ? 'Replace ID' : 'Save ID'} requireFile>
+      {!ro && <UploadForm bucket="compliance" entityId={e.id} action={saveId} submitLabel="Save ID details">
         <H name="entity_id" value={e.id} /><H name="which" value={w} />
         <label>Type of ID<select name="type" defaultValue={a[`${w}_type`] || ''}><option value="" disabled>Choose…</option>{(i === 0 ? PRIMARY_IDS : SECONDARY_IDS).map(t => <option key={t}>{t}</option>)}</select></label>
         <div className="row">{i === 0 && <label>ID number<input name="number" defaultValue={a.id1_number || ''} required /></label>}<label>Issued by (state, agency or country)<input name="issuer" defaultValue={a[`${w}_issuer`] || ''} /></label><label>Expiration date (if any)<input name="expires" type="date" defaultValue={a[`${w}_expires`] || ''} /></label></div>
-        <label>Photo or scan (PDF or image; front and back in one file if needed)<input name="file" type="file" accept="image/*,application/pdf" /></label>
+        <label>{a[`${w}_path`] ? 'Replace the photo (optional)' : 'Or upload a photo or scan from this computer'}<input name="file" type="file" accept="image/*,application/pdf" /></label>
       </UploadForm>}
     </Step>)}
 
