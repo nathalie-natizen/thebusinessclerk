@@ -9,7 +9,7 @@ h1{font:400 30px/1.15 "DM Serif Display",Georgia,serif;margin:0 0 6px}h2{font:40
 .top .who{font-size:13px;color:#BFD6D3}
 main{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
 .sub{color:var(--soft);margin:0 0 20px}
-.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}.card form.stack{max-width:none}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
 .file{font:700 13px ui-monospace,Menlo,monospace;background:var(--sand);color:var(--teal);padding:3px 8px;border-radius:6px;display:inline-block}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin:18px 0 20px}
@@ -21,7 +21,7 @@ th,td{padding:11px 14px;border-bottom:1px solid var(--line);text-align:left;vert
 .pill.urgent{background:#FDE8E6;color:var(--red)}.pill.ok{background:#E3F4EA;color:var(--green)}.pill.warn{background:#FFF3D6;color:#8A5A00}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border-radius:9px;border:0;background:var(--orange);color:#fff;font:600 14.5px Inter,sans-serif;cursor:pointer;text-decoration:none;white-space:nowrap}
 .btn.sec{background:var(--card);color:var(--teal);border:1.5px solid var(--teal)}.btn.small{min-height:32px;padding:4px 10px;font-size:13px}
-form.stack{display:grid;gap:14px;max-width:560px}label{display:grid;gap:5px;font-weight:600;font-size:14px}
+form.stack{display:grid;gap:14px;max-width:560px}form.stack.wide{max-width:none}label{display:grid;gap:5px;font-weight:600;font-size:14px}
 input,select,textarea{font:15px Inter,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);min-height:42px}
 .row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}.row>*{flex:1 1 180px}
 .note{background:var(--sand);border-left:4px solid var(--gold);padding:12px 16px;border-radius:0 10px 10px 0;margin:12px 0}

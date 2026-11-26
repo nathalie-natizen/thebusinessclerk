@@ -29,7 +29,7 @@ export default function UploadForm({ bucket, entityId, action, children, submitL
     } catch (x) { setErr(x.message || 'Upload failed.'); }
     setBusy(false);
   }
-  return (<form className="stack" onSubmit={onSubmit} noValidate>
+  return (<form className="stack wide" onSubmit={onSubmit} noValidate>
     {children}
     {err && <p className="err">{err}</p>}{done && <p className="ok-msg">{done}</p>}
     <button className="btn" disabled={busy}>{busy ? 'Saving…' : submitLabel}</button>

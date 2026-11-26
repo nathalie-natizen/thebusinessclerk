@@ -22,12 +22,13 @@ export default async function Guidelines() {
         <tr><td>Final review (quality check) before archiving</td><td>{FINAL_REVIEW_DAYS} business day</td></tr>
         <tr><td>Filed with Florida: check Sunbiz if not approved after</td><td>{STATE_CHECK_DAYS} business days</td></tr>
         <tr><td>Mail: scan, forward (each) or shred after the client asks</td><td>{MAIL_DAYS} business day</td></tr>
+        <tr><td>Scheduled forwarding (weekly, every two weeks, monthly): ship on the client’s chosen day</td><td>Same business day</td></tr>
         <tr><td>Form 1583 review after the client submits</td><td>{CMRA_REVIEW_DAYS} business day</td></tr>
         <tr><td>Legal papers and state notices: log, scan and alert the client</td><td>Same business day</td></tr>
         <tr><td>New orders and client messages: first response</td><td>1 business day</td></tr>
       </tbody></table>
     </section>
-    {Object.entries(KINDS).filter(([k]) => k !== 'corp').map(([k, v]) => (
+    {Object.entries(KINDS).filter(([k, v]) => k !== 'corp' && (!v.internal || k === 'mail_batch')).map(([k, v]) => (
       <section key={k} className="card" style={{ marginBottom: 16 }}>
         <h2 style={{ marginTop: 0 }}>{k === 'llc' ? 'LLC and corporation formation' : v.name}</h2>
         <h3>Staff steps</h3>

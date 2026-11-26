@@ -11,7 +11,7 @@ export default async function Dashboard() {
   const { data: recent } = ids.length ? await sb.from('mail_items').select('*, entities(file_number, legal_name)').in('entity_id', ids).order('received_at', { ascending: false }).limit(8) : { data: [] };
   return (<Shell profile={profile}>
     <h1>My companies</h1>
-    <p className="sub">Your registered agent mail, documents, orders and billing for each company.</p>
+    <p className="sub">Your registered agent mail, documents, orders and billing for each company. <a className="btn small sec" href="/start?service=llc" style={{ marginLeft: 8 }}>+ Form a new company</a></p>
     {!entities?.length && <div className="note">No companies are linked to {profile?.email} yet. If you just ordered, we'll link your company within one business day. Questions? hello@thebusinessclerk.com</div>}
     <div className="grid">{(entities || []).map(e => {
       const unread = (recent || []).filter(m => m.entity_id === e.id && !m.viewed_at).length;

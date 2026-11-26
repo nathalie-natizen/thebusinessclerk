@@ -10,7 +10,7 @@ export function bizDaysBetween(a, b) { const s = etDay(a), e = etDay(b); let n =
 const fmt = d => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
 // Promises per service when the order is in "To do" (business days)
-export const TODO_DAYS = { llc: 1, corp: 1, annual_report: 1, ein: 1, ra: 1, launch: 5, launch_revision: 3, ...Object.fromEntries(Object.keys(FILINGS).map(k => [k, 1])) };
+export const TODO_DAYS = { mail_batch: 0, llc: 1, corp: 1, annual_report: 1, ein: 1, ra: 1, launch: 5, launch_revision: 3, ...Object.fromEntries(Object.keys(FILINGS).map(k => [k, 1])) };
 export const FINAL_REVIEW_DAYS = 1;
 export const STATE_CHECK_DAYS = 5; // Florida usually processes online filings in 2–5 business days
 export const MAIL_DAYS = 1;        // scans, forward-each, shred: within 1 business day of the request
@@ -45,6 +45,7 @@ export function clientExpectation(o) {
   const s = o.status; const since = o.updated_at || o.created_at;
   if (['received', 'payment_confirmed', 'in_review'].includes(s)) {
     if (o.kind === 'mail') return 'Your address goes live once your USPS Form 1583 is approved (Compliance tab).';
+    if (o.kind === 'mail_batch') return 'Your scheduled mail shipment goes out today. You will get the tracking number by email.';
     if (o.kind === 'ein' && o.entities?.status === 'pending') return 'We apply for your EIN as soon as Florida approves your company.';
     const d = addBizDays(since, o.kind === 'launch' ? (revisions(o.details).used > 0 ? TODO_DAYS.launch_revision : TODO_DAYS.launch) : (TODO_DAYS[o.kind] ?? 1));
     return o.kind === 'launch' ? `We expect to deliver by ${fmt(d)}.` : `We expect to file by ${fmt(d)}.`;

@@ -63,6 +63,7 @@ export const KINDS = {
   mail: { name: 'Business Address & Mail', env: 'STRIPE_PRICE_MAIL', recurring: true },
   launch: { name: 'Launch Pack', env: 'STRIPE_PRICE_LAUNCH' },
   ...Object.fromEntries(Object.entries(FILINGS).map(([k, f]) => [k, { name: f.name, filing: true }])),
+  mail_batch: { name: 'Mail forwarding (scheduled shipment)', internal: true },
 };
 
 export const CARRIERS = { USPS: 'USPS', UPS: 'UPS', FedEx: 'FedEx', DHLExpress: 'DHL Express' };

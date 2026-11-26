@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Shell, { EntityTabs } from '@/components/Shell';
 import { requireUser, getEntity } from '@/lib/auth';
 import { HANDLING, SHIPPING } from '@/lib/labels';
+import { BATCH, WEEKDAYS, scheduleLabel, nextShipDay } from '@/lib/batches';
 
 async function save(formData) {
   'use server';
@@ -12,7 +13,8 @@ async function save(formData) {
   if (!HANDLING[handling]) return;
   const f = k => String(formData.get(k) || '').trim().slice(0, 120) || null;
   const ship = String(formData.get('forward_shipping'));
-  await sb.from('mail_preferences').upsert({ entity_id, handling, forward_shipping: SHIPPING[ship] ? ship : 'first_class', forward_name: f('forward_name'), forward_line1: f('forward_line1'), forward_line2: f('forward_line2'), forward_city: f('forward_city'), forward_state: f('forward_state'), forward_postal: f('forward_postal'), forward_country: f('forward_country'), updated_at: new Date().toISOString() });
+  const day = Math.min(5, Math.max(1, parseInt(formData.get('forward_day')) || 5));
+  await sb.from('mail_preferences').upsert({ entity_id, handling, forward_day: day, forward_shipping: SHIPPING[ship] ? ship : 'first_class', forward_name: f('forward_name'), forward_line1: f('forward_line1'), forward_line2: f('forward_line2'), forward_city: f('forward_city'), forward_state: f('forward_state'), forward_postal: f('forward_postal'), forward_country: f('forward_country'), updated_at: new Date().toISOString() });
   redirect(`/e/${String(formData.get('file'))}/settings?saved=1`);
 }
 
@@ -29,6 +31,8 @@ export default async function Settings({ params, searchParams }) {
       {searchParams?.saved && <p className="ok-msg">Mail settings saved.</p>}
       <h2 style={{ marginTop: 0 }}>What should we do with your mail?</h2>
       <label>Default handling<select name="handling" defaultValue={v.handling}>{Object.entries(HANDLING).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+      <label>Shipping day for weekly, every-two-weeks or monthly forwarding<select name="forward_day" defaultValue={v.forward_day || 5}>{Object.entries(WEEKDAYS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+      {BATCH[v.handling] && <p className="note" style={{ margin: 0 }}>Your schedule: <strong>{scheduleLabel(v.handling, v.forward_day)}</strong>. Next shipment: <strong>{nextShipDay(v.handling, v.forward_day)?.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</strong> (only if mail is waiting). Everything we receive until then goes in one package.</p>}
       <label>Default carrier service for forwarding<select name="forward_shipping" defaultValue={v.forward_shipping || 'first_class'}>{Object.entries(SHIPPING).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
       <p className="muted">Legal papers and state notices are always scanned and sent to you the same business day. Forwarding is $2.50 per item plus postage at cost; opening and scanning is priced per item (the lowest rate for your monthly volume is applied automatically). You can pick a different speed for any single item on the Mail page.</p>
       <h2>Forwarding address</h2>

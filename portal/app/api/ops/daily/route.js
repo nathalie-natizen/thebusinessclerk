@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { setOrderStatus } from '@/lib/orders';
 import { AUTO_APPROVE_DAYS } from '@/lib/guidelines';
 import { notifyEntity } from '@/lib/notify';
+import { createDueBatches } from '@/lib/batches';
 
 const APP = process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com';
 const REMIND = ['01-05', '03-01', '04-01', '04-20'];
@@ -26,7 +27,7 @@ export async function GET(req) {
     const skip = new Set((done || []).map(o => o.entity_id));
     for (const e of ents || []) {
       if (skip.has(e.id) || new Date(e.created_at).getFullYear() === year) continue; // formed this year: first report is due next year
-      await notifyEntity(e.id, { subject: `Florida annual report due by May 1: ${e.legal_name}`, text: `The Florida annual report for ${e.legal_name} is due by May 1, ${year}. After May 1 the State adds a $400 late fee.\n\nOrder it in one click and we file it for you: ${APP}/e/${e.file_number}/orders?order=annual_report`, sms: `THE BUSINESS CLERK: the Florida annual report for ${e.legal_name} is due by May 1. Order it here:` });
+      await notifyEntity(e.id, { category: 'compliance', subject: `Florida annual report due by May 1: ${e.legal_name}`, text: `The Florida annual report for ${e.legal_name} is due by May 1, ${year}. After May 1 the State adds a $400 late fee.\n\nOrder it in one click and we file it for you: ${APP}/e/${e.file_number}/orders?order=annual_report`, sms: `THE BUSINESS CLERK: the Florida annual report for ${e.legal_name} is due by May 1. Order it here:` });
       reminded++;
     }
   }
@@ -35,8 +36,9 @@ export async function GET(req) {
   const { data: old } = await db2.from('mail_items').select('id, entity_id').eq('status', 'received').eq('category', 'general').is('hold_notice_at', null).lt('received_at', new Date(Date.now() - 30 * 864e5).toISOString());
   const byEnt = {}; for (const m of old || []) (byEnt[m.entity_id] ||= []).push(m.id);
   for (const [eid, ids] of Object.entries(byEnt)) {
-    await notifyEntity(eid, { subject: 'Mail waiting for your instructions', text: `You have ${ids.length} mail item${ids.length > 1 ? 's' : ''} we've held for 30 days with no instruction. Please choose scan, forward, shred or hold in your portal within 15 days. After that, ordinary mail may be shredded (never checks, legal papers or packages).\n\n${APP}/dashboard`, sms: `THE BUSINESS CLERK: ${ids.length} mail item(s) need your instructions within 15 days:` });
+    await notifyEntity(eid, { category: 'mail', subject: 'Mail waiting for your instructions', text: `You have ${ids.length} mail item${ids.length > 1 ? 's' : ''} we've held for 30 days with no instruction. Please choose scan, forward, shred or hold in your portal within 15 days. After that, ordinary mail may be shredded (never checks, legal papers or packages).\n\n${APP}/dashboard`, sms: `THE BUSINESS CLERK: ${ids.length} mail item(s) need your instructions within 15 days:` });
     await db2.from('mail_items').update({ hold_notice_at: new Date().toISOString() }).in('id', ids);
   }
-  return NextResponse.json({ autoApproved: (data || []).length, reminded, holdNotices: Object.keys(byEnt).length });
+  const batches = await createDueBatches();
+  return NextResponse.json({ autoApproved: (data || []).length, reminded, holdNotices: Object.keys(byEnt).length, batches });
 }

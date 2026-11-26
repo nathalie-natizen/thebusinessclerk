@@ -68,7 +68,7 @@ export async function chargeStatement(st, entity) {
     try { paid = await s.invoices.pay(inv.id); } catch { /* card declined: Stripe retries automatically */ }
     const status = paid.status === 'paid' ? 'paid' : 'invoiced';
     await db.from('mail_statements').update({ status, stripe_invoice_id: inv.id, invoice_url: paid.hosted_invoice_url, error: null }).eq('id', st.id);
-    await notifyEntity(entity.id, {
+    await notifyEntity(entity.id, { category: 'billing',
       subject: `Mail statement for ${entity.legal_name}: ${money(st.total_cents)}`,
       text: `Your mail statement for ${st.period_start} to ${st.period_end} is ready: ${st.items_count} items, ${money(st.total_cents)} ${status === 'paid' ? 'charged to your card on file' : 'due'}.\n\nSee every item: ${app}/billing/statement/${st.id}`,
     });

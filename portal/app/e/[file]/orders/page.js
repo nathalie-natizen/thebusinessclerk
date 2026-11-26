@@ -7,6 +7,9 @@ import { savedCard, priceFor, chargeOnFile, createPaidOrder } from '@/lib/charge
 import { needsQuestionnaire } from '@/lib/questionnaires';
 import AgreementBox from '@/components/AgreementBox';
 import { FILINGS } from '@/lib/filings';
+import { CATALOG } from '@/lib/prices';
+const priceText = k => { const c = CATALOG[k]; if (!c) return ''; return `$${(c.cents / 100).toFixed(2).replace(/\.00$/, '')}${c.interval ? `/${c.interval === 'year' ? 'yr' : 'mo'}` : ''}`; };
+const stateFeeNote = k => (k === 'annual_report' || FILINGS[k]) ? ' The Florida state fee is charged at cost when we file.' : '';
 import { clientExpectation } from '@/lib/sla';
 import { draftFor, recordAcceptance } from '@/lib/agreements';
 
@@ -34,6 +37,10 @@ async function toCheckout(fd) {
   if (!KINDS[kind] || fd.get('service_terms') !== 'on' || !sign) return;
   const e = await getEntity(sb, file); if (!e) return;
   await recordAcceptance(e, [kind], { name: sign, email: profile?.email || user.email, userId: user.id });
+  if (!process.env.STRIPE_SECRET_KEY) { // online payment not connected yet: place the order now, payment link sent separately
+    const o = await createPaidOrder(e, kind, { source: 'portal', unpaid: true });
+    redirect(needsQuestionnaire(kind) ? `/e/${file}/orders/${o.id}?new=1` : `/e/${file}/orders?placed=1`);
+  }
   redirect(`/api/stripe/checkout?product=${kind}&entity=${file}`);
 }
 
@@ -47,27 +54,29 @@ export default async function Orders({ params, searchParams }) {
     <span className="file">{e.file_number}</span><h1 style={{ marginTop: 8 }}>{e.legal_name}</h1>
     <EntityTabs file={e.file_number} active="orders" />
     {searchParams?.paid && <div className="note">Payment received. Your order is below.</div>}
+    {searchParams?.placed && <div className="note">Order placed. We’ll send you a secure payment link, and you can follow it below.</div>}
     {searchParams?.declined && <div className="note">Your card was declined. Update the card on the Billing tab and try again.</div>}
 
     {pick ? <section className="card" style={{ marginBottom: 18 }}>
       <h3>Confirm your order: {KINDS[pick].name}</h3>
-      {card && price ? <form action={placeOrder} className="stack">
+      {card && price ? <form action={placeOrder} className="stack wide">
         <input type="hidden" name="file" value={e.file_number} /><input type="hidden" name="kind" value={pick} />
       {draft?.type !== 'none' && <><p style={{ margin: 0 }}><strong>{draft.type === 'addendum' ? `Addendum No. ${draft.number} to your Client Service Agreement` : 'Client Service Agreement'}</strong> <span className="muted">{draft.type === 'addendum' ? '(adds this service to your existing agreement)' : ''}</span></p><AgreementBox text={draft.text} /></>}
       <label>Type your full name to sign<input name="sign_name" required maxLength={120} defaultValue={profile?.full_name || ''} /></label>
       <label style={{ display: 'flex', gap: 10, fontWeight: 400, alignItems: 'flex-start' }}><input type="checkbox" name="service_terms" required style={{ minHeight: 'auto', marginTop: 4 }} /><span>{draft?.type === 'addendum' ? 'I have read and agree to this Addendum.' : draft?.type === 'none' ? 'I confirm this order under my existing Client Service Agreement.' : 'I have read and agree to the Client Service Agreement.'}</span></label>
-        <p><strong>{money(price.unit_amount)}{price.recurring ? ` per ${price.recurring.interval}` : ''}</strong> will be charged now to {card.brand.toUpperCase()} ending {card.last4}{price.recurring ? ', renewing automatically until you cancel' : ''}.{['annual_report'].includes(pick) ? ' The Florida state fee is charged separately when we file.' : ''}</p>
+        <p><strong>{money(price.unit_amount)}{price.recurring ? ` per ${price.recurring.interval}` : ''}</strong> will be charged now to {card.brand.toUpperCase()} ending {card.last4}{price.recurring ? ', renewing automatically until you cancel' : ''}.{stateFeeNote(pick)}</p>
         <div className="row" style={{ gap: 8 }}><button className="btn" style={{ flex: '0 0 auto' }}>Pay {money(price.unit_amount)} and order</button><Link className="btn sec" style={{ flex: '0 0 auto' }} href={`/e/${e.file_number}/orders`}>Cancel</Link></div>
-      </form> : <form action={toCheckout} className="stack">
+      </form> : <form action={toCheckout} className="stack wide">
         <input type="hidden" name="file" value={e.file_number} /><input type="hidden" name="kind" value={pick} />
       {draft?.type !== 'none' && <><p style={{ margin: 0 }}><strong>{draft.type === 'addendum' ? `Addendum No. ${draft.number} to your Client Service Agreement` : 'Client Service Agreement'}</strong> <span className="muted">{draft.type === 'addendum' ? '(adds this service to your existing agreement)' : ''}</span></p><AgreementBox text={draft.text} /></>}
       <label>Type your full name to sign<input name="sign_name" required maxLength={120} defaultValue={profile?.full_name || ''} /></label>
       <label style={{ display: 'flex', gap: 10, fontWeight: 400, alignItems: 'flex-start' }}><input type="checkbox" name="service_terms" required style={{ minHeight: 'auto', marginTop: 4 }} /><span>{draft?.type === 'addendum' ? 'I have read and agree to this Addendum.' : draft?.type === 'none' ? 'I confirm this order under my existing Client Service Agreement.' : 'I have read and agree to the Client Service Agreement.'}</span></label>
-        <p>You'll enter a card on the secure Stripe page. <button className="btn small">Continue to payment</button> <Link href={`/e/${e.file_number}/orders`}>Cancel</Link></p>
+        <p><strong>{priceText(pick)}</strong>{stateFeeNote(pick)}</p>
+        <p>{process.env.STRIPE_SECRET_KEY ? 'You’ll enter a card on the secure Stripe page.' : 'We’ll send you a secure payment link for this order.'} <button className="btn small">{process.env.STRIPE_SECRET_KEY ? 'Continue to payment' : 'Place order'}</button> <Link href={`/e/${e.file_number}/orders`}>Cancel</Link></p>
       </form>}
     </section> : <section className="card" style={{ marginBottom: 18 }}><h3>Order a service for this company</h3>
-      <p className="muted">Charged to this company's card on file after you confirm.</p>
-      <p>{ORDERABLE.filter(([k]) => !(k === 'ra' && e.registered_agent) && !(k === 'mail' && e.mail_service)).map(([k, label]) => <Link key={k} className="btn sec small" style={{ marginRight: 8, marginBottom: 8 }} href={`/e/${e.file_number}/orders?order=${k}`}>{label}</Link>)}</p>
+      <p className="muted">Same services and prices as our website. Charged to this company's card on file after you confirm. Want to form another company? <a href="/start?service=llc">Start a new company →</a></p>
+      <p>{ORDERABLE.filter(([k]) => !(k === 'ra' && e.registered_agent) && !(k === 'mail' && e.mail_service)).map(([k, label]) => <Link key={k} className="btn sec small" style={{ marginRight: 8, marginBottom: 8 }} href={`/e/${e.file_number}/orders?order=${k}`}>{label} · {priceText(k)}</Link>)}</p>
     </section>}
 
     {!orders?.length ? <div className="note">No orders yet.</div> : <div className="grid">{orders.map(o => (

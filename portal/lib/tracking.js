@@ -27,17 +27,18 @@ export async function startTracking(itemId, carrier, trackingNumber) {
 // Apply a tracker update from EasyPost. Marks the item delivered and tells the client.
 export async function applyTrackerUpdate(t) {
   const db = supabaseAdmin();
-  const { data: item } = await db.from('mail_items').select('id, entity_id, status, tracking_status, description, sender').eq('tracker_id', t.id).maybeSingle();
-  if (!item) return false;
+  const { data: all } = await db.from('mail_items').select('id, entity_id, status, tracking_status, description, sender').eq('tracker_id', t.id);
+  const item = all?.[0]; if (!item) return false; // a batch shares one tracker
   const patch = { tracking_status: t.status, tracking_url: t.public_url || undefined, est_delivery: t.est_delivery_date || null };
   const delivered = t.status === 'delivered' && item.status !== 'delivered';
   if (delivered) Object.assign(patch, { status: 'delivered', delivered_at: new Date().toISOString() });
-  await db.from('mail_items').update(patch).eq('id', item.id);
+  await db.from('mail_items').update(patch).eq('tracker_id', t.id).neq('status', 'delivered');
+  if (!delivered) await db.from('mail_items').update({ tracking_status: t.status }).eq('tracker_id', t.id);
   if (t.status !== item.tracking_status && ['out_for_delivery', 'delivered', 'return_to_sender', 'failure', 'available_for_pickup'].includes(t.status)) {
     const label = TRACKING_STATUS[t.status];
-    await notifyEntity(item.entity_id, {
+    await notifyEntity(item.entity_id, { category: 'mail',
       subject: `Forwarded mail: ${label}`,
-      text: `Mail we forwarded for you${item.sender ? ` (from ${item.sender})` : ''} is now: ${label}.`,
+      text: all.length > 1 ? `Your package of ${all.length} forwarded mail items is now: ${label}.` : `Mail we forwarded for you${item.sender ? ` (from ${item.sender})` : ''} is now: ${label}.`,
       sms: `THE BUSINESS CLERK: Your forwarded mail is ${label.toLowerCase()}.`,
     });
   }

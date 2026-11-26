@@ -26,7 +26,7 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
   const hasMail = service === 'mail' || (formation && addons.mail);
   const hasEin = service === 'ein' || (formation && addons.ein);
   const R = ' *';
-  return (<form className="stack" action={action}>
+  return (<form className="stack wide" action={action}>
     <input type="hidden" name="lang" value={lang} />
     <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }} />
     {state?.error && state.error !== 'spam' && <p className="err">{t.err}</p>}

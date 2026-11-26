@@ -18,11 +18,12 @@ export async function savedCard(customerId) {
 export async function priceFor(kind) { return priceOf(kind); }
 
 // Create the order record after payment (website, checkout or card on file)
-export async function createPaidOrder(entity, kind, { amount = null, source = 'portal', ref = null } = {}) {
+export async function createPaidOrder(entity, kind, { amount = null, source = 'portal', ref = null, unpaid = false } = {}) {
   const db = supabaseAdmin();
   const status = needsQuestionnaire(kind) ? 'information_needed' : 'received';
   const { data: o } = await db.from('orders').insert({ entity_id: entity.id, kind, service: KINDS[kind].name, status, source, stripe_session_id: ref, amount_cents: amount, details: { service_terms_version: GUIDELINES_VERSION } }).select().single();
-  await db.from('order_events').insert({ order_id: o.id, status, note: status === 'information_needed' ? 'Payment received. Please complete the short questionnaire so we can start.' : 'Payment received. We’re starting on it.' });
+  await db.from('order_events').insert({ order_id: o.id, status, note: unpaid ? `Order placed. We’ll send a secure payment link.${status === 'information_needed' ? ' Please complete the short questionnaire so we can start.' : ''}` : status === 'information_needed' ? 'Payment received. Please complete the short questionnaire so we can start.' : 'Payment received. We’re starting on it.' });
+  await (await import('./notify')).notifyStaff({ subject: `New portal order: ${entity.legal_name} (${entity.file_number})`, text: `${KINDS[kind].name}${unpaid ? ' (payment link needed)' : ''}\n\n${process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com'}/staff/pipeline` }).catch(() => {});
   if (kind === 'ra' || kind === 'foreign') await db.from('entities').update({ registered_agent: true }).eq('id', entity.id);
   if (kind === 'foreign') await startRaRenewal(entity).catch(() => {});
   if (kind === 'mail') await db.from('entities').update({ mail_service: true }).eq('id', entity.id);

@@ -10,7 +10,7 @@ export async function flagPaymentIssue(entity, { amountCents, what, invoiceId, i
   if (entity.payment_issue?.invoice === invoiceId) return; // already alerted for this invoice (Stripe retries)
   await supabaseAdmin().from('entities').update({ payment_issue: { at: new Date().toISOString(), amount: amountCents, what, invoice: invoiceId, url: invoiceUrl || null } }).eq('id', entity.id);
   const link = `${APP}/e/${entity.file_number}/billing`;
-  await notifyEntity(entity.id, {
+  await notifyEntity(entity.id, { category: 'billing',
     subject: `Action needed: payment failed for ${entity.legal_name}`,
     text: `We couldn't charge ${money(amountCents)} for ${what} to the card on file for ${entity.legal_name}.\n\nPlease update the card now so your services continue: ${link}`,
     sms: `THE BUSINESS CLERK: payment of ${money(amountCents)} for ${entity.legal_name} failed. Please update your card on file:`,

@@ -22,15 +22,20 @@ export async function sendSms(to, body) {
 }
 
 // Notify every client linked to an entity. Never puts document contents in the message, only a link.
-export async function notifyEntity(entityId, { subject, text, sms }) {
+// Notification topics each team member can switch on/off (email and text) on the company's Team page
+export const TOPICS = { legal: 'Legal papers and state notices', mail: 'New mail, scans and shipments', documents: 'New documents', orders: 'Order updates and questions', billing: 'Payments, receipts and statements', compliance: 'Annual reports, Form 1583 and other deadlines' };
+
+export async function notifyEntity(entityId, { subject, text, sms, category = 'orders' }) {
   const db = supabaseAdmin();
-  const { data: members } = await db.from('entity_members').select('profiles(email, phone, sms_opt_in)').eq('entity_id', entityId);
+  const { data: members } = await db.from('entity_members').select('notify, profiles(email, phone, sms_opt_in)').eq('entity_id', entityId);
   const log = [];
   for (const m of members || []) {
     const p = m.profiles; if (!p) continue;
-    const e = await sendEmail(p.email, subject, `${text}\n\nSign in to view it: ${APP}\n\nTHE BUSINESS CLERK`);
-    log.push({ entity_id: entityId, channel: 'email', recipient: p.email, subject, status: e.ok ? 'sent' : 'failed', error: e.error || null });
-    if (p.sms_opt_in && p.phone && sms) {
+    const pref = (m.notify || {})[category] || {};
+    if (pref.email === false && pref.sms === false) continue;
+    if (pref.email !== false) { const e = await sendEmail(p.email, subject, `${text}\n\nSign in to view it: ${APP}\n\nTHE BUSINESS CLERK`);
+    log.push({ entity_id: entityId, channel: 'email', recipient: p.email, subject, status: e.ok ? 'sent' : 'failed', error: e.error || null }); }
+    if (p.sms_opt_in && p.phone && sms && pref.sms !== false) {
       const s = await sendSms(p.phone, `${sms} ${APP} Reply STOP to opt out.`);
       log.push({ entity_id: entityId, channel: 'sms', recipient: p.phone, subject, status: s.ok ? 'sent' : 'failed', error: s.error || null });
     }

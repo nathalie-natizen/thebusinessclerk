@@ -7,6 +7,8 @@ import { setOrderStatus, logRevision } from '@/lib/orders';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { chargeStateFee } from '@/lib/charge';
 import { orderDeadline, toneClass } from '@/lib/sla';
+import { shipBatch } from '@/lib/batches';
+import { CARRIERS, SHIPPING } from '@/lib/labels';
 import { revisions, STAFF_STEPS } from '@/lib/guidelines';
 import { PIPELINE, ARCHIVED, KINDS, STAFF_STATUSES, fmtDate } from '@/lib/labels';
 
@@ -42,6 +44,14 @@ async function stateFee(fd) {
   revalidatePath('/staff/pipeline');
 }
 
+async function ship(fd) {
+  'use server';
+  const { user } = await requireStaff();
+  const postage = Math.round(parseFloat(String(fd.get('postage') || '').replace(/[^0-9.]/g, '')) * 100);
+  await shipBatch({ orderId: String(fd.get('order_id')), itemIds: fd.getAll('item').map(String), carrier: String(fd.get('carrier')), tracking: String(fd.get('tracking') || ''), postageCents: isNaN(postage) ? null : postage, userId: user.id });
+  revalidatePath('/staff/pipeline');
+}
+
 const bizDays = d => { let n = 0; const t = new Date(d); const now = new Date(); t.setHours(0, 0, 0, 0); now.setHours(0, 0, 0, 0); while (t < now) { t.setDate(t.getDate() + 1); if (t.getDay() % 6) n++; } return n; };
 const STAGES = [...PIPELINE.map(([label, sts]) => ({ key: label.toLowerCase().replace(/[^a-z]+/g, '-').replace(/-$/, ''), label, sts })), { key: 'archived', label: 'Archived', sts: ARCHIVED }];
 
@@ -53,6 +63,9 @@ export default async function Pipeline({ searchParams }) {
   let q = sb.from('orders').select('*, entities(file_number, legal_name, contact_name, entity_type, status)').not('status', 'in', '(cancelled,awaiting_payment)').order('updated_at');
   if (kind) q = q.eq('kind', kind);
   const { data: all } = await q;
+  const batchEnts = [...new Set((all || []).filter(o => o.kind === 'mail_batch' && !['completed', 'cancelled'].includes(o.status)).map(o => o.entity_id))];
+  const { data: batchItems } = batchEnts.length ? await sb.from('mail_items').select('id, entity_id, sender, category, received_at, description, file_path').in('entity_id', batchEnts).eq('status', 'forward_requested').order('received_at') : { data: [] };
+  const { data: batchPrefs } = batchEnts.length ? await sb.from('mail_preferences').select('*').in('entity_id', batchEnts) : { data: [] };
   const { data: unpaid } = await sb.from('entities').select('file_number, legal_name, payment_issue').not('payment_issue', 'is', null);
   const match = o => !term || [o.entities?.file_number, o.entities?.legal_name, o.entities?.contact_name, o.service].some(v => String(v || '').toLowerCase().includes(term));
   const count = st => (all || []).filter(o => st.sts.includes(o.status) && match(o)).length;
@@ -93,6 +106,17 @@ export default async function Pipeline({ searchParams }) {
             {STAFF_STEPS[o.kind] && <details style={{ margin: '6px 0' }}><summary style={{ cursor: 'pointer', fontWeight: 700 }}>Staff steps</summary><ol style={{ fontSize: 14, paddingLeft: 18, margin: '6px 0' }}>{STAFF_STEPS[o.kind].map(([st, txt], i) => <li key={i}><strong>{st}:</strong> {txt}</li>)}</ol></details>}
           </div>
           <div>
+            {o.kind === 'mail_batch' && !['completed', 'cancelled'].includes(o.status) && (() => { const its = (batchItems || []).filter(i => i.entity_id === o.entity_id); const pf = (batchPrefs || []).find(p => p.entity_id === o.entity_id) || {};
+              return <form action={ship} className="stack" style={{ gap: 8, marginTop: 12, padding: 12, border: '2px solid var(--teal, #0E4A57)', borderRadius: 10 }}>
+                <input type="hidden" name="order_id" value={o.id} />
+                <strong>Ship this package</strong>
+                <div className="muted" style={{ fontSize: 13 }}>To: {[pf.forward_name, pf.forward_line1, pf.forward_line2, [pf.forward_city, pf.forward_state, pf.forward_postal].filter(Boolean).join(', '), pf.forward_country].filter(Boolean).join(' · ') || 'No forwarding address on file: ask the client'}<br />Speed: {SHIPPING[pf.forward_shipping || 'first_class']}</div>
+                {!its.length ? <p className="muted">No mail waiting. Cancel this task with a note.</p> : <fieldset style={{ border: 0, padding: 0, margin: 0 }}><legend style={{ fontWeight: 700, fontSize: 14 }}>Items held since the last shipment ({its.length})</legend>
+                  {its.map(i => <label key={i.id} style={{ display: 'flex', gap: 8, fontWeight: 400, fontSize: 14 }}><input type="checkbox" name="item" value={i.id} defaultChecked style={{ minHeight: 'auto' }} />{i.sender || 'Unknown sender'} · {fmtDate(i.received_at)}{i.description ? ` · ${i.description}` : ''}</label>)}</fieldset>}
+                <div className="row" style={{ gap: 6 }}><select name="carrier" defaultValue={pf.forward_shipping === 'courier_overnight' ? 'UPS' : 'USPS'}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" placeholder="Tracking number" /></div>
+                <input name="postage" placeholder="Postage paid $ (billed at cost)" inputMode="decimal" />
+                {its.length > 0 && <button className="btn">Ship and close</button>}
+              </form>; })()}
             <form action={move} className="stack" style={{ gap: 8, marginTop: 12 }}>
               <input type="hidden" name="order_id" value={o.id} />
               <label>Move to<select name="status" defaultValue={STAFF_STATUSES.some(([k]) => k === o.status) ? o.status : 'received'}>{STAFF_STATUSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>

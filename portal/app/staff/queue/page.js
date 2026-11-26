@@ -4,6 +4,7 @@ import Preview from '@/components/Preview';
 import Shell from '@/components/Shell';
 import { requireStaff } from '@/lib/auth';
 import { startTracking } from '@/lib/tracking';
+import { isBatchRequest } from '@/lib/batches';
 import { mailDeadline, toneClass, addBizDays, bizDaysBetween, CMRA_REVIEW_DAYS } from '@/lib/sla';
 import { notifyEntity } from '@/lib/notify';
 import UploadForm from '@/components/UploadForm';
@@ -28,20 +29,23 @@ async function completeScan(fd) {
   if (!content_path) return { error: 'Choose the scanned PDF.' };
   const pages = Math.max(1, parseInt(fd.get('pages')) || 1);
   const { data: m } = await sb.from('mail_items').update({ content_path, pages, scanned_at: new Date().toISOString(), status: 'scanned' }).eq('id', id).select('entity_id, sender').single();
-  if (m) await notifyEntity(m.entity_id, { subject: 'Your mail has been scanned', text: `We opened and scanned your mail${m.sender ? ` from ${m.sender}` : ''}. It's ready in your portal.`, sms: 'THE BUSINESS CLERK: Your mail was scanned and is in your portal:' });
+  if (m) await notifyEntity(m.entity_id, { category: 'mail', subject: 'Your mail has been scanned', text: `We opened and scanned your mail${m.sender ? ` from ${m.sender}` : ''}. It's ready in your portal.`, sms: 'THE BUSINESS CLERK: Your mail was scanned and is in your portal:' });
   revalidatePath('/staff/queue');
   return { message: 'Scan uploaded and client notified.' };
 }
 
 export default async function Queue() {
   const { sb, profile } = await requireStaff();
-  const { data: mail } = await sb.from('mail_items').select('*, entities(file_number, legal_name, mail_preferences(*))').in('status', ['forward_requested', 'shred_requested']).order('received_at');
+  const { data: mailAll } = await sb.from('mail_items').select('*, entities(file_number, legal_name, mail_preferences(*))').in('status', ['forward_requested', 'shred_requested']).order('received_at');
+  const mail = (mailAll || []).filter(m => !isBatchRequest(m.client_request));
+  const batched = (mailAll || []).length - mail.length;
   const { data: cmra } = await sb.from('cmra_applications').select('entity_id, applicant_name, witness_method, submitted_at, entities(file_number, legal_name)').eq('status', 'submitted').order('submitted_at');
   const { data: scans } = await sb.from('mail_items').select('*, entities(id, file_number, legal_name)').eq('status', 'scan_requested').order('received_at');
   const { data: expired } = await sb.from('mail_items').select('*, entities(file_number, legal_name)').eq('status', 'received').eq('category', 'general').lt('hold_notice_at', new Date(Date.now() - 15 * 864e5).toISOString()).order('received_at');
   return (<Shell profile={profile}>
     <h1>Queue</h1>
     <h2>Forward and shred requests</h2>
+    {batched > 0 && <p className="muted">{batched} item{batched > 1 ? 's are' : ' is'} waiting for a scheduled weekly, every-two-weeks or monthly shipment. A forwarding task opens in the Pipeline on each client’s shipping day.</p>}
     {!mail?.length ? <p className="muted">Nothing waiting.</p> : <div className="scroll"><table><thead><tr><th>File #</th><th>Item</th><th>Request</th><th>Forward to</th><th>Done</th></tr></thead><tbody>
       {mail.map(m => { const p = m.entities?.mail_preferences; const pr = Array.isArray(p) ? p[0] : p; return <tr key={m.id}>
         <td><Link className="file" href={`/staff/e/${m.entities.file_number}`}>{m.entities.file_number}</Link><div className="muted">{m.entities.legal_name}</div></td>

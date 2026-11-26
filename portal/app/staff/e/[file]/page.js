@@ -1,6 +1,8 @@
 import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
+import { orderDeadline, toneClass } from '@/lib/sla';
+import { scheduleLabel, nextShipDay, BATCH } from '@/lib/batches';
 import Preview from '@/components/Preview';
 import Shell from '@/components/Shell';
 import UploadForm from '@/components/UploadForm';
@@ -40,6 +42,7 @@ async function recordMail(fd) {
   if (error) return { error: error.message };
   const label = MAIL_CATEGORY[category];
   const r = await notifyEntity(entity_id, {
+    category: ['service_of_process', 'state_notice'].includes(category) ? 'legal' : 'mail',
     subject: urgent ? `URGENT: ${label} received for your company` : `New mail received for your company`,
     text: `We received ${urgent ? 'an urgent item' : 'mail'} for your company${fd.get('sender') ? ` from ${clean(fd.get('sender'))}` : ''}: ${label}.${urgent ? ' Legal and state notices can have short deadlines. Please review it today.' : ''}`,
     sms: urgent ? `THE BUSINESS CLERK: URGENT ${label} received for your company. View it in your portal:` : `THE BUSINESS CLERK: New mail received for your company. View it:`,
@@ -56,7 +59,7 @@ async function recordDocument(fd) {
   if (!fd.get('file_path')) return { error: 'Choose a file.' };
   const { error } = await sb.from('documents').insert({ entity_id, title: clean(fd.get('title')) || 'Document', category: DOC_CATEGORY[category] ? category : 'other', file_path: clean(fd.get('file_path'), 300), uploaded_by: user.id });
   if (error) return { error: error.message };
-  if (fd.get('notify') === 'on') await notifyEntity(entity_id, { subject: 'A new document is in your portal', text: `We added a new document to your company file: ${clean(fd.get('title'))}.`, sms: 'THE BUSINESS CLERK: A new document was added to your company file:' });
+  if (fd.get('notify') === 'on') await notifyEntity(entity_id, { category: 'documents', subject: 'A new document is in your portal', text: `We added a new document to your company file: ${clean(fd.get('title'))}.`, sms: 'THE BUSINESS CLERK: A new document was added to your company file:' });
   revalidatePath('/staff/e/[file]', 'page');
   return { message: 'Document added.' };
 }
@@ -139,7 +142,7 @@ async function reviewCmra(fd) {
   if (fd.get('file_path')) patch.form_path = clean(fd.get('file_path'), 300);
   await sb.from('cmra_applications').upsert(patch, { onConflict: 'entity_id' });
   const msg = { needs_changes: ['Action needed: your USPS Form 1583', `Please update your Form 1583 information in your portal (Compliance tab).${note ? `\n\n${note}` : ''}`], verified: ['Your USPS Form 1583 is verified', 'Your identity and Form 1583 are verified. Thank you!'], filed: ['Your mail service is fully set up', 'Your Form 1583 has been filed with USPS. Your mail service is complete.'] }[status];
-  if (msg) await notifyEntity(entity_id, { subject: msg[0], text: msg[1], sms: `THE BUSINESS CLERK: ${msg[0]}.` });
+  if (msg) await notifyEntity(entity_id, { category: 'compliance', subject: msg[0], text: msg[1], sms: `THE BUSINESS CLERK: ${msg[0]}.` });
   revalidatePath('/staff/e/[file]', 'page');
   return { message: 'Saved.' };
 }
@@ -161,26 +164,39 @@ export default async function StaffEntity({ params, searchParams }) {
   return (<Shell profile={profile}>
     <p><Link href="/staff">← All entities</Link></p>
     <span className="file" style={{ fontSize: 16 }}>{e.file_number}</span><h1 style={{ marginTop: 8 }}>{e.legal_name}</h1>
-    <p><a href={`/e/${e.file_number}/agreement`}>Signed agreement &amp; addenda →</a></p>
+    <nav className="tabs" style={{ position: 'sticky', top: 0, zIndex: 5, background: 'var(--bg, #FBF7F0)', paddingTop: 6 }}>{[['#overview', 'Overview'], ['#record-mail', 'Record mail'], ['#add-document', 'Add document'], ['#mail-log', 'Mail log'], ['#orders', 'Orders'], ['#documents', 'Documents'], ['#compliance', 'Form 1583'], ['#access', 'Client access'], ['#details', 'Company details']].map(([h, l]) => <a key={h} href={h}>{l}</a>)}<a href={`/e/${e.file_number}/agreement`}>Agreement</a><a href={`/e/${e.file_number}/team`}>Team</a><a href={`/e/${e.file_number}`}>Client view</a></nav>
+    {(() => {
+      const open = (orders || []).filter(o => !['completed', 'delivered', 'cancelled', 'awaiting_payment'].includes(o.status));
+      const late = open.filter(o => orderDeadline({ ...o, entities: { status: e.status } }).tone === 'late').length;
+      const waiting = (mail || []).filter(m => ['forward_requested', 'scan_requested', 'shred_requested'].includes(m.status)).length;
+      const unread = (mail || []).filter(m => m.status === 'received').length;
+      const legal = (mail || []).filter(m => ['service_of_process', 'state_notice'].includes(m.category) && !m.viewed_at).length;
+      const y = new Date().getFullYear(); const arDone = (orders || []).some(o => o.kind === 'annual_report' && new Date(o.created_at).getFullYear() === y && o.status !== 'cancelled');
+      const tile = (label, value, sub, tone, href) => <a href={href} className="card" style={{ padding: 14, textDecoration: 'none', color: 'inherit', borderLeft: `4px solid ${tone === 'late' ? '#C0392B' : tone === 'warn' ? '#E0A100' : tone === 'ok' ? '#2E8B57' : 'var(--line, #ddd)'}` }}><div className="muted" style={{ fontSize: 13 }}>{label}</div><div style={{ fontSize: 22, fontWeight: 800 }}>{value}</div>{sub && <div className="muted" style={{ fontSize: 13 }}>{sub}</div>}</a>;
+      return <div id="overview" style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', margin: '6px 0 16px' }}>
+        {tile('Company status', e.status === 'active' ? 'Active' : e.status === 'pending' ? 'Pending at the State' : e.status, e.sunbiz_doc_number ? `Doc # ${e.sunbiz_doc_number}` : 'No document number yet', e.status === 'active' ? 'ok' : 'warn', '#details')}
+        {tile('Open orders', open.length, late ? `${late} overdue` : open.length ? 'On time' : 'Nothing open', late ? 'late' : open.length ? 'warn' : 'ok', '#orders')}
+        {tile('Mail to act on', waiting, `${unread} without instructions${legal ? ` · ${legal} legal unread by client` : ''}`, legal ? 'late' : waiting ? 'warn' : 'ok', '#mail-log')}
+        {tile('Services', [e.registered_agent && 'Registered agent', e.mail_service && 'Mail'].filter(Boolean).join(' + ') || 'None', e.mail_service && BATCH[prefs?.handling] ? `${scheduleLabel(prefs.handling, prefs.forward_day)} · next ${nextShipDay(prefs.handling, prefs.forward_day)?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : (prefs?.handling ? HANDLING[prefs.handling].split('(')[0] : ''), 'info', '#details')}
+        {e.mail_service && tile('Form 1583', CMRA_STATUS[cmra?.status || 'not_started'] || 'Not started', 'Mail is held until approved', ['verified', 'filed'].includes(cmra?.status) ? 'ok' : cmra?.status === 'submitted' ? 'warn' : 'late', '#compliance')}
+        {e.registered_agent && tile(`Annual report ${y}`, arDone ? 'Ordered' : 'Not ordered', 'Due May 1', arDone ? 'ok' : new Date().getMonth() >= 2 ? 'warn' : 'info', '#orders')}
+        {e.payment_issue && tile('Payment', 'Failed', `$${((e.payment_issue.amount || 0) / 100).toFixed(2)} · client alerted`, 'late', '#details')}
+      </div>; })()}
     <p className="sub">Label the paper folder and the PMB line with <strong>{e.file_number}</strong>. Mail handling: {HANDLING[prefs?.handling || 'notify']}.</p>
     {searchParams?.saved && <p className="ok-msg">Saved.</p>}
 
     <div className="grid">
-      <section className="card"><h2 style={{ marginTop: 0 }}>Record mail</h2>
+      <section className="card" id="record-mail"><h2 style={{ marginTop: 0 }}>Record mail</h2>
         <UploadForm bucket="mail" entityId={e.id} action={recordMail} submitLabel="Save and notify client">
           <input type="hidden" name="entity_id" value={e.id} />
-          <label>Type<select name="category" defaultValue="general">{opts(MAIL_CATEGORY)}</select></label>
-          <label>From (sender)<input name="sender" placeholder="e.g. Florida Department of State" /></label>
-          <label>Received<input name="received_at" type="datetime-local" /></label>
-          <label>Short description<input name="description" placeholder="e.g. Summons, Orange County Circuit Court" /></label>
-          <label>Envelope photo (front)<input name="file" type="file" accept="image/*,application/pdf" capture="environment" /></label>
-          <label>Opened &amp; scanned contents (PDF): required for legal/state mail, or if the client asked for a scan<input name="content_file" type="file" accept="application/pdf,image/*" /></label>
-          <label>Pages scanned<input name="pages" type="number" min="1" placeholder="e.g. 3" /></label>
+          <div className="row"><label>Type<select name="category" defaultValue="general">{opts(MAIL_CATEGORY)}</select></label><label>From (sender)<input name="sender" placeholder="e.g. Florida Department of State" /></label></div>
+          <div className="row"><label>Received<input name="received_at" type="datetime-local" /></label><label>Short description<input name="description" placeholder="e.g. Summons, Orange County Circuit Court" /></label></div>
+          <div className="row"><label>Envelope photo (front)<input name="file" type="file" accept="image/*,application/pdf" capture="environment" /></label><label>Scanned contents (PDF; required for legal/state mail or a scan request)<input name="content_file" type="file" accept="application/pdf,image/*" /></label><label style={{ flex: '0 1 140px' }}>Pages scanned<input name="pages" type="number" min="1" placeholder="e.g. 3" /></label></div>
           <p className="muted" style={{ margin: 0 }}>Client's standing choice: <strong>{HANDLING[prefs?.handling || 'notify']}</strong>. It is applied automatically when you save.</p>
           <label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="urgent" style={{ minHeight: 'auto' }} /> Urgent (lawsuits and state notices are always urgent)</label>
         </UploadForm>
       </section>
-      <section className="card"><h2 style={{ marginTop: 0 }}>Add document</h2>
+      <section className="card" id="add-document"><h2 style={{ marginTop: 0 }}>Add document</h2>
         <UploadForm bucket="documents" entityId={e.id} action={recordDocument} submitLabel="Add document" requireFile>
           <input type="hidden" name="entity_id" value={e.id} />
           <label>Title<input name="title" placeholder="e.g. Filed Articles of Organization" required /></label>
@@ -191,7 +207,7 @@ export default async function StaffEntity({ params, searchParams }) {
       </section>
     </div>
 
-    <h2>Compliance: USPS Form 1583</h2>
+    <h2 id="compliance" style={{ scrollMarginTop: 70 }}>Compliance: USPS Form 1583</h2>
     <section className="card" style={{ marginBottom: 18 }}>
       <p>Status: <span className={`pill ${['verified', 'filed'].includes(cmra?.status) ? 'ok' : cmra?.status === 'submitted' ? 'warn' : ''}`}>{CMRA_STATUS[cmra?.status || 'not_started']}</span>{cmra?.witness_method && <span className="muted"> · Signing: {WITNESS[cmra.witness_method]}</span>}</p>
       {cmra && <table style={{ fontSize: 14 }}><tbody>
@@ -213,30 +229,30 @@ export default async function StaffEntity({ params, searchParams }) {
       <p className="muted" style={{ marginTop: 8 }}>Checklist: both IDs current and matching the name; second ID shows the home address; a driver's/state ID used for only one of the two; the form is notarized (or you watched the client sign in person); you signed item 14 as CMRA agent; then enter it in the USPS CMRA Customer Registration Database and mark "Complete".</p>
     </section>
 
-    <h2>Mail log</h2>
+    <h2 id="mail-log" style={{ scrollMarginTop: 70 }}>Mail log</h2>
     {!mail?.length ? <p className="muted">No mail yet.</p> : <div className="scroll"><table><thead><tr><th>Received</th><th>Type</th><th>From</th><th>Client</th><th>Status</th></tr></thead><tbody>
       {mail.map(m => <tr key={m.id}><td>{fmtDate(m.received_at)}</td><td>{m.urgent && <span className="pill urgent">Urgent</span>} {MAIL_CATEGORY[m.category]}{m.file_path && <div><Preview src={`/api/file?type=mail&id=${m.id}&view=1`} pdf title="Preview">Envelope</Preview></div>}{m.content_path && <div><Preview src={`/api/file?type=mail&id=${m.id}&part=content&view=1`} pdf title="Preview">Scan ({m.pages || '?'} p.)</Preview></div>}</td><td>{m.sender || '—'}</td>
         <td className="muted">{m.notified_at ? `Notified ${fmtDate(m.notified_at)}` : 'Not notified'}<br />{m.viewed_at ? `Viewed ${fmtDate(m.viewed_at)}` : 'Not viewed'}</td>
         <td><form action={setMailStatus} className="row" style={{ gap: 6 }}><input type="hidden" name="id" value={m.id} /><select name="status" defaultValue={m.status}>{opts(MAIL_STATUS)}</select><select name="carrier" defaultValue={m.carrier || 'USPS'} style={{ width: 'auto' }}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" defaultValue={m.tracking_number || ''} placeholder="Tracking #" /><button className="btn small sec">Update</button>{m.tracking_status && <div className="muted" style={{ flexBasis: '100%' }}>{TRACKING_STATUS[m.tracking_status] || m.tracking_status}{m.tracking_url && <> · <a href={m.tracking_url} target="_blank" rel="noopener noreferrer">Track</a></>}</div>}</form></td></tr>)}
     </tbody></table></div>}
 
-    <h2>Orders</h2>
-    <form className="row" action={createOrder} style={{ marginBottom: 14 }}><input type="hidden" name="entity_id" value={e.id} /><select name="kind" style={{ flex: '0 1 220px' }}><option value="">Other service</option>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select><input name="service" placeholder="Name shown to client, e.g. Annual report 2027 (optional)" /><input name="note" placeholder="Note (optional)" /><button className="btn sec" style={{ flex: '0 0 auto' }}>Add order</button></form>
+    <h2 id="orders" style={{ scrollMarginTop: 70 }}>Orders</h2>
+    <form className="row" action={createOrder} style={{ marginBottom: 14 }}><input type="hidden" name="entity_id" value={e.id} /><select name="kind" style={{ flex: '0 1 220px' }}><option value="">Other service</option>{Object.entries(KINDS).filter(([, v]) => !v.internal).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select><input name="service" placeholder="Name shown to client, e.g. Annual report 2027 (optional)" /><input name="note" placeholder="Note (optional)" /><button className="btn sec" style={{ flex: '0 0 auto' }}>Add order</button></form>
     <div className="grid">{(orders || []).map(o => <div className="card" key={o.id}><h3>{o.service}</h3><p><span className="pill">{statusLabel(o.status, o.kind)}</span> <span className="muted">{fmtDate(o.created_at)}</span></p>
       <OrderDetails d={o.details} kind={o.kind} orderId={o.id} />
       <form className="stack" action={updateOrder}><input type="hidden" name="order_id" value={o.id} /><select name="status" defaultValue={STAFF_STATUSES.some(([k]) => k === o.status) ? o.status : 'received'}>{STAFF_STATUSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="note" placeholder="Note shown to client (optional)" /><label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="notify" defaultChecked style={{ minHeight: 'auto' }} /> Notify client</label><button className="btn small">Update status</button></form>
       <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(ev => <li key={ev.id}><strong>{statusLabel(ev.status, o.kind)}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul></div>)}</div>
 
-    <h2>Documents</h2>
+    <h2 id="documents" style={{ scrollMarginTop: 70 }}>Documents</h2>
     {!docs?.length ? <p className="muted">No documents.</p> : <ul>{docs.map(d => <li key={d.id}><Preview src={`/api/file?type=document&id=${d.id}&view=1`} pdf title="Preview">{d.title}</Preview> (<a href={`/api/file?type=document&id=${d.id}`}>download</a>) <span className="muted">· {DOC_CATEGORY[d.category]} · {fmtDay(d.created_at)}</span></li>)}</ul>}
 
-    <h2>Client access</h2>
+    <h2 id="access" style={{ scrollMarginTop: 70 }}>Client access</h2>
     <ul>{(members || []).map(m => <li key={m.user_id}>{m.profiles?.email} {m.profiles?.phone && <span className="muted">· {m.profiles.phone}{m.profiles.sms_opt_in ? ' (texts on)' : ''}</span>} <form action={removeMember} style={{ display: 'inline' }}><input type="hidden" name="entity_id" value={e.id} /><input type="hidden" name="user_id" value={m.user_id} /><button className="btn small sec">Remove</button></form></li>)}
       {(invites || []).map(i => <li key={i.email}>{i.email} <span className="pill warn">Invited, hasn't signed in</span> <form action={removeMember} style={{ display: 'inline' }}><input type="hidden" name="entity_id" value={e.id} /><input type="hidden" name="email" value={i.email} /><button className="btn small sec">Remove</button></form></li>)}</ul>
     <form className="row" action={addMember}><input type="hidden" name="entity_id" value={e.id} /><input name="email" type="email" placeholder="client@example.com" required /><button className="btn sec" style={{ flex: '0 0 auto' }}>Give access</button></form>
     <p className="muted">The client signs in at app.thebusinessclerk.com with this email. Access is linked automatically on first sign-in.</p>
 
-    <h2>Company details</h2>
+    <h2 id="details" style={{ scrollMarginTop: 70 }}>Company details</h2>
     <form className="stack" action={updateEntity}>
       <input type="hidden" name="entity_id" value={e.id} /><input type="hidden" name="file" value={e.file_number} />
       <label>Legal name<input name="legal_name" defaultValue={e.legal_name} required /></label>

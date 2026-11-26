@@ -25,6 +25,6 @@ async function PaymentBanner({ file }) {
 }
 
 export function EntityTabs({ file, active }) {
-  const t = [['', 'Overview'], ['mail', 'Mail & legal notices'], ['documents', 'Documents'], ['orders', 'Orders'], ['billing', 'Billing'], ['settings', 'Mail settings'], ['compliance', 'Compliance'], ['agreement', 'Agreement']];
+  const t = [['', 'Overview'], ['mail', 'Mail & legal notices'], ['documents', 'Documents'], ['orders', 'Orders'], ['billing', 'Billing'], ['settings', 'Mail settings'], ['compliance', 'Compliance'], ['team', 'Team'], ['agreement', 'Agreement']];
   return <><PaymentBanner file={file} /><nav className="tabs">{t.map(([p, l]) => <Link key={p} href={`/e/${file}${p ? '/' + p : ''}`} aria-current={active === p ? 'page' : undefined}>{l}</Link>)}</nav></>;
 }
