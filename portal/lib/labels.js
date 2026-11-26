@@ -73,8 +73,8 @@ export const carrierUrl = (carrier, n) => !n ? null : ({
   DHLExpress: `https://www.dhl.com/us-en/home/tracking.html?tracking-id=${encodeURIComponent(n)}`,
 }[carrier] || null);
 
-// USPS Form 1583 (DMM 608.10): two current IDs; the secondary must show the applicant's address. Digital IDs are not accepted.
-export const PRIMARY_IDS = ["U.S. driver's license or state ID card", 'U.S. passport or passport card', 'Foreign passport', 'U.S. permanent resident card', 'U.S. military / uniformed service ID', 'U.S. university ID card', 'U.S. access card (e.g. Trusted Traveler / NEXUS)', 'Certificate of naturalization', 'Matricula consular (Mexico)', 'Other government photo ID'];
-export const SECONDARY_IDS = ['Current lease, mortgage or deed of trust', 'Voter or vehicle registration card', 'Home or vehicle insurance policy'];
+// USPS Form 1583 (June 2024), items 8e and 9g. Two current IDs; the second must show the home address. A driver's/state ID can be used for only one of the two.
+export const PRIMARY_IDS = ['U.S. State/Territory/Tribal driver\'s or nondriver\'s ID card', 'Passport', 'Uniformed Service ID', 'U.S. Access Card', 'U.S. University ID card', 'Matricula Consular', 'Certificate of Naturalization', 'U.S. Permanent Resident Card', 'NEXUS card'];
+export const SECONDARY_IDS = ['U.S. State/Territory/Tribal driver\'s or nondriver\'s ID card', 'Current lease', 'Home or vehicle insurance policy', 'Mortgage or deed of trust', 'Vehicle registration card', 'Voter card'];
 export const CMRA_STATUS = { not_started: 'Not started', in_progress: 'In progress', submitted: 'Submitted for review', needs_changes: 'Changes needed', verified: 'Verified', filed: 'Complete' };
-export const WITNESS = { video: 'Live video call with our staff', in_person: 'In person at our Florida office', notary: 'Signed in front of a notary (I will upload the notarized form)' };
+export const WITNESS = { notary: 'In front of a notary near me (I will upload the notarized form)', ron: 'With an online notary (RON) (I will upload the notarized form)', in_person: 'In person at your Florida office' };

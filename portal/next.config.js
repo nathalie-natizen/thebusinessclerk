@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 module.exports = {
   poweredByHeader: false,
-  experimental: { serverComponentsExternalPackages: ['pdfjs-dist'] },
-  webpack: (config) => { config.resolve.alias.canvas = false; return config; },
   async headers() {
     return [{ source: '/(.*)', headers: [
       { key: 'X-Content-Type-Options', value: 'nosniff' },
