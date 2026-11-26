@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
+import Preview from '@/components/Preview';
 import Shell from '@/components/Shell';
 import UploadForm from '@/components/UploadForm';
 import { requireStaff, getEntity } from '@/lib/auth';
@@ -196,9 +197,9 @@ export default async function StaffEntity({ params, searchParams }) {
         <tr><th style={{ textAlign: 'left' }}>Home address</th><td>{cmra.home_address}</td></tr>
         <tr><th style={{ textAlign: 'left' }}>Business</th><td>{cmra.business_name} · {cmra.business_type} · {cmra.registration_place}{cmra.business_address ? ` · ${cmra.business_address}` : ''}</td></tr>
         {cmra.receivers && <tr><th style={{ textAlign: 'left' }}>Other receivers</th><td>{cmra.receivers}</td></tr>}
-        <tr><th style={{ textAlign: 'left' }}>Photo ID</th><td>{cmra.id1_path ? <><a href={`/api/file?type=compliance&id=${e.id}&part=id1&view=1`} target="_blank" rel="noopener noreferrer">{cmra.id1_type}</a> · #{cmra.id1_number || '—'} · {cmra.id1_issuer} · exp. {cmra.id1_expires || '—'}</> : 'Missing'}</td></tr>
-        <tr><th style={{ textAlign: 'left' }}>Address ID</th><td>{cmra.id2_path ? <><a href={`/api/file?type=compliance&id=${e.id}&part=id2&view=1`} target="_blank" rel="noopener noreferrer">{cmra.id2_type}</a> · {cmra.id2_issuer} · exp. {cmra.id2_expires || '—'}</> : 'Missing'}</td></tr>
-        <tr><th style={{ textAlign: 'left' }}>Form 1583</th><td><a href={`/api/cmra/form?entity=${e.id}`} target="_blank" rel="noopener noreferrer">Pre-filled form</a> · {cmra.form_path ? <a href={`/api/file?type=compliance&id=${e.id}&part=form&view=1`} target="_blank" rel="noopener noreferrer">Signed form</a> : 'Signed form not uploaded yet'}{cmra.id1_back_path && <> · <a href={`/api/file?type=compliance&id=${e.id}&part=id1_back&view=1`} target="_blank" rel="noopener noreferrer">ID back</a></>}{cmra.selfie_path && <> · <a href={`/api/file?type=compliance&id=${e.id}&part=selfie&view=1`} target="_blank" rel="noopener noreferrer">Selfie with ID</a></>}{cmra.protected_individual && <strong> · Court-ordered protected individual: get the court order</strong>}</td></tr>
+        <tr><th style={{ textAlign: 'left' }}>Photo ID</th><td>{cmra.id1_path ? <><Preview src={`/api/file?type=compliance&id=${e.id}&part=id1&view=1`} pdf title="Preview">{cmra.id1_type}</Preview> · #{cmra.id1_number || '—'} · {cmra.id1_issuer} · exp. {cmra.id1_expires || '—'}</> : 'Missing'}</td></tr>
+        <tr><th style={{ textAlign: 'left' }}>Address ID</th><td>{cmra.id2_path ? <><Preview src={`/api/file?type=compliance&id=${e.id}&part=id2&view=1`} pdf title="Preview">{cmra.id2_type}</Preview> · {cmra.id2_issuer} · exp. {cmra.id2_expires || '—'}</> : 'Missing'}</td></tr>
+        <tr><th style={{ textAlign: 'left' }}>Form 1583</th><td><Preview src={`/api/cmra/form?entity=${e.id}`} pdf title="Pre-filled PS Form 1583">Pre-filled form</Preview> · {cmra.form_path ? <Preview src={`/api/file?type=compliance&id=${e.id}&part=form&view=1`} pdf title="Preview">Signed form</Preview> : 'Signed form not uploaded yet'}{cmra.id1_back_path && <> · <Preview src={`/api/file?type=compliance&id=${e.id}&part=id1_back&view=1`} pdf title="Preview">ID back</Preview></>}{cmra.selfie_path && <> · <Preview src={`/api/file?type=compliance&id=${e.id}&part=selfie&view=1`} pdf title="Preview">Selfie with ID</Preview></>}{cmra.protected_individual && <strong> · Court-ordered protected individual: get the court order</strong>}</td></tr>
         {cmra.client_note && <tr><th style={{ textAlign: 'left' }}>Client note</th><td>{cmra.client_note}</td></tr>}
       </tbody></table>}
       <UploadForm bucket="compliance" entityId={e.id} action={reviewCmra} submitLabel="Save review">
@@ -212,7 +213,7 @@ export default async function StaffEntity({ params, searchParams }) {
 
     <h2>Mail log</h2>
     {!mail?.length ? <p className="muted">No mail yet.</p> : <div className="scroll"><table><thead><tr><th>Received</th><th>Type</th><th>From</th><th>Client</th><th>Status</th></tr></thead><tbody>
-      {mail.map(m => <tr key={m.id}><td>{fmtDate(m.received_at)}</td><td>{m.urgent && <span className="pill urgent">Urgent</span>} {MAIL_CATEGORY[m.category]}{m.file_path && <div><a href={`/api/file?type=mail&id=${m.id}&view=1`} target="_blank" rel="noopener noreferrer">Envelope</a></div>}{m.content_path && <div><a href={`/api/file?type=mail&id=${m.id}&part=content&view=1`} target="_blank" rel="noopener noreferrer">Scan ({m.pages || '?'} p.)</a></div>}</td><td>{m.sender || '—'}</td>
+      {mail.map(m => <tr key={m.id}><td>{fmtDate(m.received_at)}</td><td>{m.urgent && <span className="pill urgent">Urgent</span>} {MAIL_CATEGORY[m.category]}{m.file_path && <div><Preview src={`/api/file?type=mail&id=${m.id}&view=1`} pdf title="Preview">Envelope</Preview></div>}{m.content_path && <div><Preview src={`/api/file?type=mail&id=${m.id}&part=content&view=1`} pdf title="Preview">Scan ({m.pages || '?'} p.)</Preview></div>}</td><td>{m.sender || '—'}</td>
         <td className="muted">{m.notified_at ? `Notified ${fmtDate(m.notified_at)}` : 'Not notified'}<br />{m.viewed_at ? `Viewed ${fmtDate(m.viewed_at)}` : 'Not viewed'}</td>
         <td><form action={setMailStatus} className="row" style={{ gap: 6 }}><input type="hidden" name="id" value={m.id} /><select name="status" defaultValue={m.status}>{opts(MAIL_STATUS)}</select><select name="carrier" defaultValue={m.carrier || 'USPS'} style={{ width: 'auto' }}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" defaultValue={m.tracking_number || ''} placeholder="Tracking #" /><button className="btn small sec">Update</button>{m.tracking_status && <div className="muted" style={{ flexBasis: '100%' }}>{TRACKING_STATUS[m.tracking_status] || m.tracking_status}{m.tracking_url && <> · <a href={m.tracking_url} target="_blank" rel="noopener noreferrer">Track</a></>}</div>}</form></td></tr>)}
     </tbody></table></div>}
@@ -225,7 +226,7 @@ export default async function StaffEntity({ params, searchParams }) {
       <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(ev => <li key={ev.id}><strong>{statusLabel(ev.status, o.kind)}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul></div>)}</div>
 
     <h2>Documents</h2>
-    {!docs?.length ? <p className="muted">No documents.</p> : <ul>{docs.map(d => <li key={d.id}><a href={`/api/file?type=document&id=${d.id}&view=1`} target="_blank" rel="noopener noreferrer">{d.title}</a> (<a href={`/api/file?type=document&id=${d.id}`}>download</a>) <span className="muted">· {DOC_CATEGORY[d.category]} · {fmtDay(d.created_at)}</span></li>)}</ul>}
+    {!docs?.length ? <p className="muted">No documents.</p> : <ul>{docs.map(d => <li key={d.id}><Preview src={`/api/file?type=document&id=${d.id}&view=1`} pdf title="Preview">{d.title}</Preview> (<a href={`/api/file?type=document&id=${d.id}`}>download</a>) <span className="muted">· {DOC_CATEGORY[d.category]} · {fmtDay(d.created_at)}</span></li>)}</ul>}
 
     <h2>Client access</h2>
     <ul>{(members || []).map(m => <li key={m.user_id}>{m.profiles?.email} {m.profiles?.phone && <span className="muted">· {m.profiles.phone}{m.profiles.sms_opt_in ? ' (texts on)' : ''}</span>} <form action={removeMember} style={{ display: 'inline' }}><input type="hidden" name="entity_id" value={e.id} /><input type="hidden" name="user_id" value={m.user_id} /><button className="btn small sec">Remove</button></form></li>)}

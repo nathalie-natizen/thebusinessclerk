@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import Shell, { EntityTabs } from '@/components/Shell';
+import Preview from '@/components/Preview';
 import { requireUser, getEntity } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { fmtDate, MAIL_CATEGORY, MAIL_STATUS, SHIPPING, SHIPPING_SHORT, TRACKING_STATUS, CARRIERS } from '@/lib/labels';
@@ -39,9 +40,9 @@ export default async function Mail({ params }) {
         <td>{m.sender || '—'}</td>
         <td><span className="pill">{MAIL_STATUS[m.status]}</span>{m.tracking_number && <div className="muted">{CARRIERS[m.carrier] || ''} {m.tracking_url ? <a href={m.tracking_url} target="_blank" rel="noopener noreferrer">{m.tracking_number}</a> : m.tracking_number}{m.tracking_status && m.status !== 'delivered' && <div>{TRACKING_STATUS[m.tracking_status] || m.tracking_status}{m.est_delivery ? ` · expected ${new Date(m.est_delivery).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}</div>}</div>}</td>
         <td>{m.file_path && (/\.(jpe?g|png|gif|webp|heic)$/i.test(m.file_path)
-            ? <a href={`/api/file?type=mail&id=${m.id}&view=1`} target="_blank" rel="noopener noreferrer" title="Open envelope photo"><img src={`/api/file?type=mail&id=${m.id}&view=1`} alt={`Envelope from ${m.sender || 'sender'}`} style={{ height: 64, maxWidth: 120, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--line)', display: 'block', marginBottom: 6 }} /></a>
-            : <div><a href={`/api/file?type=mail&id=${m.id}&view=1`} target="_blank" rel="noopener noreferrer">View envelope</a></div>)}
-          {m.content_path ? <div className="row" style={{ gap: 6 }}><a className="btn small" href={`/api/file?type=mail&id=${m.id}&part=content&view=1`} target="_blank" rel="noopener noreferrer">View scan</a><a className="btn small sec" href={`/api/file?type=mail&id=${m.id}&part=content`}>Download</a></div> : m.status === 'scan_requested' ? <span className="pill warn">Scan requested</span> : <span className="muted">Not opened</span>}</td>
+            ? <Preview src={`/api/file?type=mail&id=${m.id}&view=1`} title={`Envelope from ${m.sender || 'sender'}`}><img src={`/api/file?type=mail&id=${m.id}&view=1`} alt={`Envelope from ${m.sender || 'sender'}`} style={{ height: 64, maxWidth: 120, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--line)', display: 'block', marginBottom: 6 }} /></Preview>
+            : <div><Preview src={`/api/file?type=mail&id=${m.id}&view=1`} pdf title="Envelope">View envelope</Preview></div>)}
+          {m.content_path ? <div className="row" style={{ gap: 6 }}><Preview className="btn small" src={`/api/file?type=mail&id=${m.id}&part=content&view=1`} pdf title={`Scan: ${m.sender || 'mail'}`}>View scan</Preview><a className="btn small sec" href={`/api/file?type=mail&id=${m.id}&part=content`}>Download</a></div> : m.status === 'scan_requested' ? <span className="pill warn">Scan requested</span> : <span className="muted">Not opened</span>}</td>
         <td>{['received', 'scanned', 'held', 'scan_requested'].includes(m.status) ? <form action={requestAction} className="stack" style={{ gap: 6 }}>
           <input type="hidden" name="id" value={m.id} />
           {!m.content_path && m.status !== 'scan_requested' && <button className="btn small" name="action" value="scan">Open &amp; scan to portal</button>}

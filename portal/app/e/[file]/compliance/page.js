@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import Shell, { EntityTabs } from '@/components/Shell';
 import UploadForm from '@/components/UploadForm';
+import Preview from '@/components/Preview';
 import { requireUser, getEntity } from '@/lib/auth';
 import { canActFor, upsertCmra, maybeSubmit } from '@/lib/compliance';
 import { PRIMARY_IDS, SECONDARY_IDS, CMRA_STATUS, WITNESS, fmtDay } from '@/lib/labels';
@@ -112,11 +113,11 @@ export default async function Compliance({ params, searchParams }) {
       </div> : <form action={phoneLink}><H name="entity_id" value={e.id} /><H name="file" value={e.file_number} />
         <p className="muted">Fastest way: we show you a QR code, you scan it with your phone, and your camera opens to take each photo. Nothing to download.</p>
         <button className="btn">Show QR code</button></form>}
-      <p className="muted" style={{ marginTop: 10 }}>Photos received: {[['id1', 'photo ID front'], ['id1_back', 'back'], ['id2', 'address ID']].map(([k, l]) => a[`${k}_path`] ? <a key={k} style={{ marginRight: 10 }} href={`/api/file?type=compliance&id=${e.id}&part=${k}&view=1`} target="_blank" rel="noopener noreferrer">✓ {l}</a> : <span key={k} style={{ marginRight: 10 }}>○ {l}</span>)}</p>
+      <p className="muted" style={{ marginTop: 10 }}>Photos received: {[['id1', 'photo ID front'], ['id1_back', 'back'], ['id2', 'address ID']].map(([k, l]) => a[`${k}_path`] ? <Preview key={k} style={{ marginRight: 10 }} src={`/api/file?type=compliance&id=${e.id}&part=${k}&view=1`} pdf title="Document">✓ {l}</Preview> : <span key={k} style={{ marginRight: 10 }}>○ {l}</span>)}</p>
     </section>}
 
     {['id1', 'id2'].map((w, i) => <Step key={w} n={i + 2} done={!!a[`${w}_path`]} title={i === 0 ? 'Photo ID (primary)' : 'Second ID showing your home address'}>
-      {a[`${w}_path`] && <p className="muted">On file: {a[`${w}_type`]}{a[`${w}_expires`] ? `, expires ${fmtDay(a[`${w}_expires`] + 'T12:00:00')}` : ''} · <a href={`/api/file?type=compliance&id=${e.id}&part=${w}&view=1`} target="_blank" rel="noopener noreferrer">View</a></p>}
+      {a[`${w}_path`] && <p className="muted">On file: {a[`${w}_type`]}{a[`${w}_expires`] ? `, expires ${fmtDay(a[`${w}_expires`] + 'T12:00:00')}` : ''} · <Preview src={`/api/file?type=compliance&id=${e.id}&part=${w}&view=1`} pdf title="Document">View</Preview></p>}
       {!ro && <UploadForm bucket="compliance" entityId={e.id} action={saveId} submitLabel="Save ID details">
         <H name="entity_id" value={e.id} /><H name="which" value={w} />
         <label>Type of ID<select name="type" defaultValue={a[`${w}_type`] || ''}><option value="" disabled>Choose…</option>{(i === 0 ? PRIMARY_IDS : SECONDARY_IDS).map(t => <option key={t}>{t}</option>)}</select></label>
@@ -126,11 +127,11 @@ export default async function Compliance({ params, searchParams }) {
     </Step>)}
 
     <Step n="4" done={!!a.form_path || a.witness_method === 'in_person'} title="Sign your pre-filled USPS Form 1583">
-      <p>We fill in the latest official USPS form with your details: <a className="btn small" href={`/api/cmra/form?entity=${e.id}`} target="_blank" rel="noopener noreferrer">Open my pre-filled Form 1583</a></p>
+      <p>We fill in the latest official USPS form with your details: <Preview className="btn small" src={`/api/cmra/form?entity=${e.id}`} pdf title="Your pre-filled PS Form 1583">Open my pre-filled Form 1583</Preview></p>
       <p className="muted">Check it, print it, and <strong>don't sign until you are in front of the notary</strong> (or our staff). Bring both original IDs.</p>
       <ul><li><strong>Notary near you or online notary (RON):</strong> sign in front of the notary, then upload the notarized form below.</li>
         <li><strong>In person at our Florida office:</strong> bring the printed form and both original IDs; you'll sign in front of our staff.</li></ul>
-      {a.form_path && <p className="muted">Signed form on file · <a href={`/api/file?type=compliance&id=${e.id}&part=form&view=1`} target="_blank" rel="noopener noreferrer">View</a></p>}
+      {a.form_path && <p className="muted">Signed form on file · <Preview src={`/api/file?type=compliance&id=${e.id}&part=form&view=1`} pdf title="Document">View</Preview></p>}
       {!ro && <UploadForm bucket="compliance" entityId={e.id} action={saveForm} submitLabel="Upload notarized form">
         <H name="entity_id" value={e.id} />
         <label>Notarized PS Form 1583 (PDF)<input name="file" type="file" accept="application/pdf,image/*" /></label>
