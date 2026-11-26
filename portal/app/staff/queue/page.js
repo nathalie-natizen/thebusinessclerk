@@ -37,6 +37,7 @@ export default async function Queue() {
   const { data: mail } = await sb.from('mail_items').select('*, entities(file_number, legal_name, mail_preferences(*))').in('status', ['forward_requested', 'shred_requested']).order('received_at');
   const { data: cmra } = await sb.from('cmra_applications').select('entity_id, applicant_name, witness_method, submitted_at, entities(file_number, legal_name)').eq('status', 'submitted').order('submitted_at');
   const { data: scans } = await sb.from('mail_items').select('*, entities(id, file_number, legal_name)').eq('status', 'scan_requested').order('received_at');
+  const { data: expired } = await sb.from('mail_items').select('*, entities(file_number, legal_name)').eq('status', 'received').eq('category', 'general').lt('hold_notice_at', new Date(Date.now() - 15 * 864e5).toISOString()).order('received_at');
   return (<Shell profile={profile}>
     <h1>Queue</h1>
     <h2>Forward and shred requests</h2>
@@ -50,8 +51,14 @@ export default async function Queue() {
           {m.status === 'forward_requested' ? <><select name="carrier" defaultValue={['courier_overnight'].includes(m.forward_shipping) ? 'UPS' : 'USPS'} style={{ width: 'auto' }}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" placeholder="Tracking #" /><input name="postage" placeholder="Postage $" inputMode="decimal" style={{ maxWidth: 110 }} /><button className="btn small" name="status" value="forwarded">Mark forwarded</button></> : <button className="btn small" name="status" value="shredded">Mark shredded</button>}
         </form></td></tr>; })}
     </tbody></table></div>}
+    {expired?.length > 0 && <><h2>Ready to shred (no instruction after notice)</h2>
+      <p className="muted">Ordinary mail held 30 days with no instruction; the client was notified and 15 more days passed. Checks, legal papers and packages never appear here.</p>
+      <div className="scroll"><table><thead><tr><th>File #</th><th>Item</th><th>Notice sent</th><th>Done</th></tr></thead><tbody>{expired.map(m => <tr key={m.id}>
+        <td><Link className="file" href={`/staff/e/${m.entities.file_number}`}>{m.entities.file_number}</Link><div className="muted">{m.entities.legal_name}</div></td>
+        <td>{m.sender || 'Unknown sender'}<div className="muted">received {fmtDate(m.received_at)}</div></td><td>{fmtDate(m.hold_notice_at)}</td>
+        <td><form action={complete}><input type="hidden" name="id" value={m.id} /><button className="btn small" name="status" value="shredded">Mark shredded</button></form></td></tr>)}</tbody></table></div></>}
     <h2>Form 1583 to review</h2>
-    {!cmra?.length ? <p className="muted">Nothing to review.</p> : <ul>{cmra.map(c => <li key={c.entity_id}><Link className="file" href={`/staff/e/${c.entities.file_number}`}>{c.entities.file_number}</Link> {c.entities.legal_name} · {c.applicant_name} · {c.witness_method === 'notary' ? 'notarized form uploaded' : `schedule ${c.witness_method === 'video' ? 'video call' : 'office visit'}`} · submitted {fmtDate(c.submitted_at)}</li>)}</ul>}
+    {!cmra?.length ? <p className="muted">Nothing to review.</p> : <ul>{cmra.map(c => <li key={c.entity_id}><Link className="file" href={`/staff/e/${c.entities.file_number}`}>{c.entities.file_number}</Link> {c.entities.legal_name} · {c.applicant_name} · {c.witness_method === 'in_person' ? 'sign in person: schedule an office visit' : c.witness_method === 'ron' ? 'online notary form uploaded' : 'notarized form uploaded'} · submitted {fmtDate(c.submitted_at)}</li>)}</ul>}
     <h2>Scan requests</h2>
     {!scans?.length ? <p className="muted">Nothing to scan.</p> : <div className="grid">{scans.map(m => <div className="card" key={m.id}>
       <Link className="file" href={`/staff/e/${m.entities.file_number}`}>{m.entities.file_number}</Link> <strong>{m.entities.legal_name}</strong>

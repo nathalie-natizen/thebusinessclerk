@@ -30,5 +30,13 @@ export async function GET(req) {
       reminded++;
     }
   }
-  return NextResponse.json({ autoApproved: (data || []).length, reminded });
+  // Mail held 30 days with no instruction: one notice per company; staff may shred ordinary mail 15 days later (Mail queue)
+  const db2 = supabaseAdmin();
+  const { data: old } = await db2.from('mail_items').select('id, entity_id').eq('status', 'received').eq('category', 'general').is('hold_notice_at', null).lt('received_at', new Date(Date.now() - 30 * 864e5).toISOString());
+  const byEnt = {}; for (const m of old || []) (byEnt[m.entity_id] ||= []).push(m.id);
+  for (const [eid, ids] of Object.entries(byEnt)) {
+    await notifyEntity(eid, { subject: 'Mail waiting for your instructions', text: `You have ${ids.length} mail item${ids.length > 1 ? 's' : ''} we've held for 30 days with no instruction. Please choose scan, forward, shred or hold in your portal within 15 days. After that, ordinary mail may be shredded (never checks, legal papers or packages).\n\n${APP}/dashboard`, sms: `THE BUSINESS CLERK: ${ids.length} mail item(s) need your instructions within 15 days:` });
+    await db2.from('mail_items').update({ hold_notice_at: new Date().toISOString() }).in('id', ids);
+  }
+  return NextResponse.json({ autoApproved: (data || []).length, reminded, holdNotices: Object.keys(byEnt).length });
 }
