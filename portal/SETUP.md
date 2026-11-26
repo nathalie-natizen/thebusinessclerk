@@ -15,7 +15,7 @@ Live at **https://app.thebusinessclerk.com** (Vercel). Clients sign in with the 
 ## 2. Stripe (payments, card on file, subscriptions)
 1. Create the account for THE BUSINESS CLERK LLC and finish business verification.
 2. **Product catalog:** create the products and copy each Price ID:
-   Registered Agent $49/year (recurring) · Business Address & Mail $20/month (recurring) · Florida LLC Formation $213 · Florida Corporation Formation $158 · Annual Report Filing $100 · EIN Application $75 · Launch Pack $350.
+   Registered Agent $49/year (recurring) · Business Address & Mail $20/month (recurring) · Florida LLC Formation $213 · Florida Corporation Formation $158 · Annual Report Filing $100 · EIN Application $75 · Launch Pack $599.
 3. **Settings → Billing → Customer portal:** turn on update payment method, view invoices, cancel subscriptions.
 4. **Developers → Webhooks → Add endpoint:** `https://app.thebusinessclerk.com/api/stripe/webhook` with events `checkout.session.completed` and `customer.subscription.deleted`. Copy the signing secret.
 5. Website "buy" links: `https://app.thebusinessclerk.com/api/stripe/checkout?product=llc` (also `corp`, `ra`, `mail`, `annual_report`, `ein`, `launch`).

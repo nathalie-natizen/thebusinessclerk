@@ -20,7 +20,7 @@ module.exports = {
     scanPages: 10,         // pages included per scan
     scanPage: '0.25',      // per extra page
     scanLevels: [['Pay as you go', 0, 0, '2.50'], ['Scan 10', 19, 10, '2.25'], ['Scan 25', 39, 25, '2.00'], ['Scan 50', 69, 50, '1.75'], ['Scan 100', 119, 100, '1.50']],
-    launch: 350,           // Launch Pack: name & trademark search, domain, email, website up to 5 pages
+    launch: 599,           // Launch Pack: name & trademark search, domain, email, website up to 5 pages
   },
   alaCarte: [
     ["EIN application", 75, "ein"],
