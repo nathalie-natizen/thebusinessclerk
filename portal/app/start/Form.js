@@ -13,14 +13,13 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
   const existing = !formation && service !== 'mail' && service !== 'launch';
   const hasMail = service === 'mail' || (formation && addons.mail);
   const hasEin = service === 'ein' || (formation && addons.ein);
-  const R = <span style={{ color: '#B3261E' }}> *</span>;
+  const R = ' *';
   return (<form className="stack" action={action}>
-    <input type="hidden" name="lang" value={lang} /><input type="hidden" name="ts" value={String(Date.now())} />
+    <input type="hidden" name="lang" value={lang} />
     <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }} />
     {state?.error && state.error !== 'spam' && <p className="err">{t.err}</p>}
 
-    <h2 style={{ marginTop: 0 }}>{t.service}</h2>
-    <label>{t.service}{R}<select name="service" value={service} onChange={e => setService(e.target.value)}>{Object.entries(t.s).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+    <label style={{ fontSize: 20, fontWeight: 700 }}>{t.service}<select name="service" value={service} onChange={e => setService(e.target.value)}>{Object.entries(t.s).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
     {formation && <fieldset className="stack" style={{ border: 0, padding: 0, margin: 0 }}><legend style={{ fontWeight: 700, marginBottom: 6 }}>{t.addons}</legend>
       {Object.entries(t.a).map(([k, l]) => <label key={k} style={{ display: 'flex', gap: 10, fontWeight: 400 }}><input type="checkbox" name={'addon_' + k} checked={!!addons[k]} onChange={e => setAddons({ ...addons, [k]: e.target.checked })} style={{ minHeight: 'auto' }} />{l}</label>)}
     </fieldset>}

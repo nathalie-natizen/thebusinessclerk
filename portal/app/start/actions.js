@@ -9,8 +9,8 @@ const FORMATION = ['llc', 'corp'];
 const clip = (v, n = 200) => String(v ?? '').trim().slice(0, n);
 
 export async function submitIntake(_prev, fd) {
-  // Simple spam protection: hidden field must be empty and the form must have been open a few seconds
-  if (fd.get('website') || Date.now() - Number(fd.get('ts') || 0) < 3000) return { error: 'spam' };
+  // Simple spam protection: a hidden field people never see must stay empty
+  if (fd.get('website')) return { error: 'spam' };
   const lang = ['en', 'pt', 'es'].includes(fd.get('lang')) ? fd.get('lang') : 'en';
   const service = String(fd.get('service'));
   if (!KINDS[service]) return { error: 'required' };
