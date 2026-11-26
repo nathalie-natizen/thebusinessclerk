@@ -3,7 +3,9 @@ import { revalidatePath } from 'next/cache';
 import Shell from '@/components/Shell';
 import OrderDetails from '@/components/OrderDetails';
 import { requireStaff } from '@/lib/auth';
-import { setOrderStatus } from '@/lib/orders';
+import { setOrderStatus, logRevision } from '@/lib/orders';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import { revisions, STAFF_STEPS } from '@/lib/guidelines';
 import { PIPELINE, KINDS, STAFF_STATUSES, fmtDate } from '@/lib/labels';
 
 async function move(fd) {
@@ -12,6 +14,15 @@ async function move(fd) {
   const status = String(fd.get('status'));
   if (!STAFF_STATUSES.some(([k]) => k === status)) return;
   await setOrderStatus({ orderId: String(fd.get('order_id')), status, note: String(fd.get('note') || '').trim().slice(0, 500) || null, notify: fd.get('notify') === 'on', userId: user.id });
+  revalidatePath('/staff/pipeline');
+}
+
+async function staffRevision(fd) {
+  'use server';
+  const { user } = await requireStaff();
+  const { data: o } = await supabaseAdmin().from('orders').select('*').eq('id', String(fd.get('order_id'))).single();
+  if (!o || o.kind !== 'launch') return;
+  await logRevision({ order: o, text: String(fd.get('note') || '').trim().slice(0, 2000) || 'Requested by phone/email', by: 'staff', userId: user.id });
   revalidatePath('/staff/pipeline');
 }
 
@@ -38,6 +49,12 @@ export default async function Pipeline({ searchParams }) {
             <div style={{ fontWeight: 700, marginTop: 6 }}>{o.entities?.legal_name}</div>
             <div>{o.service}</div>
             <div className="muted" style={{ fontSize: 13 }}>{o.source === 'website' ? 'Website' : 'Staff'} · opened {fmtDate(o.created_at)} · {days(o.created_at)}d</div>
+            {o.kind === 'launch' && (() => { const r = revisions(o.details); return <div style={{ marginTop: 6 }}>
+              <span className={`pill ${r.used >= r.allowed ? 'urgent' : ''}`}>{r.used ? `Revision ${r.used} of ${r.allowed}` : 'No revisions yet'} · {r.allowed - r.used} left</span>
+              {r.used < r.allowed && <details style={{ marginTop: 4 }}><summary style={{ cursor: 'pointer', fontSize: 14 }}>Log revision (phone/email request)</summary>
+                <form action={staffRevision} className="stack" style={{ gap: 6, marginTop: 6 }}><input type="hidden" name="order_id" value={o.id} /><input name="note" placeholder="What the client asked for" required /><button className="btn small sec">Log revision {r.used + 1} of {r.allowed}</button></form></details>}
+            </div>; })()}
+            {STAFF_STEPS[o.kind] && <details style={{ margin: '6px 0' }}><summary style={{ cursor: 'pointer', fontSize: 14 }}>Staff steps</summary><ol style={{ fontSize: 14, paddingLeft: 18, margin: '6px 0' }}>{STAFF_STEPS[o.kind].map(([st, txt], i) => <li key={i}><strong>{st}:</strong> {txt}</li>)}</ol></details>}
             <OrderDetails d={o.details} kind={o.kind} orderId={o.id} />
             <form action={move} className="stack" style={{ gap: 6, marginTop: 8 }}>
               <input type="hidden" name="order_id" value={o.id} />

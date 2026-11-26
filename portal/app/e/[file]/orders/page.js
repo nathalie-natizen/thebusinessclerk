@@ -5,6 +5,7 @@ import { requireUser, getEntity } from '@/lib/auth';
 import { fmtDate, statusLabel, KINDS } from '@/lib/labels';
 import { savedCard, priceFor, chargeOnFile, createPaidOrder } from '@/lib/charge';
 import { needsQuestionnaire } from '@/lib/questionnaires';
+import ServiceTerms from '@/components/ServiceTerms';
 
 const ORDERABLE = [['annual_report', 'Annual report filing'], ['ein', 'EIN application'], ['ra', 'Registered agent'], ['mail', 'Business address & mail'], ['launch', 'Launch Pack']];
 const money = c => '$' + (c / 100).toFixed(2).replace(/\.00$/, '');
@@ -13,7 +14,7 @@ async function placeOrder(fd) {
   'use server';
   const { sb } = await requireUser();
   const file = String(fd.get('file')); const kind = String(fd.get('kind'));
-  if (!KINDS[kind]) return;
+  if (!KINDS[kind] || fd.get('service_terms') !== 'on') return;
   const e = await getEntity(sb, file); if (!e) return; // RLS: only this company's people
   const r = await chargeOnFile(e, kind);
   if (!r.ok) redirect(r.reason === 'no_card' ? `/api/stripe/checkout?product=${kind}&entity=${file}` : `/e/${file}/orders?declined=1`);
@@ -37,9 +38,16 @@ export default async function Orders({ params, searchParams }) {
       <h3>Confirm your order: {KINDS[pick].name}</h3>
       {card && price ? <form action={placeOrder} className="stack">
         <input type="hidden" name="file" value={e.file_number} /><input type="hidden" name="kind" value={pick} />
+      <ServiceTerms kinds={[pick]} names={{ [pick]: KINDS[pick].name }} />
+      <label style={{ display: 'flex', gap: 10, fontWeight: 400, alignItems: 'flex-start' }}><input type="checkbox" name="service_terms" required style={{ minHeight: 'auto', marginTop: 4 }} /><span>I have read and agree to the terms for this service.</span></label>
         <p><strong>{money(price.unit_amount)}{price.recurring ? ` per ${price.recurring.interval}` : ''}</strong> will be charged now to {card.brand.toUpperCase()} ending {card.last4}{price.recurring ? ', renewing automatically until you cancel' : ''}.{['annual_report'].includes(pick) ? ' The Florida state fee is charged separately when we file.' : ''}</p>
         <div className="row" style={{ gap: 8 }}><button className="btn" style={{ flex: '0 0 auto' }}>Pay {money(price.unit_amount)} and order</button><Link className="btn sec" style={{ flex: '0 0 auto' }} href={`/e/${e.file_number}/orders`}>Cancel</Link></div>
-      </form> : <p>You'll enter a card on the secure Stripe page. <a className="btn small" href={`/api/stripe/checkout?product=${pick}&entity=${e.file_number}`}>Continue to payment</a> <Link href={`/e/${e.file_number}/orders`}>Cancel</Link></p>}
+      </form> : <form method="get" action="/api/stripe/checkout" className="stack">
+        <input type="hidden" name="product" value={pick} /><input type="hidden" name="entity" value={e.file_number} />
+      <ServiceTerms kinds={[pick]} names={{ [pick]: KINDS[pick].name }} />
+      <label style={{ display: 'flex', gap: 10, fontWeight: 400, alignItems: 'flex-start' }}><input type="checkbox" name="service_terms" required style={{ minHeight: 'auto', marginTop: 4 }} /><span>I have read and agree to the terms for this service.</span></label>
+        <p>You'll enter a card on the secure Stripe page. <button className="btn small">Continue to payment</button> <Link href={`/e/${e.file_number}/orders`}>Cancel</Link></p>
+      </form>}
     </section> : <section className="card" style={{ marginBottom: 18 }}><h3>Order a service for this company</h3>
       <p className="muted">Charged to this company's card on file after you confirm.</p>
       <p>{ORDERABLE.filter(([k]) => !(k === 'ra' && e.registered_agent) && !(k === 'mail' && e.mail_service)).map(([k, label]) => <Link key={k} className="btn sec small" style={{ marginRight: 8, marginBottom: 8 }} href={`/e/${e.file_number}/orders?order=${k}`}>{label}</Link>)}</p>

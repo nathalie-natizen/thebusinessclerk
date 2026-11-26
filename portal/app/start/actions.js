@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { stripe } from '@/lib/stripe';
 import { KINDS } from '@/lib/labels';
 import { needsQuestionnaire } from '@/lib/questionnaires';
+import { GUIDELINES_VERSION } from '@/lib/guidelines';
 
 const FORMATION = ['llc', 'corp'];
 const clip = (v, n = 200) => String(v ?? '').trim().slice(0, n);
@@ -18,7 +19,7 @@ export async function submitIntake(_prev, fd) {
   const addons = FORMATION.includes(service) ? ['ein', 'mail', 'launch'].filter(k => fd.get('addon_' + k) === 'on') : [];
   const g = k => clip(fd.get(k));
   const email = g('email').toLowerCase();
-  if (!g('contact_name') || !/^\S+@\S+\.\S+$/.test(email) || !g('company') || fd.get('terms') !== 'on') return { error: 'required' };
+  if (!g('contact_name') || !/^\S+@\S+\.\S+$/.test(email) || !g('company') || fd.get('terms') !== 'on' || fd.get('service_terms') !== 'on') return { error: 'required' };
   if (FORMATION.includes(service) && (!g('p1_name') || !g('name2') || !g('signer'))) return { error: 'required' };
 
   const people = [1, 2, 3, 4].map(i => ({ name: g(`p${i}_name`), title: g(`p${i}_title`), address: g(`p${i}_address`, 300) })).filter(p => p.name);
@@ -29,7 +30,7 @@ export async function submitIntake(_prev, fd) {
     effective_date: g('effective_date', 10), signer: g('signer'), mailing_address: g('mailing_address'), sunbiz_doc_number: g('doc'), purpose: g('purpose', 300),
     principal_address: useOurs ? 'Use THE BUSINESS CLERK office address' : [g('line1'), g('line2'), g('city'), g('state'), g('postal'), g('country')].filter(Boolean).join(', '),
     people, contact: { name: g('contact_name'), email, phone: g('phone', 40), language: lang }, notes: g('notes', 2000),
-    ip: headers().get('x-forwarded-for')?.split(',')[0] || null, submitted_at: new Date().toISOString(), terms_accepted: true,
+    ip: headers().get('x-forwarded-for')?.split(',')[0] || null, submitted_at: new Date().toISOString(), terms_accepted: true, service_terms_version: GUIDELINES_VERSION,
   };
 
   const db = supabaseAdmin();
@@ -46,7 +47,7 @@ export async function submitIntake(_prev, fd) {
   const canPay = !!process.env.STRIPE_SECRET_KEY && kinds.every(k => process.env[KINDS[k].env]);
   const orders = [];
   for (const k of kinds) {
-    const { data: o } = await db.from('orders').insert({ entity_id: entity.id, kind: k, service: KINDS[k].name, status: canPay ? 'awaiting_payment' : needsQuestionnaire(k) ? 'information_needed' : 'received', source: 'website', details: k === service ? details : { parent_service: service } }).select().single();
+    const { data: o } = await db.from('orders').insert({ entity_id: entity.id, kind: k, service: KINDS[k].name, status: canPay ? 'awaiting_payment' : needsQuestionnaire(k) ? 'information_needed' : 'received', source: 'website', details: k === service ? details : { parent_service: service, service_terms_version: GUIDELINES_VERSION } }).select().single();
     await db.from('order_events').insert({ order_id: o.id, status: o.status, note: o.status === 'information_needed' ? 'Order placed. Please complete the short questionnaire in your portal so we can start.' : 'Order placed on the website.' });
     orders.push(o);
   }

@@ -250,12 +250,12 @@ pages.push(servicePage({
 - **Professional email** with **Google Workspace** or **Microsoft 365**, your choice, with SPF, DKIM and DMARC configured so your email reaches inboxes
 - **Website of up to 5 pages** from a professional template, with your logo, services and contact form
 - **Mobile-friendly design**, SSL and basic SEO setup
-- **One round of revisions**
+- **Up to 2 revisions** (each revision is one round of changes, as many as you like)
 - **Handover**: every account is in your name and you keep full control
 ## You own your accounts
 We set things up with you on a screen-share. You create the accounts and add your own payment method, so domain, email and hosting bills go straight to the provider. No lock-in, no markup on third-party costs.
 > Our trademark search is a basic availability check, not legal advice or a trademark registration. For a full clearance search or to file a trademark, we refer you to a trademark attorney.`,
-  aside: rel => priceCard('Launch Pack', `$${P.launch}`, 'one time', ['Name & trademark search', 'Domain research & setup', 'Google Workspace or Microsoft 365 email', 'Website up to 5 pages', 'Everything in your name'], 'get-started.html', 'Launch my business', rel),
+  aside: rel => priceCard('Launch Pack', `$${P.launch}`, 'one time', ['Name & trademark search', 'Domain research & setup', 'Google Workspace or Microsoft 365 email', 'Website up to 5 pages', 'Up to 2 revisions', 'Everything in your name'], 'get-started.html', 'Launch my business', rel),
 }));
 
 // ---------- International ----------
@@ -305,7 +305,7 @@ pages.push(servicePage({
 - Forwarding: **$${P.mailForward} per item** + postage at cost · Packages: **$${P.mailPackage}** each
 - Open & scan to your portal: **$1.50–$2.50 per item** (up to ${P.scanPages} pages); the lowest rate for your monthly volume is applied automatically. [See scan pricing](business-address-mail.html)
 ## Launch
-- **Launch Pack: from $${P.launch}** (name and trademark search, domain, professional email, website up to 5 pages). Third-party costs paid directly by you.
+- **Launch Pack: from $${P.launch}** (name and trademark search, domain, professional email, website up to 5 pages, up to 2 revisions). Third-party costs paid directly by you.
 ## Individual filings
 Service fee shown; Florida state fees are additional.`,
   extra: rel => `<div class="scroll"><table class="stack"><thead><tr><th>Filing</th><th class="n">Our fee</th></tr></thead><tbody>${C.alaCarte.map(([n, p]) => `<tr><td>${n}</td><td class="n">${typeof p === "number" ? "$" + p : p}</td></tr>`).join('')}</tbody></table></div><p style="margin-top:16px;color:var(--soft)">See our <a href="${rel}refund-policy.html">refund policy</a>. Prices may change; the price shown when you order is the price you pay.</p>`,

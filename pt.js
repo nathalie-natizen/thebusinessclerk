@@ -151,7 +151,7 @@ const pricing = servicePage({
 - Abrir e digitalizar para o seu portal: **de US$ 1,50 a US$ 2,50 por item** (até ${P.scanPages} páginas; US$ ${P.scanPage.replace(".", ",")} por página extra). Você não escolhe plano: no fim do mês aplicamos automaticamente o menor preço para o seu volume.
 - Fragmentar: grátis. Documentos legais e avisos do estado (agente registrado) são sempre abertos e digitalizados sem custo.
 ## Lançamento
-- **Pacote de lançamento: a partir de ${$(P.launch)}** (pesquisa de nome e marca, domínio, e-mail profissional com Google Workspace ou Microsoft 365 e site de até 5 páginas). Custos de terceiros pagos diretamente por você.
+- **Pacote de lançamento: a partir de ${$(P.launch)}** (pesquisa de nome e marca, domínio, e-mail profissional com Google Workspace ou Microsoft 365 e site de até 5 páginas, até 2 revisões). Custos de terceiros pagos diretamente por você.
 ## Outros registros
 Taxa de serviço; as taxas do estado da Flórida são cobradas à parte.
 - Troca de agente registrado: **US$ 0** ao nos contratar como agente

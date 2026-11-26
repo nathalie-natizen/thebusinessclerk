@@ -151,7 +151,7 @@ const pricing = servicePage({
 - Abrir y escanear a tu portal: **de US$ 1,50 a US$ 2,50 por artículo** (hasta ${P.scanPages} páginas; US$ ${P.scanPage.replace(".", ",")} por página adicional). No eliges plan: al cierre del mes aplicamos automáticamente el precio más bajo para tu volumen.
 - Destruir: gratis. Los documentos legales y avisos del estado (agente registrado) siempre se abren y escanean sin costo.
 ## Lanzamiento
-- **Paquete de lanzamiento: desde ${$(P.launch)}** (búsqueda de nombre y marca, dominio, correo profesional con Google Workspace o Microsoft 365 y sitio web de hasta 5 páginas). Los costos de terceros los pagas directamente.
+- **Paquete de lanzamiento: desde ${$(P.launch)}** (búsqueda de nombre y marca, dominio, correo profesional con Google Workspace o Microsoft 365 y sitio web de hasta 5 páginas, hasta 2 revisiones). Los costos de terceros los pagas directamente.
 ## Otros trámites
 Tarifa de servicio; las tarifas del estado de Florida se cobran aparte.
 - Cambio de agente registrado: **US$ 0** al contratarnos como agente

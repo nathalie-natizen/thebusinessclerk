@@ -42,7 +42,7 @@ export const SHIPPING_SHORT = { first_class: 'USPS First-Class', priority: 'USPS
 
 // Status label with the right agency for the service
 export const statusLabel = (status, kind) => status === 'submitted'
-  ? (kind === 'ein' ? 'Submitted to the IRS' : ['llc', 'corp', 'annual_report', 'amendment', 'ra_change'].includes(kind) ? 'Submitted to the State of Florida' : 'In progress')
+  ? (kind === 'launch' ? 'Delivered for your review' : kind === 'ein' ? 'Submitted to the IRS' : ['llc', 'corp', 'annual_report', 'amendment', 'ra_change'].includes(kind) ? 'Submitted to the State of Florida' : 'In progress')
   : ORDER_STATUS[status] || status;
 
 // Pipeline columns, in order

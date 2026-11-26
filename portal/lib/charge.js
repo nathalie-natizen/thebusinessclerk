@@ -3,6 +3,7 @@ import { stripe } from './stripe';
 import { supabaseAdmin } from './supabase/admin';
 import { KINDS } from './labels';
 import { needsQuestionnaire } from './questionnaires';
+import { GUIDELINES_VERSION } from './guidelines';
 
 // The company's saved card (null if none)
 export async function savedCard(customerId) {
@@ -22,7 +23,7 @@ export async function priceFor(kind) {
 export async function createPaidOrder(entity, kind, { amount = null, source = 'portal', ref = null } = {}) {
   const db = supabaseAdmin();
   const status = needsQuestionnaire(kind) ? 'information_needed' : 'received';
-  const { data: o } = await db.from('orders').insert({ entity_id: entity.id, kind, service: KINDS[kind].name, status, source, stripe_session_id: ref, amount_cents: amount }).select().single();
+  const { data: o } = await db.from('orders').insert({ entity_id: entity.id, kind, service: KINDS[kind].name, status, source, stripe_session_id: ref, amount_cents: amount, details: { service_terms_version: GUIDELINES_VERSION } }).select().single();
   await db.from('order_events').insert({ order_id: o.id, status, note: status === 'information_needed' ? 'Payment received. Please complete the short questionnaire so we can start.' : 'Payment received. We’re starting on it.' });
   if (kind === 'ra') await db.from('entities').update({ registered_agent: true }).eq('id', entity.id);
   if (kind === 'mail') await db.from('entities').update({ mail_service: true }).eq('id', entity.id);

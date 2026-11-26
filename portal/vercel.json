@@ -7,6 +7,10 @@
     {
       "path": "/api/billing/close-month",
       "schedule": "0 12 1 * *"
+    },
+    {
+      "path": "/api/ops/daily",
+      "schedule": "0 13 * * *"
     }
   ]
 }

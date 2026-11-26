@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { submitIntake } from './actions';
+import ServiceTerms from '@/components/ServiceTerms';
+import { headings } from '@/lib/guidelines';
 
 function Submit({ label }) { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? '…' : label}</button>; }
 
@@ -70,6 +72,10 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
     <label>{t.email}{R}<input name="email" type="email" required autoComplete="email" /></label>
     <label>{t.phone}<input name="phone" type="tel" autoComplete="tel" /></label>
     <label>{t.notes}<textarea name="notes" rows={3} maxLength={2000} /></label>
+    {(() => { const chosen = [service, ...(formation ? Object.keys(addons).filter(k => addons[k]) : [])]; const h = headings(lang);
+      const names = { ...Object.fromEntries(chosen.filter(k => t.a[k]).map(k => [k, t.a[k]])), [service]: t.s[service] };
+      return <><h2>{h.title}</h2><ServiceTerms kinds={chosen} names={names} lang={lang} open={chosen.length < 3} />
+        <label style={{ display: 'flex', gap: 10, fontWeight: 400, alignItems: 'flex-start' }}><input type="checkbox" name="service_terms" required style={{ minHeight: 'auto', marginTop: 4 }} /><span>{h.ack}{R}</span></label></>; })()}
     <label style={{ display: 'flex', gap: 10, fontWeight: 400, alignItems: 'flex-start' }}><input type="checkbox" name="terms" required style={{ minHeight: 'auto', marginTop: 4 }} />
       <span>{t.terms} (<a href="https://thebusinessclerk.com/terms" target="_blank" rel="noopener">Terms</a> · <a href="https://thebusinessclerk.com/privacy" target="_blank" rel="noopener">Privacy</a>){R}</span></label>
     <Submit label={payReady ? t.submitPay : t.submit} />
