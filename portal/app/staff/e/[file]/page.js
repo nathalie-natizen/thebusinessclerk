@@ -225,7 +225,7 @@ export default async function StaffEntity({ params, searchParams }) {
       <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(ev => <li key={ev.id}><strong>{statusLabel(ev.status, o.kind)}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul></div>)}</div>
 
     <h2>Documents</h2>
-    {!docs?.length ? <p className="muted">No documents.</p> : <ul>{docs.map(d => <li key={d.id}><a href={`/api/file?type=document&id=${d.id}`}>{d.title}</a> <span className="muted">· {DOC_CATEGORY[d.category]} · {fmtDay(d.created_at)}</span></li>)}</ul>}
+    {!docs?.length ? <p className="muted">No documents.</p> : <ul>{docs.map(d => <li key={d.id}><a href={`/api/file?type=document&id=${d.id}&view=1`} target="_blank" rel="noopener noreferrer">{d.title}</a> (<a href={`/api/file?type=document&id=${d.id}`}>download</a>) <span className="muted">· {DOC_CATEGORY[d.category]} · {fmtDay(d.created_at)}</span></li>)}</ul>}
 
     <h2>Client access</h2>
     <ul>{(members || []).map(m => <li key={m.user_id}>{m.profiles?.email} {m.profiles?.phone && <span className="muted">· {m.profiles.phone}{m.profiles.sms_opt_in ? ' (texts on)' : ''}</span>} <form action={removeMember} style={{ display: 'inline' }}><input type="hidden" name="entity_id" value={e.id} /><input type="hidden" name="user_id" value={m.user_id} /><button className="btn small sec">Remove</button></form></li>)}
