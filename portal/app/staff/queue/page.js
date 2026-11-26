@@ -34,6 +34,7 @@ async function completeScan(fd) {
 export default async function Queue() {
   const { sb, profile } = await requireStaff();
   const { data: mail } = await sb.from('mail_items').select('*, entities(file_number, legal_name, mail_preferences(*))').in('status', ['forward_requested', 'shred_requested']).order('received_at');
+  const { data: cmra } = await sb.from('cmra_applications').select('entity_id, applicant_name, witness_method, submitted_at, entities(file_number, legal_name)').eq('status', 'submitted').order('submitted_at');
   const { data: scans } = await sb.from('mail_items').select('*, entities(id, file_number, legal_name)').eq('status', 'scan_requested').order('received_at');
   return (<Shell profile={profile}>
     <h1>Queue</h1>
@@ -48,6 +49,8 @@ export default async function Queue() {
           {m.status === 'forward_requested' ? <><select name="carrier" defaultValue={['courier_overnight'].includes(m.forward_shipping) ? 'UPS' : 'USPS'} style={{ width: 'auto' }}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" placeholder="Tracking #" /><input name="postage" placeholder="Postage $" inputMode="decimal" style={{ maxWidth: 110 }} /><button className="btn small" name="status" value="forwarded">Mark forwarded</button></> : <button className="btn small" name="status" value="shredded">Mark shredded</button>}
         </form></td></tr>; })}
     </tbody></table></div>}
+    <h2>Form 1583 to review</h2>
+    {!cmra?.length ? <p className="muted">Nothing to review.</p> : <ul>{cmra.map(c => <li key={c.entity_id}><Link className="file" href={`/staff/e/${c.entities.file_number}`}>{c.entities.file_number}</Link> {c.entities.legal_name} · {c.applicant_name} · {c.witness_method === 'notary' ? 'notarized form uploaded' : `schedule ${c.witness_method === 'video' ? 'video call' : 'office visit'}`} · submitted {fmtDate(c.submitted_at)}</li>)}</ul>}
     <h2>Scan requests</h2>
     {!scans?.length ? <p className="muted">Nothing to scan.</p> : <div className="grid">{scans.map(m => <div className="card" key={m.id}>
       <Link className="file" href={`/staff/e/${m.entities.file_number}`}>{m.entities.file_number}</Link> <strong>{m.entities.legal_name}</strong>

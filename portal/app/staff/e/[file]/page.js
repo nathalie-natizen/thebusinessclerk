@@ -8,7 +8,7 @@ import { notifyEntity } from '@/lib/notify';
 import { setOrderStatus } from '@/lib/orders';
 import { startTracking } from '@/lib/tracking';
 import OrderDetails from '@/components/OrderDetails';
-import { fmtDate, fmtDay, MAIL_CATEGORY, MAIL_STATUS, ORDER_STATUS, DOC_CATEGORY, HANDLING, statusLabel, KINDS, CARRIERS, TRACKING_STATUS } from '@/lib/labels';
+import { fmtDate, fmtDay, MAIL_CATEGORY, MAIL_STATUS, ORDER_STATUS, DOC_CATEGORY, HANDLING, statusLabel, KINDS, CARRIERS, TRACKING_STATUS, CMRA_STATUS, WITNESS } from '@/lib/labels';
 
 const clean = (v, n = 200) => String(v || '').trim().slice(0, n) || null;
 
@@ -125,6 +125,23 @@ async function setMailStatus(fd) {
   revalidatePath('/staff/e/[file]', 'page');
 }
 
+async function reviewCmra(fd) {
+  'use server';
+  const { sb, user } = await requireStaff();
+  const entity_id = String(fd.get('entity_id')); const status = String(fd.get('status'));
+  if (!CMRA_STATUS[status]) return;
+  const note = clean(fd.get('staff_note'), 1000);
+  const patch = { entity_id, status, staff_note: note, updated_at: new Date().toISOString() };
+  if (status === 'verified' || status === 'filed') Object.assign(patch, { verified_by: user.id, verified_at: new Date().toISOString() });
+  if (status === 'filed') patch.crd_filed_at = fd.get('crd_date') ? new Date(String(fd.get('crd_date')) + 'T12:00:00').toISOString() : new Date().toISOString();
+  if (fd.get('file_path')) patch.form_path = clean(fd.get('file_path'), 300);
+  await sb.from('cmra_applications').upsert(patch, { onConflict: 'entity_id' });
+  const msg = { needs_changes: ['Action needed: your USPS Form 1583', `Please update your Form 1583 information in your portal (Compliance tab).${note ? `\n\n${note}` : ''}`], verified: ['Your USPS Form 1583 is verified', 'Your identity and Form 1583 are verified. Thank you!'], filed: ['Your mail service is fully set up', 'Your Form 1583 has been filed with USPS. Your mail service is complete.'] }[status];
+  if (msg) await notifyEntity(entity_id, { subject: msg[0], text: msg[1], sms: `THE BUSINESS CLERK: ${msg[0]}.` });
+  revalidatePath('/staff/e/[file]', 'page');
+  return { message: 'Saved.' };
+}
+
 export default async function StaffEntity({ params, searchParams }) {
   const { sb, profile } = await requireStaff();
   const e = await getEntity(sb, params.file); if (!e) notFound();
@@ -137,6 +154,7 @@ export default async function StaffEntity({ params, searchParams }) {
     sb.from('mail_preferences').select('*').eq('entity_id', e.id).maybeSingle(),
     sb.from('entity_notes').select('notes').eq('entity_id', e.id).maybeSingle(),
   ]);
+  const { data: cmra } = await sb.from('cmra_applications').select('*').eq('entity_id', e.id).maybeSingle();
   const opts = o => Object.entries(o).map(([k, l]) => <option key={k} value={k}>{l}</option>);
   return (<Shell profile={profile}>
     <p><Link href="/staff">← All entities</Link></p>
@@ -169,6 +187,28 @@ export default async function StaffEntity({ params, searchParams }) {
         </UploadForm>
       </section>
     </div>
+
+    <h2>Compliance: USPS Form 1583</h2>
+    <section className="card" style={{ marginBottom: 18 }}>
+      <p>Status: <span className={`pill ${['verified', 'filed'].includes(cmra?.status) ? 'ok' : cmra?.status === 'submitted' ? 'warn' : ''}`}>{CMRA_STATUS[cmra?.status || 'not_started']}</span>{cmra?.witness_method && <span className="muted"> · Signing: {WITNESS[cmra.witness_method]}</span>}</p>
+      {cmra && <table style={{ fontSize: 14 }}><tbody>
+        <tr><th style={{ textAlign: 'left', width: 170 }}>Applicant</th><td>{cmra.applicant_name} · {cmra.applicant_email} · {cmra.applicant_phone}</td></tr>
+        <tr><th style={{ textAlign: 'left' }}>Home address</th><td>{cmra.home_address}</td></tr>
+        <tr><th style={{ textAlign: 'left' }}>Business</th><td>{cmra.business_name} · {cmra.business_type} · {cmra.registration_place}{cmra.business_address ? ` · ${cmra.business_address}` : ''}</td></tr>
+        {cmra.receivers && <tr><th style={{ textAlign: 'left' }}>Other receivers</th><td>{cmra.receivers}</td></tr>}
+        <tr><th style={{ textAlign: 'left' }}>Photo ID</th><td>{cmra.id1_path ? <><a href={`/api/file?type=compliance&id=${e.id}&part=id1`}>{cmra.id1_type}</a> · {cmra.id1_issuer} · exp. {cmra.id1_expires || '—'}</> : 'Missing'}</td></tr>
+        <tr><th style={{ textAlign: 'left' }}>Address ID</th><td>{cmra.id2_path ? <><a href={`/api/file?type=compliance&id=${e.id}&part=id2`}>{cmra.id2_type}</a> · {cmra.id2_issuer} · exp. {cmra.id2_expires || '—'}</> : 'Missing'}</td></tr>
+        <tr><th style={{ textAlign: 'left' }}>Signed form</th><td>{cmra.form_path ? <a href={`/api/file?type=compliance&id=${e.id}&part=form`}>View PS 1583</a> : 'Not uploaded yet'}</td></tr>
+        {cmra.client_note && <tr><th style={{ textAlign: 'left' }}>Client note</th><td>{cmra.client_note}</td></tr>}
+      </tbody></table>}
+      <UploadForm bucket="compliance" entityId={e.id} action={reviewCmra} submitLabel="Save review">
+        <input type="hidden" name="entity_id" value={e.id} />
+        <div className="row"><label>Set status<select name="status" defaultValue={cmra?.status || 'not_started'}>{opts(CMRA_STATUS)}</select></label><label>Filed in USPS CRD on<input name="crd_date" type="date" /></label></div>
+        <label>Note to client (shown if changes are needed)<input name="staff_note" defaultValue={cmra?.staff_note || ''} /></label>
+        <label>Upload the final signed form (after the video/in-person signing), optional<input name="file" type="file" accept="application/pdf,image/*" /></label>
+      </UploadForm>
+      <p className="muted" style={{ marginTop: 8 }}>Checklist: both IDs current and matching the name; second ID shows the home address; you watched the client sign (video or in person) or the form is notarized; you signed as CMRA agent; then enter it in the USPS CMRA Customer Registration Database and mark "Complete".</p>
+    </section>
 
     <h2>Mail log</h2>
     {!mail?.length ? <p className="muted">No mail yet.</p> : <div className="scroll"><table><thead><tr><th>Received</th><th>Type</th><th>From</th><th>Client</th><th>Status</th></tr></thead><tbody>

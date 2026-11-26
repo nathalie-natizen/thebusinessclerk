@@ -6,6 +6,18 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 // then a short-lived signed link (60 seconds) is created.
 export async function GET(req) {
   const url = new URL(req.url); const type = url.searchParams.get('type'); const id = url.searchParams.get('id');
+  // Compliance files (IDs, signed Form 1583): ?type=compliance&id=<entity id>&part=id1|id2|form
+  if (type === 'compliance') {
+    const part = { id1: 'id1_path', id2: 'id2_path', form: 'form_path' }[url.searchParams.get('part')];
+    const sb = supabaseServer();
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return NextResponse.redirect(new URL('/login', req.url));
+    const { data: row } = part ? await sb.from('cmra_applications').select(part).eq('entity_id', id).maybeSingle() : { data: null }; // RLS: members/staff only
+    if (!row?.[part]) return new NextResponse('Not found', { status: 404 });
+    const { data, error } = await supabaseAdmin().storage.from('compliance').createSignedUrl(row[part], 60);
+    if (error) return new NextResponse('File unavailable', { status: 404 });
+    return NextResponse.redirect(data.signedUrl);
+  }
   const table = type === 'mail' ? 'mail_items' : type === 'document' ? 'documents' : null;
   if (!table || !id) return new NextResponse('Bad request', { status: 400 });
   const sb = supabaseServer();

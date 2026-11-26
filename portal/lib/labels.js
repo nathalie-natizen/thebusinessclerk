@@ -72,3 +72,9 @@ export const carrierUrl = (carrier, n) => !n ? null : ({
   FedEx: `https://www.fedex.com/fedextrack/?trknbr=${encodeURIComponent(n)}`,
   DHLExpress: `https://www.dhl.com/us-en/home/tracking.html?tracking-id=${encodeURIComponent(n)}`,
 }[carrier] || null);
+
+// USPS Form 1583 (DMM 608.10): two current IDs; the secondary must show the applicant's address. Digital IDs are not accepted.
+export const PRIMARY_IDS = ["U.S. driver's license or state ID card", 'U.S. passport or passport card', 'Foreign passport', 'U.S. permanent resident card', 'U.S. military / uniformed service ID', 'U.S. university ID card', 'U.S. access card (e.g. Trusted Traveler / NEXUS)', 'Certificate of naturalization', 'Matricula consular (Mexico)', 'Other government photo ID'];
+export const SECONDARY_IDS = ['Current lease, mortgage or deed of trust', 'Voter or vehicle registration card', 'Home or vehicle insurance policy'];
+export const CMRA_STATUS = { not_started: 'Not started', in_progress: 'In progress', submitted: 'Submitted for review', needs_changes: 'Changes needed', verified: 'Verified', filed: 'Complete' };
+export const WITNESS = { video: 'Live video call with our staff', in_person: 'In person at our Florida office', notary: 'Signed in front of a notary (I will upload the notarized form)' };

@@ -26,9 +26,11 @@ export default async function Mail({ params }) {
   const e = await getEntity(sb, params.file); if (!e) notFound();
   const { data: items } = await sb.from('mail_items').select('*').eq('entity_id', e.id).order('received_at', { ascending: false });
   const { data: pref } = await sb.from('mail_preferences').select('forward_shipping').eq('entity_id', e.id).maybeSingle();
+  const { data: cmra } = await sb.from('cmra_applications').select('status').eq('entity_id', e.id).maybeSingle();
   return (<Shell profile={profile}>
     <span className="file">{e.file_number}</span><h1 style={{ marginTop: 8 }}>{e.legal_name}</h1>
     <EntityTabs file={e.file_number} active="mail" />
+    {e.mail_service && !['verified', 'filed'].includes(cmra?.status) && <div className="note"><strong>Action needed:</strong> USPS requires Form 1583 and two IDs before we can handle business mail at our address. <a href={`/e/${e.file_number}/compliance`}>Complete it in the Compliance tab →</a></div>}
     <p className="sub">Registered agent notices and business mail received at our Florida office for this company. For each item you can: <strong>open &amp; scan</strong> it to your portal (from $1.50 to $2.50 per item, up to 10 pages; the lowest price for your monthly volume is applied automatically), <strong>forward</strong> it ($2.50 per item + postage at cost) or <strong>shred</strong> it (free). Legal papers and state notices are always opened and scanned for free. Legal papers are flagged urgent: please read them right away and contact an attorney if needed.</p>
     {!items?.length ? <div className="note">No mail received yet.</div> : <div className="scroll"><table><thead><tr><th>Received</th><th>Type</th><th>From</th><th>Status</th><th>Envelope / scan</th><th>What should we do?</th></tr></thead><tbody>
       {items.map(m => <tr key={m.id}>
