@@ -23,7 +23,7 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
   const [state, action] = useFormState(submitIntake, null);
   const formation = service === 'llc' || service === 'corp';
   const existing = !formation && service !== 'mail' && service !== 'launch';
-  const hasMail = service === 'mail' || (formation && addons.mail);
+  const hasMail = service === 'mail' || service === 'bundle' || (formation && addons.mail);
   const hasEin = service === 'ein' || (formation && addons.ein);
   const R = ' *';
   return (<form className="stack wide" action={action}>

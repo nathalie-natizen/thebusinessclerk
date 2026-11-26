@@ -23,13 +23,29 @@ export async function GET(req) {
   let reminded = 0;
   if (REMIND.includes(md)) {
     const db = supabaseAdmin(); const year = et.getFullYear();
-    const { data: ents } = await db.from('entities').select('id, legal_name, file_number, created_at').eq('registered_agent', true).eq('status', 'active');
+    const { data: ents } = await db.from('entities').select('id, legal_name, file_number, created_at').eq('registered_agent', true).eq('status', 'active').eq('bundle', false);
     const { data: done } = await db.from('orders').select('entity_id').eq('kind', 'annual_report').gte('created_at', `${year}-01-01`).neq('status', 'cancelled');
     const skip = new Set((done || []).map(o => o.entity_id));
     for (const e of ents || []) {
       if (skip.has(e.id) || new Date(e.created_at).getFullYear() === year) continue; // formed this year: first report is due next year
       await notifyEntity(e.id, { category: 'compliance', subject: `Florida annual report due by May 1: ${e.legal_name}`, text: `The Florida annual report for ${e.legal_name} is due by May 1, ${year}. After May 1 the State adds a $400 late fee.\n\nOrder it in one click and we file it for you: ${APP}/e/${e.file_number}/orders?order=annual_report`, sms: `THE BUSINESS CLERK: the Florida annual report for ${e.legal_name} is due by May 1. Order it here:` });
       reminded++;
+    }
+  }
+  // Annual bundle: open the year's annual report order automatically (service fee included; state fee charged at cost when filed)
+  let bundleReports = 0;
+  if (et.getMonth() < 4 || (et.getMonth() === 4 && et.getDate() === 1)) {
+    const db = supabaseAdmin(); const year = et.getFullYear();
+    const { data: bents } = await db.from('entities').select('id, legal_name, file_number, created_at').eq('bundle', true).eq('status', 'active');
+    const { data: bdone } = await db.from('orders').select('entity_id').eq('kind', 'annual_report').gte('created_at', `${year}-01-01`).neq('status', 'cancelled');
+    const bskip = new Set((bdone || []).map(o => o.entity_id));
+    for (const e of bents || []) {
+      if (bskip.has(e.id) || new Date(e.created_at).getFullYear() === year) continue;
+      const { data: o } = await db.from('orders').insert({ entity_id: e.id, kind: 'annual_report', service: `Annual Report Filing ${year} (included in your annual bundle)`, status: 'information_needed', amount_cents: 0, source: 'bundle' }).select().single();
+      if (!o) continue;
+      await db.from('order_events').insert({ order_id: o.id, status: 'information_needed', note: 'Included in your annual bundle. Please answer the short annual report questions so we can file. The Florida state fee is charged at cost when we file.', notified: true });
+      await notifyEntity(e.id, { category: 'compliance', subject: `Your ${year} Florida annual report: please confirm your information`, text: `Your annual bundle includes the ${year} Florida annual report for ${e.legal_name}. Please answer a few short questions in your portal so we can file it before May 1: ${APP}/e/${e.file_number}/orders/${o.id}\n\nThe Florida state fee is charged at cost when we file.`, sms: `THE BUSINESS CLERK: please confirm your ${year} annual report info for ${e.legal_name}:` });
+      bundleReports++;
     }
   }
   // Mail held 30 days with no instruction: one notice per company; staff may shred ordinary mail 15 days later (Mail queue)
@@ -43,5 +59,5 @@ export async function GET(req) {
   const batches = await createDueBatches();
   const legal = await unopenedLegal();
   if (legal.length) await notifyStaff({ subject: `Call clients: ${legal.length} legal item(s) unopened after 1 business day`, text: legal.map(m => `${m.entities?.file_number} ${m.entities?.legal_name}: ${m.category === 'service_of_process' ? 'lawsuit papers' : 'state notice'} received ${new Date(m.received_at).toLocaleDateString('en-US')} · ${m.entities?.contact_phone || 'no phone on file'}`).join('\n') + `\n\n${APP}/staff/pipeline` }).catch(() => {});
-  return NextResponse.json({ legalEscalations: legal.length,  autoApproved: (data || []).length, reminded, holdNotices: Object.keys(byEnt).length, batches });
+  return NextResponse.json({ bundleReports, legalEscalations: legal.length,  autoApproved: (data || []).length, reminded, holdNotices: Object.keys(byEnt).length, batches });
 }

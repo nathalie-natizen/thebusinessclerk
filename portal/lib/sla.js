@@ -25,13 +25,13 @@ export function bizDaysBetween(a, b) { const s = etDay(a), e = etDay(b); let n =
 const fmt = d => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
 // Promises per service when the order is in "To do" (business days)
-export const TODO_DAYS = { mail_batch: 0, llc: 1, corp: 1, annual_report: 1, ein: 1, ra: 1, launch: 5, launch_revision: 3, ...Object.fromEntries(Object.keys(FILINGS).map(k => [k, 1])) };
+export const TODO_DAYS = { bundle: 1, mail_batch: 0, llc: 1, corp: 1, annual_report: 1, ein: 1, ra: 1, launch: 5, launch_revision: 3, ...Object.fromEntries(Object.keys(FILINGS).map(k => [k, 1])) };
 export const FINAL_REVIEW_DAYS = 1;
 export const STATE_CHECK_DAYS = 5; // Florida usually processes online filings in 2–5 business days
 export const MAIL_DAYS = 1;        // scans, forward-each, shred: within 1 business day of the request
 export const CMRA_REVIEW_DAYS = 1; // Form 1583 review
 
-const stateKinds = k => ['llc', 'corp', 'annual_report', 'ra'].includes(k) || !!FILINGS[k];
+const stateKinds = k => ['llc', 'corp', 'annual_report', 'ra', 'bundle'].includes(k) || !!FILINGS[k];
 
 // Returns { text, tone: 'late' | 'today' | 'ok' | 'info', due?: Date }
 export function orderDeadline(o, now = new Date()) {

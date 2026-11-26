@@ -27,6 +27,7 @@ export async function createPaidOrder(entity, kind, { amount = null, source = 'p
   if (kind === 'ra' || kind === 'foreign') await db.from('entities').update({ registered_agent: true }).eq('id', entity.id);
   if (kind === 'foreign') await startRaRenewal(entity).catch(() => {});
   if (kind === 'mail') await db.from('entities').update({ mail_service: true }).eq('id', entity.id);
+  if (kind === 'bundle') { await db.from('entities').update({ registered_agent: true, mail_service: true, bundle: true }).eq('id', entity.id); await endOverlaps(entity).catch(() => {}); }
   return o;
 }
 
@@ -88,8 +89,17 @@ export async function payPendingOrders(entity) {
     await db.from('order_events').insert({ order_id: o.id, status, note: status === 'information_needed' ? 'Payment received. Please complete the short questionnaire so we can start.' : 'Payment received. We’re starting on it.' });
     if (o.kind === 'ra' || o.kind === 'foreign') await db.from('entities').update({ registered_agent: true }).eq('id', entity.id);
     if (o.kind === 'mail') await db.from('entities').update({ mail_service: true }).eq('id', entity.id);
+    if (o.kind === 'bundle') { await db.from('entities').update({ registered_agent: true, mail_service: true, bundle: true }).eq('id', entity.id); await endOverlaps(entity).catch(() => {}); }
     await (await import('./notify')).notifyStaff({ subject: `New portal order: ${entity.legal_name} (${entity.file_number})`, text: `${KINDS[o.kind]?.name || o.service} (paid)\n\n${process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com'}/staff/pipeline` }).catch(() => {});
     out.push({ id: o.id, ok: true });
   }
   return out;
+}
+
+// The annual bundle replaces separate registered agent and mail subscriptions for the same company
+export async function endOverlaps(entity) {
+  if (!entity.stripe_customer_id || !process.env.STRIPE_SECRET_KEY) return;
+  const s = stripe();
+  const subs = (await s.subscriptions.list({ customer: entity.stripe_customer_id, status: 'all', limit: 100 })).data.filter(x => ['active', 'trialing', 'past_due'].includes(x.status) && x.metadata?.entity_id === entity.id && ['ra', 'mail'].includes(x.metadata?.product));
+  for (const x of subs) await s.subscriptions.cancel(x.id, { prorate: true });
 }

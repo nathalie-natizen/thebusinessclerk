@@ -26,7 +26,7 @@ export async function submitIntake(_prev, fd) {
   if (FORMATION.includes(service) && (!g('p1_name') || !g('name2') || !g('signer'))) return { error: 'required' };
 
   const people = [1, 2, 3, 4].map(i => ({ name: g(`p${i}_name`), title: g(`p${i}_title`), address: g(`p${i}_address`, 300) })).filter(p => p.name);
-  const useOurs = fd.get('use_our_address') === 'on' && (service === 'mail' || addons.includes('mail'));
+  const useOurs = fd.get('use_our_address') === 'on' && (service === 'mail' || service === 'bundle' || addons.includes('mail'));
   const details = {
     service, addons, company: g('company'), names: [g('company'), g('name2'), g('name3')].filter(Boolean), ending: g('ending', 40) || null,
     use_backup: fd.get('use_backup') === 'on', management: g('management'), shares: g('shares', 20), par: g('par', 20), incorporator: g('incorporator'), s_corp: g('s_corp'),
@@ -39,8 +39,8 @@ export async function submitIntake(_prev, fd) {
   const db = supabaseAdmin();
   const { data: entity, error } = await db.from('entities').insert({
     legal_name: FORMATION.includes(service) && details.ending && !details.company.toUpperCase().endsWith(details.ending.toUpperCase()) ? `${details.company} ${details.ending}` : details.company, entity_type: service === 'corp' ? 'Corporation' : 'LLC', status: FORMATION.includes(service) ? 'pending' : 'active',
-    sunbiz_doc_number: details.sunbiz_doc_number || null, registered_agent: FORMATION.includes(service) || service === 'ra' || service === 'foreign',
-    mail_service: service === 'mail' || addons.includes('mail'), contact_name: details.contact.name, contact_email: email, contact_phone: details.contact.phone || null, language: lang,
+    sunbiz_doc_number: details.sunbiz_doc_number || null, registered_agent: FORMATION.includes(service) || service === 'ra' || service === 'foreign' || service === 'bundle', bundle: service === 'bundle',
+    mail_service: service === 'mail' || service === 'bundle' || addons.includes('mail'), contact_name: details.contact.name, contact_email: email, contact_phone: details.contact.phone || null, language: lang,
   }).select().single();
   if (error) return { error: 'server' };
   await db.from('mail_preferences').insert({ entity_id: entity.id });

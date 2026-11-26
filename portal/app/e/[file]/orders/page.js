@@ -13,7 +13,7 @@ const stateFeeNote = k => (k === 'annual_report' || FILINGS[k]) ? ' The Florida 
 import { clientExpectation } from '@/lib/sla';
 import { draftFor, recordAcceptance } from '@/lib/agreements';
 
-const ORDERABLE = [['annual_report', 'Annual report filing'], ['ein', 'EIN application'], ['ra', 'Registered agent'], ['mail', 'Business address & mail'], ['launch', 'Launch Pack'], ...Object.entries(FILINGS).map(([k, f]) => [k, f.name])];
+const ORDERABLE = [['bundle', 'Annual bundle (agent + annual report + address)'], ['annual_report', 'Annual report filing'], ['ein', 'EIN application'], ['ra', 'Registered agent'], ['mail', 'Business address & mail'], ['launch', 'Launch Pack'], ...Object.entries(FILINGS).map(([k, f]) => [k, f.name])];
 const money = c => '$' + (c / 100).toFixed(2).replace(/\.00$/, '');
 
 async function placeOrder(fd) {
@@ -63,7 +63,7 @@ export default async function Orders({ params, searchParams }) {
       </form>
     </section> : <section className="card" style={{ marginBottom: 18 }}><h3>Order a service for this company</h3>
       <p className="muted">Same services and prices as our website. Charged to this company's card on file after you confirm. Want to form another company? <a href="/start?service=llc">Start a new company →</a></p>
-      <p>{ORDERABLE.filter(([k]) => !(k === 'ra' && e.registered_agent) && !(k === 'mail' && e.mail_service)).map(([k, label]) => <Link key={k} className="btn sec small" style={{ marginRight: 8, marginBottom: 8 }} href={`/e/${e.file_number}/orders?order=${k}`}>{label} · {priceText(k)}</Link>)}</p>
+      <p>{ORDERABLE.filter(([k]) => !(k === 'ra' && e.registered_agent) && !(k === 'mail' && e.mail_service) && !(k === 'bundle' && e.bundle) && !(['ra', 'mail', 'annual_report'].includes(k) && e.bundle)).map(([k, label]) => <Link key={k} className="btn sec small" style={{ marginRight: 8, marginBottom: 8 }} href={`/e/${e.file_number}/orders?order=${k}`}>{label} · {priceText(k)}</Link>)}</p>
     </section>}
 
     {!orders?.length ? <div className="note">No orders yet.</div> : <div className="grid">{orders.map(o => (

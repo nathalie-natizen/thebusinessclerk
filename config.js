@@ -12,7 +12,7 @@ module.exports = {
     ein: 75,               // EIN application add-on
     raAnnual: 49,          // Registered agent only, per year
     annualReport: 100,     // Annual report filing service (state fee separate)
-    mailBasic: 20,         // Business address + mail log (envelope photo + alert), per month
+    mailBasic: 25,         // Business address + mail log (envelope photo + alert), per month
     mailIncluded: 30,      // items logged per month included
     mailOverItem: '0.50',  // per item above that
     mailForward: '2.50',   // per forwarded item, plus postage at cost
@@ -20,6 +20,7 @@ module.exports = {
     scanPages: 10,         // pages included per scan
     scanPage: '0.25',      // per extra page
     scanLevels: [['Pay as you go', 0, 0, '2.50'], ['Scan 10', 19, 10, '2.25'], ['Scan 25', 39, 25, '2.00'], ['Scan 50', 69, 50, '1.75'], ['Scan 100', 119, 100, '1.50']],
+    bundle: 389,           // Annual bundle: registered agent + annual report filing + 12 months business address (state fee and mail usage extra)
     launch: 599,           // Launch Pack: name & trademark search, domain, email, website up to 5 pages
   },
   alaCarte: [

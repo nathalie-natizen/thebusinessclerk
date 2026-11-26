@@ -6,7 +6,7 @@ import { createPaidOrder } from '@/lib/charge';
 import { needsQuestionnaire } from '@/lib/questionnaires';
 import { KINDS } from '@/lib/labels';
 import { flagPaymentIssue, clearPaymentIssue } from '@/lib/payments';
-import { priceOf, isRa, isMail } from '@/lib/prices';
+import { priceOf, isRa, isMail, isBundle } from '@/lib/prices';
 import { sendEmail, notifyStaff } from '@/lib/notify';
 
 // Stripe → portal. Creates the company file, order and client access after payment, and keeps service flags in sync.
@@ -74,6 +74,7 @@ export async function POST(req) {
     const flags = {};
     if (key === 'ra' || p.withRa) flags.registered_agent = true;
     if (key === 'mail') flags.mail_service = true;
+    if (key === 'bundle') Object.assign(flags, { registered_agent: true, mail_service: true, bundle: true });
     if (Object.keys(flags).length) await db.from('entities').update(flags).eq('id', entity.id);
     if (KINDS[key]) await createPaidOrder(entity, key, { amount: s.amount_total, source: s.metadata?.entity_id ? 'portal' : 'website', ref: s.id });
     if (email) {
@@ -91,6 +92,7 @@ export async function POST(req) {
     const fields = {};
     if (items.some(isRa) || sub.metadata?.product === 'ra') fields.registered_agent = false;
     if (items.some(isMail) || sub.metadata?.product === 'mail') fields.mail_service = false;
+    if (items.some(isBundle) || sub.metadata?.product === 'bundle') Object.assign(fields, { registered_agent: false, mail_service: false, bundle: false });
     if (Object.keys(fields).length) {
       if (sub.metadata?.entity_id) await db.from('entities').update(fields).eq('id', sub.metadata.entity_id);
       else await db.from('entities').update(fields).eq('stripe_customer_id', sub.customer);

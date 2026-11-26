@@ -10,7 +10,8 @@ export const CATALOG = {
   ra: { name: 'Florida Registered Agent', cents: 4900, interval: 'year' },
   annual_report: { name: 'Annual Report Filing (service fee)', cents: 10000, desc: 'State fee charged separately when filed' },
   ein: { name: 'EIN Application', cents: 7500 },
-  mail: { name: 'Business Address & Mail (base plan)', cents: 2000, interval: 'month', desc: '30 items logged a month; usage billed at month end' },
+  mail: { name: 'Business Address & Mail (base plan)', cents: 2500, interval: 'month', desc: '30 items logged a month; usage billed at month end' },
+  bundle: { name: 'Annual Bundle: Registered Agent + Annual Report + Business Address', cents: 38900, interval: 'year', desc: 'Registered agent, annual report filing service and 12 months of business address; state fee and mail usage billed separately' },
   launch: { name: 'Launch Pack', cents: 59900, desc: 'Domain, email and website up to 5 pages, up to 2 revisions' },
   ...Object.fromEntries(Object.entries(FILINGS).map(([k, f]) => [k, { name: `${f.name} (service fee)`, cents: f.cents, desc: f.withRa ? 'Service and first year of registered agent; Florida state fee charged separately when filed' : 'Florida state fee charged separately when filed' }])),
 };
@@ -27,6 +28,7 @@ export async function prices() {
 export const priceOf = async k => (await prices())[k] || null;
 export const isRa = price => price?.lookup_key === key('ra');
 export const isMail = price => price?.lookup_key === key('mail');
+export const isBundle = price => price?.lookup_key === key('bundle');
 
 // Create missing products/prices, and replace any price whose amount changed (the lookup key moves to the new price)
 export async function ensureCatalog() {

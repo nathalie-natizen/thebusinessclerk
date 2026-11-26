@@ -31,7 +31,7 @@ const home = homeL('es', {
   priceKicker: 'Precios', priceH: 'Precios simples y publicados.', priceP: 'Las tarifas del estado de Florida se muestran por separado, excepto cuando el paquete indica que están incluidas.', popular: 'El más elegido',
   plans: [
     { h: 'Formación de LLC en Florida', price: $(P.formation), unit: 'pago único', items: ['Articles of Organization presentados', `Tarifa estatal (US$ ${F.llcArticles}) incluida`, 'Primer año de agente registrado', `EIN opcional: ${$(P.ein)}`], href: 'es/empezar.html', btn: 'Abrir mi LLC' },
-    { h: 'Agente Registrado en Florida', price: $(P.raAnnual), unit: 'por año', items: ['Dirección del agente en Florida', 'Escaneo el mismo día', 'Renovación automática', `Reporte anual automático: ${$(P.annualReport)} + tarifa estatal`], href: 'es/agente-registrado-florida.html', btn: 'Contratar agente' },
+    { h: 'Agente Registrado en Florida', price: $(P.raAnnual), unit: 'por año', items: ['Dirección del agente en Florida', 'Escaneo el mismo día', 'Renovación automática', `Reporte anual automático: ${$(P.annualReport)} + tarifa estatal`, `Paquete con dirección comercial: ${$(P.bundle)}/año`], href: 'es/agente-registrado-florida.html', btn: 'Contratar agente' },
     { h: 'Dirección y Correo', price: $(P.mailBasic), unit: 'por mes', items: ['Dirección comercial en Florida', `${P.mailIncluded} artículos/mes con foto del sobre`, `Reenvío: US$ ${P.mailForward.replace(".", ",")}/artículo + franqueo`, 'Abrir y escanear: desde US$ 1,50'], href: 'es/precios.html', btn: 'Ver detalles' },
   ],
   pricingHref: 'es/precios.html', allPrices: 'Ver la lista completa de precios →',
@@ -144,7 +144,8 @@ const pricing = servicePage({
 ## Mantenimiento anual
 - **Agente registrado en Florida: ${$(P.raAnnual)}/año**
 - **Reporte anual: ${$(P.annualReport)}** por presentación, más la tarifa estatal (US$ ${F.llcAnnual} LLC, US$ ${F.corpAnnual} corporación)
-> El agente registrado y el reporte anual se renuevan automáticamente, para que tu empresa esté siempre al día sin que tengas que hacer nada. Puedes desactivar la renovación automática cuando quieras.
+- **Paquete anual: ${$(P.bundle)}/año.** Agente registrado, presentación del reporte anual y 12 meses de dirección comercial y correo en un solo pago anual (ahorras US$ ${P.raAnnual + P.annualReport + 12 * P.mailBasic - P.bundle}). La tarifa estatal del reporte anual y el uso del correo (escaneos, reenvíos, paquetes y artículos por encima de ${P.mailIncluded} al mes) se cobran aparte.
+> El agente registrado, el reporte anual y el paquete anual se renuevan automáticamente, para que tu empresa esté siempre al día sin que tengas que hacer nada. Puedes desactivar la renovación automática cuando quieras.
 ## Dirección y correo
 - Dirección comercial y correo: **${$(P.mailBasic)}/mes**, con ${P.mailIncluded} artículos al mes registrados con foto del sobre y aviso en tu portal (después, US$ ${P.mailOverItem.replace(".", ",")} por artículo)
 - Reenvío: **US$ ${P.mailForward.replace(".", ",")} por artículo** + franqueo al costo · Paquetes: **US$ ${P.mailPackage}** cada uno

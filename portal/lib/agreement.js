@@ -9,7 +9,7 @@ const CO = 'THE BUSINESS CLERK LLC';
 
 const NAMES = { llc: 'Florida LLC Formation', corp: 'Florida Corporation Formation', ra: 'Florida Registered Agent', annual_report: 'Annual Report Filing', ein: 'EIN Application', mail: 'Business Address & Mail (Mail Service Addendum)', launch: 'Launch Pack' };
 for (const [k, f] of Object.entries(FILINGS)) NAMES[k] = f.name;
-const ORDER = ['llc', 'corp', 'ra', 'annual_report', 'ein', 'mail', 'launch', ...FILING_KINDS];
+const ORDER = ['llc', 'corp', 'bundle', 'ra', 'annual_report', 'ein', 'mail', 'launch', ...FILING_KINDS];
 const fmt = d => new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' });
 
 const GENERAL = [
@@ -70,6 +70,10 @@ const SCHEDULE_TERMS = {
     'You will use the address with your PMB number as shown in the portal. We may refuse or return hazardous, perishable, illegal or oversized items and mail for people not listed on your Form 1583.',
     'Items with no instruction are held 30 days. After a further 15-day notice, ordinary mail may be shredded; checks, legal papers and packages are never shredded without your instruction.',
     'Monthly charges are billed on the card on file at month end with an itemized statement. When this service ends, we will forward or return remaining mail per your instruction and handle later mail as USPS rules require.'],
+  bundle: [
+    'The Annual Bundle combines the Registered Agent, Annual Report Filing and Business Address & Mail schedules of this Agreement, which apply in full, for one yearly fee of $389 charged to the card on file.',
+    'The Florida annual report state fee is not included and is charged at cost when we file. Mail usage (scans, forwarding, packages and items over the monthly allowance) is billed monthly as described in the Mail schedule.',
+    'The bundle renews automatically every year until you cancel. It replaces any separate registered agent or mail subscription for the same company. The current year is not prorated on cancellation.'],
   launch: [
     'Domain, email and hosting accounts are created in your name, with your own payment method, during a screen-share. You own them, pay the providers directly, and remain responsible for renewing them.',
     'The Launch Pack includes up to 2 revisions. A revision is one round of changes sent at once. When we deliver, you approve the work or request a revision in the portal; if you do neither within 14 days, the work is considered approved.',
@@ -93,7 +97,7 @@ const scheduleSection = (k, letter) => {
 };
 
 // Formation includes the first year of registered agent service, so its schedule comes with it
-export const sortKinds = kinds => { const ks = [...kinds]; if (ks.some(k => k === 'llc' || k === 'corp' || k === 'foreign')) ks.push('ra'); return ORDER.filter(k => ks.includes(k) && SCHEDULE_TERMS[k]); };
+export const sortKinds = kinds => { const ks = [...kinds]; if (ks.some(k => k === 'llc' || k === 'corp' || k === 'foreign')) ks.push('ra'); if (ks.includes('bundle')) ks.push('ra', 'annual_report', 'mail'); return ORDER.filter(k => ks.includes(k) && SCHEDULE_TERMS[k]); };
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 export function buildAgreement({ clientName, file, kinds, date = new Date() }) {
