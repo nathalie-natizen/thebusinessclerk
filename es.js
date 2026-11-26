@@ -20,7 +20,7 @@ const home = homeL('es', {
     ['form', 'Formación de LLC y Corporación', 'Presentamos tus Articles ante la División de Corporaciones de Florida y somos tu agente registrado.', 'es/abrir-llc-en-florida.html', `${$(P.formation)} todo incluido`],
     ['globe', 'Emprendedores Internacionales', '¿Vives fuera de EE. UU.? Abre tu LLC en Florida a distancia, con EIN sin SSN.', 'es/emprendedores-internacionales.html', '100% remoto'],
     ['cal', 'Reporte Anual y Trámites', 'Reporte anual automático, enmiendas, cambio de agente, reinstalación y disolución.', 'es/precios.html', `Reporte anual ${$(P.annualReport)}`, 'Ver precios →'],
-    ['mail', 'Dirección Comercial y Correo', 'Dirección comercial en Florida con escaneo y reenvío de correo.', 'es/precios.html', `${$(P.mailBasic)}/mes`, 'Ver precios →'],
+    ['mail', 'Dirección Comercial y Correo', 'Dirección comercial en Florida. Tú eliges para cada carta: reenviar, abrir y escanear o destruir.', 'es/precios.html', `${$(P.mailBasic)}/mes`, 'Ver precios →'],
     ['launch', 'Paquete de Lanzamiento', 'Búsqueda de nombre y marca, dominio, correo profesional y sitio web de hasta 5 páginas, todo a tu nombre.', 'es/precios.html', `desde ${$(P.launch)}`, 'Ver precios →'],
   ],
   whyKicker: 'Por qué elegirnos', whyH: 'Una oficina real en Florida.',
@@ -32,7 +32,7 @@ const home = homeL('es', {
   plans: [
     { h: 'Formación de LLC en Florida', price: $(P.formation), unit: 'pago único', items: ['Articles of Organization presentados', `Tarifa estatal (US$ ${F.llcArticles}) incluida`, 'Primer año de agente registrado', `EIN opcional: ${$(P.ein)}`], href: 'es/empezar.html', btn: 'Abrir mi LLC' },
     { h: 'Agente Registrado en Florida', price: $(P.raAnnual), unit: 'por año', items: ['Dirección del agente en Florida', 'Escaneo el mismo día', 'Renovación automática', `Reporte anual automático: ${$(P.annualReport)} + tarifa estatal`], href: 'es/agente-registrado-florida.html', btn: 'Contratar agente' },
-    { h: 'Dirección y Correo', price: $(P.mailBasic), unit: 'por mes', items: ['Dirección comercial en Florida', 'Escaneo de correo', 'Reenvío al costo postal', 'Recepción de paquetes'], href: 'es/precios.html', btn: 'Ver detalles' },
+    { h: 'Dirección y Correo', price: $(P.mailBasic), unit: 'por mes', items: ['Dirección comercial en Florida', `${P.mailIncluded} artículos/mes con foto del sobre`, `Reenvío: US$ ${P.mailForward.replace(".", ",")}/artículo + franqueo`, 'Abrir y escanear: desde US$ 1,50'], href: 'es/precios.html', btn: 'Ver detalles' },
   ],
   pricingHref: 'es/precios.html', allPrices: 'Ver la lista completa de precios →',
   faqKicker: 'Dudas', faqH: 'Preguntas frecuentes', faqP: '¿No encuentras tu respuesta? Escríbenos a hello@thebusinessclerk.com.',
@@ -146,7 +146,10 @@ const pricing = servicePage({
 - **Reporte anual: ${$(P.annualReport)}** por presentación, más la tarifa estatal (US$ ${F.llcAnnual} LLC, US$ ${F.corpAnnual} corporación)
 > El agente registrado y el reporte anual se renuevan automáticamente, para que tu empresa esté siempre al día sin que tengas que hacer nada. Puedes desactivar la renovación automática cuando quieras.
 ## Dirección y correo
-- Dirección comercial y escaneo: **${$(P.mailBasic)}/mes** (reenvío al costo postal)
+- Dirección comercial y correo: **${$(P.mailBasic)}/mes**, con ${P.mailIncluded} artículos al mes registrados con foto del sobre y aviso en tu portal (después, US$ ${P.mailOverItem.replace(".", ",")} por artículo)
+- Reenvío: **US$ ${P.mailForward.replace(".", ",")} por artículo** + franqueo al costo · Paquetes: **US$ ${P.mailPackage}** cada uno
+- Abrir y escanear a tu portal: **de US$ 1,50 a US$ 2,50 por artículo** (hasta ${P.scanPages} páginas; US$ ${P.scanPage.replace(".", ",")} por página adicional). No eliges plan: al cierre del mes aplicamos automáticamente el precio más bajo para tu volumen.
+- Destruir: gratis. Los documentos legales y avisos del estado (agente registrado) siempre se abren y escanean sin costo.
 ## Lanzamiento
 - **Paquete de lanzamiento: desde ${$(P.launch)}** (búsqueda de nombre y marca, dominio, correo profesional con Google Workspace o Microsoft 365 y sitio web de hasta 5 páginas). Los costos de terceros los pagas directamente.
 ## Otros trámites

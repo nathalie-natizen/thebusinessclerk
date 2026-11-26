@@ -20,7 +20,7 @@ const home = homeL('pt', {
     ['form', 'Abertura de LLC e Corporação', 'Registramos seus Articles na Divisão de Corporações da Flórida e atuamos como seu agente registrado.', 'pt/abrir-llc-na-florida.html', `${$(P.formation)} tudo incluído`],
     ['globe', 'Empreendedores Internacionais', 'Mora fora dos EUA? Abra sua LLC na Flórida à distância, com EIN sem SSN.', 'pt/empreendedores-internacionais.html', '100% remoto'],
     ['cal', 'Relatório Anual e Registros', 'Relatório anual automático, alterações, troca de agente, reativação e encerramento.', 'pt/precos.html', `Relatório anual ${$(P.annualReport)}`, 'Ver preços →'],
-    ['mail', 'Endereço Comercial e Correspondência', 'Endereço comercial na Flórida com digitalização e reenvio de correspondência.', 'pt/precos.html', `${$(P.mailBasic)}/mês`, 'Ver preços →'],
+    ['mail', 'Endereço Comercial e Correspondência', 'Endereço comercial na Flórida. Você escolhe para cada carta: reenviar, abrir e digitalizar ou fragmentar.', 'pt/precos.html', `${$(P.mailBasic)}/mês`, 'Ver preços →'],
     ['launch', 'Pacote de Lançamento', 'Pesquisa de nome e marca, domínio, e-mail profissional e site de até 5 páginas, tudo no seu nome.', 'pt/precos.html', `a partir de ${$(P.launch)}`, 'Ver preços →'],
   ],
   whyKicker: 'Por que nos escolher', whyH: 'Um escritório de verdade na Flórida.',
@@ -32,7 +32,7 @@ const home = homeL('pt', {
   plans: [
     { h: 'Abertura de LLC na Flórida', price: $(P.formation), unit: 'pagamento único', items: ['Articles of Organization registrados', `Taxa estadual (US$ ${F.llcArticles}) incluída`, '1º ano de agente registrado', `EIN opcional: ${$(P.ein)}`], href: 'pt/comecar.html', btn: 'Abrir minha LLC' },
     { h: 'Agente Registrado na Flórida', price: $(P.raAnnual), unit: 'por ano', items: ['Endereço do agente na Flórida', 'Digitalização no mesmo dia', 'Renovação automática', `Relatório anual automático: ${$(P.annualReport)} + taxa estadual`], href: 'pt/agente-registrado-florida.html', btn: 'Contratar agente' },
-    { h: 'Endereço e Correspondência', price: $(P.mailBasic), unit: 'por mês', items: ['Endereço comercial na Flórida', 'Digitalização de correspondência', 'Reenvio pelo custo postal', 'Recebimento de pacotes'], href: 'pt/precos.html', btn: 'Ver detalhes' },
+    { h: 'Endereço e Correspondência', price: $(P.mailBasic), unit: 'por mês', items: ['Endereço comercial na Flórida', `${P.mailIncluded} itens/mês com foto do envelope`, `Reenvio: US$ ${P.mailForward.replace(".", ",")}/item + postagem`, 'Abrir e digitalizar: a partir de US$ 1,50'], href: 'pt/precos.html', btn: 'Ver detalhes' },
   ],
   pricingHref: 'pt/precos.html', allPrices: 'Ver a tabela completa de preços →',
   faqKicker: 'Dúvidas', faqH: 'Perguntas frequentes', faqP: 'Não encontrou sua resposta? Escreva para hello@thebusinessclerk.com.',
@@ -146,7 +146,10 @@ const pricing = servicePage({
 - **Relatório anual: ${$(P.annualReport)}** por envio, mais a taxa estadual (US$ ${F.llcAnnual} LLC, US$ ${F.corpAnnual} corporação)
 > O agente registrado e o relatório anual renovam automaticamente, para sua empresa ficar sempre em dia sem você precisar fazer nada. Você pode desativar a renovação automática quando quiser.
 ## Endereço e correspondência
-- Endereço comercial e digitalização: **${$(P.mailBasic)}/mês** (reenvio pelo custo postal)
+- Endereço comercial e correspondência: **${$(P.mailBasic)}/mês**, com ${P.mailIncluded} itens por mês registrados com foto do envelope e aviso no portal (depois, US$ ${P.mailOverItem.replace(".", ",")} por item)
+- Reenvio: **US$ ${P.mailForward.replace(".", ",")} por item** + postagem pelo custo · Pacotes: **US$ ${P.mailPackage}** cada
+- Abrir e digitalizar para o seu portal: **de US$ 1,50 a US$ 2,50 por item** (até ${P.scanPages} páginas; US$ ${P.scanPage.replace(".", ",")} por página extra). Você não escolhe plano: no fim do mês aplicamos automaticamente o menor preço para o seu volume.
+- Fragmentar: grátis. Documentos legais e avisos do estado (agente registrado) são sempre abertos e digitalizados sem custo.
 ## Lançamento
 - **Pacote de lançamento: a partir de ${$(P.launch)}** (pesquisa de nome e marca, domínio, e-mail profissional com Google Workspace ou Microsoft 365 e site de até 5 páginas). Custos de terceiros pagos diretamente por você.
 ## Outros registros

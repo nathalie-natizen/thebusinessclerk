@@ -210,17 +210,28 @@ pages.push(servicePage({
   lead: 'Use our Florida address for your business mail, website and invoices. We receive your mail, scan it and forward it wherever you are.',
   cta: 'Get a Florida address',
   content: `
-## Plans
-- **Business Address & Mail, $${P.mailBasic}/month**: Florida mailing address, mail arrival alerts and scanning of your mail
-Forwarding is billed at postage cost plus a small handling fee. Packages are accepted within size limits and held for pickup or forwarding.
+## Pricing
+**Business Address & Mail: $${P.mailBasic}/month.** Your Florida address, every item logged with a photo of the envelope and the sender, and an alert in your portal. Up to ${P.mailIncluded} items a month included, then $${P.mailOverItem} per item. Legal papers and state notices for registered agent clients are always opened and scanned free.
+
+For each piece of mail, you choose what we do:
+- **Forward it:** $${P.mailForward} per item, plus postage at cost. Pick the carrier service (USPS First-Class, Priority, Priority Express, or UPS/FedEx overnight), and track it in your portal.
+- **Open and scan it to your portal:** from $1.50 to $2.50 per item, up to ${P.scanPages} pages ($${P.scanPage} per extra page). You never pick a plan: at month end we apply the lowest price for your volume.
+- **Shred it:** free.
+- **Packages:** $${P.mailPackage} each, held for pickup or forwarded.
+
+**Open & scan pricing by monthly volume** (applied automatically, whichever is lowest):
+${P.scanLevels.map(([n, price, inc, extra]) => `- **${n}:** ${price ? `$${price}/month for ${inc} scans, then $${extra} each` : `$${extra} per scan`}`).join('\n')}
+
+You can also set a standing choice, such as "forward everything weekly" or "open and scan everything," in your portal. Each month you get one itemized statement listing every piece of mail and charge, billed to your card on file.
+
 ## How it works
 1. Sign up and complete **USPS Form 1583**, which authorizes us to receive mail for you. You'll need two forms of ID: a government photo ID and one showing your home address. You can sign in our office, on a live video call with our staff, or in front of a notary.
 2. Use your new address in the format **Street Address, Suite, PMB number**.
-3. When mail arrives, we log it and notify you. You choose: scan, forward, hold for pickup or shred.
+3. When mail arrives, we log it with a photo of the envelope and notify you. You choose: open and scan, forward, hold for pickup or shred.
 ## Registered agent address vs. business address
 They are different services. Your **registered agent** address receives legal and state notices. A **business mailing address** handles everyday mail. Many clients use both. [Read the difference](resources/registered-agent-vs-virtual-address.html).
 > A mailing address may not be accepted as a physical business location by every bank, licensing agency or tax registration. Ask us before you rely on it for a specific purpose.`,
-  aside: rel => priceCard('Address & Mail', `$${P.mailBasic}`, 'per month', ['Florida mailing address', 'Mail arrival alerts', 'Mail scanning', 'Forwarding & package receipt'], 'get-started.html', 'Get my address', rel),
+  aside: rel => priceCard('Address & Mail', `$${P.mailBasic}`, 'per month', ['Florida mailing address', `${P.mailIncluded} items/month logged with envelope photo`, `Forwarding: $${P.mailForward}/item + postage`, 'Open & scan: from $1.50/item', 'Itemized monthly statement'], 'get-started.html', 'Get my address', rel),
 }));
 
 // ---------- Launch ----------
@@ -290,7 +301,9 @@ pages.push(servicePage({
 - **Annual report filing: $${P.annualReport}** per filing, plus the state fee ($${F.llcAnnual} LLC, $${F.corpAnnual} corporation)
 > Registered agent service and annual report filing renew automatically by default, so your company stays in good standing without you having to do anything. You can turn off auto-renew anytime.
 ## Address & mail
-- Business address & mail scanning: **$${P.mailBasic}/month** (forwarding at postage cost)
+- Business address & mail: **$${P.mailBasic}/month**, ${P.mailIncluded} items logged with envelope photo (then $${P.mailOverItem}/item)
+- Forwarding: **$${P.mailForward} per item** + postage at cost · Packages: **$${P.mailPackage}** each
+- Open & scan to your portal: **$1.50–$2.50 per item** (up to ${P.scanPages} pages); the lowest rate for your monthly volume is applied automatically. [See scan pricing](business-address-mail.html)
 ## Launch
 - **Launch Pack: from $${P.launch}** (name and trademark search, domain, professional email, website up to 5 pages). Third-party costs paid directly by you.
 ## Individual filings

@@ -52,7 +52,7 @@ const services = [
   ['agent', 'Florida Registered Agent', `Our Florida office receives your legal and state mail during business hours. We scan it and notify you the same day.`, 'florida-registered-agent.html', `$${C.prices.raAnnual}/year`],
   ['form', 'LLC & Corporation Formation', `We file your Articles with the Florida Division of Corporations, serve as your agent and deliver your documents.`, 'florida-llc-formation.html', `$${C.prices.formation} all-in`],
   ['cal', 'Annual Reports & Filings', `Annual reports, amendments, agent changes, reinstatements, dissolutions and certificates.`, 'business-filings.html', `Annual report $${C.prices.annualReport}`],
-  ['mail', 'Business Address & Mail', `A professional Florida mailing address with mail scanning, forwarding and package receipt.`, 'business-address-mail.html', `from $${C.prices.mailBasic}/month`],
+  ['mail', 'Business Address & Mail', `A professional Florida mailing address. For each piece of mail you choose: forward it, open and scan it to your portal, or shred it.`, 'business-address-mail.html', `from $${C.prices.mailBasic}/month`],
   ['launch', 'Launch Pack', `Name and trademark search, domain, professional email and a website of up to 5 pages, all in your name.`, 'launch-pack.html', `from $${C.prices.launch}`],
   ['globe', 'International Founders', `Living outside the U.S.? Form a Florida LLC remotely, in English, Portuguese or Spanish.`, 'international-founders.html', 'Remote-friendly'],
 ];
@@ -104,7 +104,7 @@ const body = rel => `
 <div class="grid">
 <div class="card plan best"><span class="tag">Most popular</span><h3>Florida LLC Formation</h3><p class="price">$${C.prices.formation} <small>one time</small></p><ul><li>Articles of Organization filed</li><li>State filing fee included</li><li>First year of registered agent</li><li>EIN add-on: $${C.prices.ein}</li></ul><a class="btn primary" href="${rel}get-started.html">Form my LLC</a></div>
 <div class="card plan"><h3>Florida Registered Agent</h3><p class="price">$${C.prices.raAnnual} <small>per year</small></p><ul><li>Florida registered agent address</li><li>Same-day legal mail scans</li><li>Auto-renew, so nothing lapses</li><li>Deadline reminders</li><li>Annual report filing: $${C.prices.annualReport} + state fee</li></ul><a class="btn ghost" href="${rel}florida-registered-agent.html">Hire us as agent</a></div>
-<div class="card plan"><h3>Business Address & Mail</h3><p class="price">$${C.prices.mailBasic} <small>per month</small></p><ul><li>Florida business mailing address</li><li>Mail scanning</li><li>Forwarding at postage cost</li><li>Package receipt</li></ul><a class="btn ghost" href="${rel}business-address-mail.html">See mail plans</a></div>
+<div class="card plan"><h3>Business Address & Mail</h3><p class="price">$${C.prices.mailBasic} <small>per month</small></p><ul><li>Florida business mailing address</li><li>${C.prices.mailIncluded} items/month logged with envelope photo</li><li>Forwarding: $${C.prices.mailForward}/item + postage</li><li>Open &amp; scan: from $1.50/item</li></ul><a class="btn ghost" href="${rel}business-address-mail.html">See mail plans</a></div>
 </div>
 <p style="margin-top:20px"><a href="${rel}pricing.html">Full price list, including individual filings →</a></p>
 </div></section>
