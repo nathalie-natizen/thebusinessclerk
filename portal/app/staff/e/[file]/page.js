@@ -88,6 +88,7 @@ async function updateEntity(fd) {
     sunbiz_doc_number: clean(fd.get('sunbiz_doc_number')), formation_date: clean(fd.get('formation_date')),
     registered_agent: fd.get('registered_agent') === 'on', mail_service: fd.get('mail_service') === 'on',
     stripe_customer_id: clean(fd.get('stripe_customer_id')), ein: clean(fd.get('ein'), 20),
+    sunbiz_url: /^https:\/\/search\.sunbiz\.org\//.test(String(fd.get('sunbiz_url') || '')) ? clean(fd.get('sunbiz_url'), 600) : null,
     contact_name: clean(fd.get('contact_name')), contact_email: clean(fd.get('contact_email')), contact_phone: clean(fd.get('contact_phone'), 40),
   }).eq('id', id);
   await sb.from('entity_notes').upsert({ entity_id: id, notes: clean(fd.get('notes'), 2000), updated_at: new Date().toISOString() });
@@ -241,6 +242,7 @@ export default async function StaffEntity({ params, searchParams }) {
       <div className="row"><label>Type<select name="entity_type" defaultValue={e.entity_type}><option>LLC</option><option>Corporation</option><option>Nonprofit</option><option>Other</option></select></label>
         <label>Status<select name="status" defaultValue={e.status}><option value="active">Active</option><option value="pending">Pending</option><option value="inactive">Inactive</option><option value="dissolved">Dissolved</option></select></label></div>
       <div className="row"><label>Florida document #<input name="sunbiz_doc_number" defaultValue={e.sunbiz_doc_number || ''} /></label><label>Formation date<input name="formation_date" type="date" defaultValue={e.formation_date || ''} /></label><label>EIN<input name="ein" defaultValue={e.ein || ''} placeholder="12-3456789" /></label></div>
+      <label>Sunbiz page link (open the company's detail page on search.sunbiz.org and paste its address)<input name="sunbiz_url" defaultValue={e.sunbiz_url || ''} placeholder="https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResultDetail?..." /></label>
       <div className="row"><label>Contact name<input name="contact_name" defaultValue={e.contact_name || ''} /></label><label>Contact email<input name="contact_email" type="email" defaultValue={e.contact_email || ''} /></label><label>Contact phone<input name="contact_phone" defaultValue={e.contact_phone || ''} /></label></div>
       <label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="registered_agent" defaultChecked={e.registered_agent} style={{ minHeight: 'auto' }} /> Registered agent service</label>
       <label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="mail_service" defaultChecked={e.mail_service} style={{ minHeight: 'auto' }} /> Business address & mail service</label>

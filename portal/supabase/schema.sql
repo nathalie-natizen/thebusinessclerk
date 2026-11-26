@@ -477,3 +477,6 @@ create table if not exists public.capture_tokens (
   created_at timestamptz not null default now()
 );
 alter table public.capture_tokens enable row level security;  -- no policies: only the server (service key) reads or writes tokens
+
+-- Sunbiz detail page link (staff paste)
+alter table public.entities add column if not exists sunbiz_url text;
