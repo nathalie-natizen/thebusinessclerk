@@ -1,6 +1,6 @@
 const C = require('./config');
 const P = C.prices, F = C.stateFees;
-const { servicePage, priceCard, linksCard, chooser } = require('./pages');
+const { servicePage, priceCard, linksCard, chooser, filingsTable } = require('./pages');
 const { buildGuides } = require('./articles');
 const homeL = require('./homeL');
 const $ = n => `US$ ${n}`;
@@ -139,7 +139,7 @@ const pricing = servicePage({
   content: `
 ## Formación de empresas
 - **LLC en Florida: ${$(P.formation)}**, pago único. Nuestro servicio de ${$(P.formationService)}, la tarifa estatal de US$ ${F.llcArticles} y el primer año de agente registrado (${$(P.raAnnual)}). Incluye modelo de acuerdo operativo.
-- **Corporación en Florida: ${$(P.formationCorp)}**, pago único. Nuestro servicio de ${$(P.formationService)}, la tarifa estatal de US$ ${F.corpArticles} y el primer año de agente registrado.
+- **Corporación en Florida: ${$(P.formationCorp)}**, pago único. Nuestro servicio de ${$(P.formationService)}, la tarifa estatal de US$ ${F.corpArticles} y el primer año de agente registrado. Incluye modelo de estatutos (bylaws).
 - **Solicitud del EIN (opcional): ${$(P.ein)}**
 ## Mantenimiento anual
 - **Agente registrado en Florida: ${$(P.raAnnual)}/año**
@@ -153,17 +153,8 @@ const pricing = servicePage({
 ## Lanzamiento
 - **Paquete de lanzamiento: desde ${$(P.launch)}** (búsqueda de nombre y marca, dominio, correo profesional con Google Workspace o Microsoft 365 y sitio web de hasta 5 páginas, hasta 2 revisiones). Los costos de terceros los pagas directamente.
 ## Otros trámites
-Tarifa de servicio; las tarifas del estado de Florida se cobran aparte.
-- Cambio de agente registrado: **US$ 0** al contratarnos como agente
-- Enmienda de los Articles (Articles of Amendment): **US$ 85**
-- Reporte anual enmendado: **US$ 65**
-- Cambio de dirección: **US$ 65**
-- Nombre comercial (DBA): **US$ 75**
-- Certificate of Status: **US$ 25**
-- Copia certificada: **US$ 35**
-- Disolución de LLC: **US$ 95**
-- Reinstalación: **desde US$ 175**
-- Registro de empresa extranjera en Florida: **US$ ${P.formationService}**`,
+Tarifa de servicio; las tarifas del estado de Florida se cobran aparte.`,
+  extra: rel => `${filingsTable('es')}<p style="margin-top:16px;color:var(--soft)">Vea nuestra <a href="${rel}refund-policy.html">política de reembolso</a> (en inglés). Los precios pueden cambiar; se aplica el precio mostrado al hacer el pedido.</p>`,
 });
 
 const start = servicePage({

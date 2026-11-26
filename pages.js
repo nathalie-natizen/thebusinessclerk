@@ -40,6 +40,16 @@ const chooser = lang => { const c = CHOOSER[lang]; return `<div class="grid">${c
 const linksCard = (title, links, rel) => `<div class="card"><h3>${title}</h3><ul style="padding-left:18px;margin:0">${links.map(([h, t]) => `<li><a href="${rel}${h}">${t}</a></li>`).join('')}</ul></div>`;
 
 const pages = [];
+// Filings price table, identical in every language (names translated; prices from config.js)
+const FT = {
+  en: { h: ['Filing', 'Our fee (state fee at cost)'], order: 'Order →', from: 'from', zero: '$0 with agent service', names: {} },
+  pt: { h: ['Registro', 'Nossa taxa (taxa estadual pelo custo)'], order: 'Pedir →', from: 'a partir de', zero: 'US$ 0 com o serviço de agente', names: { ein: 'Solicitação de EIN', ra: 'Troca de agente registrado', amendment: 'Alteração dos Articles (Articles of Amendment)', amended_ar: 'Relatório anual retificado', address_change: 'Mudança de endereço da empresa', dba: 'Nome fantasia (DBA)', cert_status: 'Certidão de regularidade (Certificate of Status)', certified_copy: 'Cópia autenticada', dissolution: 'Encerramento (LLC ou corporação)', reinstatement: 'Reativação (reinstatement)', foreign: 'Registro de empresa de outro estado na Flórida' } },
+  es: { h: ['Trámite', 'Nuestra tarifa (tarifa estatal al costo)'], order: 'Pedir →', from: 'desde', zero: 'US$ 0 con el servicio de agente', names: { ein: 'Solicitud de EIN', ra: 'Cambio de agente registrado', amendment: 'Enmienda de los Articles (Articles of Amendment)', amended_ar: 'Reporte anual enmendado', address_change: 'Cambio de dirección de la empresa', dba: 'Nombre comercial (DBA)', cert_status: 'Certificado de estado (Certificate of Status)', certified_copy: 'Copia certificada', dissolution: 'Disolución (LLC o corporación)', reinstatement: 'Reinstalación (reinstatement)', foreign: 'Registro de empresa de otro estado en Florida' } },
+};
+const filingsTable = lang => { const t = FT[lang]; const cur = lang === 'en' ? '$' : 'US$ ';
+  const fee = p => typeof p === 'number' ? cur + p : String(p).startsWith('from $') ? `${t.from} ${cur}${p.replace('from $', '')}` : t.zero;
+  return `<div class="scroll"><table class="stack"><thead><tr><th>${t.h[0]}</th><th class="n">${t.h[1]}</th><th></th></tr></thead><tbody>${C.alaCarte.map(([n, p, k]) => `<tr><td>${t.names[k] || n}</td><td class="n">${fee(p)}</td><td class="n"><a href="https://app.thebusinessclerk.com/start?service=${k}&lang=${lang}">${t.order}</a></td></tr>`).join('')}</tbody></table></div>`; };
+
 
 // ---------- Registered agent ----------
 pages.push(servicePage({
@@ -197,7 +207,7 @@ pages.push(servicePage({
 - **Foreign qualification**: register an out-of-state company to do business in Florida
 - **Certificate of Status** and **certified copies** for banks, licenses and contracts
 Our service fees are listed below. Florida state fees are additional and billed at cost.`,
-  extra: rel => `<div class="scroll"><table class="stack"><thead><tr><th>Filing</th><th class="n">Our fee (state fee at cost)</th><th></th></tr></thead><tbody>${C.alaCarte.map(([n, p, k]) => `<tr><td>${n}</td><td class="n">${typeof p === "number" ? "$" + p : p}</td><td class="n"><a href="https://app.thebusinessclerk.com/start?service=${k}&lang=en">Order →</a></td></tr>`).join('')}</tbody></table></div>`,
+  extra: rel => `${filingsTable('en')}`,
   aside: rel => linksCard('Most requested', [['florida-annual-report.html', 'Annual report'], ['florida-change-registered-agent.html', 'Change registered agent'], ['resources/florida-llc-reinstatement.html', 'Reinstatement'], ['pricing.html', 'Full price list']], rel),
 }));
 
@@ -304,12 +314,13 @@ pages.push(servicePage({
 ## Address & mail
 - Business address & mail: **$${P.mailBasic}/month**, ${P.mailIncluded} items logged with envelope photo (then $${P.mailOverItem}/item)
 - Forwarding: **$${P.mailForward} per item** + postage at cost · Packages: **$${P.mailPackage}** each
-- Open & scan to your portal: **$1.50–$2.50 per item** (up to ${P.scanPages} pages); the lowest rate for your monthly volume is applied automatically. [See scan pricing](business-address-mail.html)
+- Open & scan to your portal: **$1.50–$2.50 per item** (up to ${P.scanPages} pages; $${P.scanPage} per extra page). No plan to choose: at month end we automatically apply the lowest rate for your volume. [See scan pricing](business-address-mail.html)
+- Shred: free. Legal papers and state notices (registered agent) are always opened and scanned at no charge.
 ## Launch
-- **Launch Pack: from $${P.launch}** (name and trademark search, domain, professional email, website up to 5 pages, up to 2 revisions). Third-party costs paid directly by you.
+- **Launch Pack: from $${P.launch}** (name and trademark search, domain, professional email with Google Workspace or Microsoft 365, website up to 5 pages, up to 2 revisions). Third-party costs paid directly by you.
 ## Individual filings
 Service fee shown; Florida state fees are additional.`,
-  extra: rel => `<div class="scroll"><table class="stack"><thead><tr><th>Filing</th><th class="n">Our fee (state fee at cost)</th><th></th></tr></thead><tbody>${C.alaCarte.map(([n, p, k]) => `<tr><td>${n}</td><td class="n">${typeof p === "number" ? "$" + p : p}</td><td class="n"><a href="https://app.thebusinessclerk.com/start?service=${k}&lang=en">Order →</a></td></tr>`).join('')}</tbody></table></div><p style="margin-top:16px;color:var(--soft)">See our <a href="${rel}refund-policy.html">refund policy</a>. Prices may change; the price shown when you order is the price you pay.</p>`,
+  extra: rel => `${filingsTable('en')}<p style="margin-top:16px;color:var(--soft)">See our <a href="${rel}refund-policy.html">refund policy</a>. Prices may change; the price shown when you order is the price you pay.</p>`,
 }));
 
 // ---------- Company ----------
@@ -450,8 +461,6 @@ If you cancel before we submit anything to a government agency, we refund your s
 Government fees are paid to the state and cannot be refunded once submitted. Service fees for work already completed are not refundable.
 ## Recurring services
 Registered agent service can be cancelled at any time and will not renew; the current service year is not prorated. Mail plans can be cancelled at any time, effective at the end of the month; that month's usage is billed.
-## Launch Pack
-Full refund until your domain is registered. After the domain is registered, the Launch Pack service fee is not refundable. Third-party costs (domain, email, hosting) are paid by you directly to those providers.
 ## Rejected filings
 If a filing is rejected because of our error, we correct and refile it at no charge.
 ## Questions
@@ -468,3 +477,4 @@ module.exports.linksCard = linksCard;
 module.exports.priceCard = priceCard;
 module.exports.chooser = chooser;
 module.exports.startUrl = startUrl;
+module.exports.filingsTable = filingsTable;

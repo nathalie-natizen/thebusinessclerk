@@ -1,6 +1,6 @@
 const C = require('./config');
 const P = C.prices, F = C.stateFees;
-const { servicePage, priceCard, linksCard, chooser } = require('./pages');
+const { servicePage, priceCard, linksCard, chooser, filingsTable } = require('./pages');
 const { buildGuides } = require('./articles');
 const homeL = require('./homeL');
 const $ = n => `US$ ${n}`;
@@ -139,7 +139,7 @@ const pricing = servicePage({
   content: `
 ## Abertura de empresa
 - **LLC na Flórida: ${$(P.formation)}**, pagamento único. Nosso serviço de ${$(P.formationService)}, a taxa estadual de US$ ${F.llcArticles} e o primeiro ano de agente registrado (${$(P.raAnnual)}). Inclui modelo de acordo operacional.
-- **Corporação na Flórida: ${$(P.formationCorp)}**, pagamento único. Nosso serviço de ${$(P.formationService)}, a taxa estadual de US$ ${F.corpArticles} e o primeiro ano de agente registrado.
+- **Corporação na Flórida: ${$(P.formationCorp)}**, pagamento único. Nosso serviço de ${$(P.formationService)}, a taxa estadual de US$ ${F.corpArticles} e o primeiro ano de agente registrado. Inclui modelo de estatuto (bylaws).
 - **Solicitação do EIN (opcional): ${$(P.ein)}**
 ## Manutenção anual
 - **Agente registrado na Flórida: ${$(P.raAnnual)}/ano**
@@ -153,17 +153,8 @@ const pricing = servicePage({
 ## Lançamento
 - **Pacote de lançamento: a partir de ${$(P.launch)}** (pesquisa de nome e marca, domínio, e-mail profissional com Google Workspace ou Microsoft 365 e site de até 5 páginas, até 2 revisões). Custos de terceiros pagos diretamente por você.
 ## Outros registros
-Taxa de serviço; as taxas do estado da Flórida são cobradas à parte.
-- Troca de agente registrado: **US$ 0** ao nos contratar como agente
-- Alteração dos Articles (Articles of Amendment): **US$ 85**
-- Relatório anual retificador: **US$ 65**
-- Mudança de endereço: **US$ 65**
-- Nome fantasia (DBA): **US$ 75**
-- Certificate of Status: **US$ 25**
-- Cópia autenticada: **US$ 35**
-- Encerramento de LLC: **US$ 95**
-- Reativação: **a partir de US$ 175**
-- Registro de empresa estrangeira na Flórida: **US$ ${P.formationService}**`,
+Taxa de serviço; as taxas do estado da Flórida são cobradas à parte.`,
+  extra: rel => `${filingsTable('pt')}<p style="margin-top:16px;color:var(--soft)">Veja nossa <a href="${rel}refund-policy.html">política de reembolso</a> (em inglês). Os preços podem mudar; vale o preço mostrado no momento do pedido.</p>`,
 });
 
 const start = servicePage({

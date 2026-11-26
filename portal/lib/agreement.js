@@ -4,7 +4,7 @@
 import { clientTerms } from './guidelines';
 import { FILINGS, FILING_KINDS } from './filings';
 
-export const AGREEMENT_VERSION = '2026-11-26-draft1';
+export const AGREEMENT_VERSION = '2026-11-26-draft2';
 const CO = 'THE BUSINESS CLERK LLC';
 
 const NAMES = { llc: 'Florida LLC Formation', corp: 'Florida Corporation Formation', ra: 'Florida Registered Agent', annual_report: 'Annual Report Filing', ein: 'EIN Application', mail: 'Business Address & Mail (Mail Service Addendum)', launch: 'Launch Pack' };
