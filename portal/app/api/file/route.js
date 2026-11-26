@@ -1,0 +1,24 @@
+import { NextResponse } from 'next/server';
+import { supabaseServer } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+
+// Download a scan or document. Access is checked with the user's own session (row level security),
+// then a short-lived signed link (60 seconds) is created.
+export async function GET(req) {
+  const url = new URL(req.url); const type = url.searchParams.get('type'); const id = url.searchParams.get('id');
+  const table = type === 'mail' ? 'mail_items' : type === 'document' ? 'documents' : null;
+  if (!table || !id) return new NextResponse('Bad request', { status: 400 });
+  const sb = supabaseServer();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return NextResponse.redirect(new URL('/login', req.url));
+  const { data: row } = await sb.from(table).select('id, file_path').eq('id', id).single();
+  if (!row?.file_path) return new NextResponse('Not found', { status: 404 });
+  const admin = supabaseAdmin();
+  const { data, error } = await admin.storage.from(type === 'mail' ? 'mail' : 'documents').createSignedUrl(row.file_path, 60, { download: true });
+  if (error) return new NextResponse('File unavailable', { status: 404 });
+  if (type === 'mail') {
+    const { data: p } = await sb.from('profiles').select('role').eq('id', user.id).single();
+    if (p?.role === 'client') await admin.from('mail_items').update({ viewed_at: new Date().toISOString() }).eq('id', id).is('viewed_at', null);
+  }
+  return NextResponse.redirect(data.signedUrl);
+}
