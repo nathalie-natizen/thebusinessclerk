@@ -24,7 +24,19 @@ ${o.noCta ? '' : ctaBand(rel, o.ctaH, o.ctaP, lang)}`,
   }) };
 }
 
-const priceCard = (title, price, unit, items, href, btn, rel) => `<div class="card plan best"><h3>${title}</h3><p class="price">${price} <small>${unit}</small></p><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul><a class="btn primary" href="${rel}${href}">${btn}</a></div>`;
+const PORTAL_START = 'https://app.thebusinessclerk.com/start';
+const startUrl = (service, lang = 'en') => `${PORTAL_START}?service=${service}&lang=${lang}`;
+const serviceFromTitle = t => /Agent/i.test(t) ? 'ra' : /Corpora/i.test(t) ? 'corp' : /Annual|Anual/i.test(t) ? 'annual_report' : /Mail|Correspond|Correo|Address|Endere|Direcc/i.test(t) ? 'mail' : /Launch/i.test(t) ? 'launch' : /EIN/.test(t) ? 'ein' : 'llc';
+const isStart = h => /^(get-started|pt\/comecar|es\/empezar)\.html$/.test(h);
+const priceCard = (title, price, unit, items, href, btn, rel) => `<div class="card plan best"><h3>${title}</h3><p class="price">${price} <small>${unit}</small></p><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul><a class="btn primary" href="${isStart(href) ? startUrl(serviceFromTitle(title), href.startsWith('pt/') ? 'pt' : href.startsWith('es/') ? 'es' : 'en') : rel + href}">${btn}</a></div>`;
+
+// Service chooser used on the Get started pages (EN/PT/ES): each button opens the portal order form
+const CHOOSER = {
+  en: { h: 'Choose a service', other: 'Need a different filing (amendment, change of agent, DBA, dissolution)? <a href="contact.html">Contact us</a> and we\'ll send you a quote.', items: [['llc', 'Form a Florida LLC', `$${P.formation} one time, state fee and first-year agent included`], ['corp', 'Form a Florida corporation', `$${P.formationCorp} one time, state fee included`], ['ra', 'Registered agent', `$${P.raAnnual} per year`], ['annual_report', 'Annual report', `$${P.annualReport} + state fee`], ['ein', 'EIN application', `$${P.ein}`], ['mail', 'Business address & mail', `$${P.mailBasic} per month`], ['launch', 'Launch Pack', `$${P.launch} one time`]], btn: 'Start' },
+  pt: { h: 'Escolha um serviço', other: 'Precisa de outro registro (alteração, troca de agente, DBA, encerramento)? <a href="../contact.html">Fale conosco</a> e enviamos um orçamento.', items: [['llc', 'Abrir uma LLC na Flórida', `US$ ${P.formation} pagamento único, taxa estadual e 1º ano de agente incluídos`], ['corp', 'Abrir uma corporação', `US$ ${P.formationCorp} pagamento único, taxa estadual incluída`], ['ra', 'Agente registrado', `US$ ${P.raAnnual} por ano`], ['annual_report', 'Relatório anual', `US$ ${P.annualReport} + taxa estadual`], ['ein', 'Solicitação de EIN', `US$ ${P.ein}`], ['mail', 'Endereço e correspondência', `US$ ${P.mailBasic} por mês`], ['launch', 'Launch Pack', `US$ ${P.launch} pagamento único`]], btn: 'Começar' },
+  es: { h: 'Elija un servicio', other: '¿Necesita otro trámite (enmienda, cambio de agente, DBA, disolución)? <a href="../contact.html">Contáctenos</a> y le enviamos una cotización.', items: [['llc', 'Abrir una LLC en Florida', `US$ ${P.formation} pago único, tarifa estatal y primer año de agente incluidos`], ['corp', 'Abrir una corporación', `US$ ${P.formationCorp} pago único, tarifa estatal incluida`], ['ra', 'Agente registrado', `US$ ${P.raAnnual} por año`], ['annual_report', 'Reporte anual', `US$ ${P.annualReport} + tarifa estatal`], ['ein', 'Solicitud de EIN', `US$ ${P.ein}`], ['mail', 'Dirección comercial y correo', `US$ ${P.mailBasic} por mes`], ['launch', 'Launch Pack', `US$ ${P.launch} pago único`]], btn: 'Empezar' },
+};
+const chooser = lang => { const c = CHOOSER[lang]; return `<div class="grid">${c.items.map(([k, h, d]) => `<div class="card"><h3>${h}</h3><p>${d}</p><a class="btn primary" href="${startUrl(k, lang)}">${c.btn}</a></div>`).join('')}</div><p style="margin-top:18px">${c.other}</p>`; };
 const linksCard = (title, links, rel) => `<div class="card"><h3>${title}</h3><ul style="padding-left:18px;margin:0">${links.map(([h, t]) => `<li><a href="${rel}${h}">${t}</a></li>`).join('')}</ul></div>`;
 
 const pages = [];
@@ -371,21 +383,9 @@ pages.push(servicePage({
   path: 'get-started.html', title: 'Get Started – Form Your Florida Company | The Business Clerk', noCta: true,
   desc: 'Start your Florida LLC, hire us as your registered agent or order a filing. Tell us what you need and we\'ll take it from there.',
   kicker: 'Get started', h1: 'Let\'s get your business filed', crumb: 'Get started',
-  lead: 'Tell us what you need. We\'ll confirm the details and the exact price, including any state fees, before anything is filed.',
-  content: `## Your request`,
-  extra: () => `<form data-mail="New order request">
-<label>What do you need?<select name="Service" required>
-<option>Florida LLC formation ($${P.formation})</option><option>Florida Corporation formation ($${P.formationCorp})</option><option>Registered agent ($${P.raAnnual}/yr)</option><option>Change my registered agent</option><option>Annual report filing ($${P.annualReport} + state fee)</option><option>EIN application ($${P.ein})</option><option>Business address & mail</option><option>Launch Pack</option><option>Other filing</option></select></label>
-<label>Your full name<input name="Name" required autocomplete="name"></label>
-<label>Email<input name="Email" type="email" required autocomplete="email"></label>
-<label>Phone / WhatsApp<input name="Phone" type="tel" autocomplete="tel"></label>
-<label>Company name (or the name you want)<input name="Company"></label>
-<label>Country where you live<input name="Country" autocomplete="country-name"></label>
-<label>Preferred language<select name="Language"><option>English</option><option>Português</option><option>Español</option></select></label>
-<label>Anything else we should know?<textarea name="Notes"></textarea></label>
-<button class="btn primary" type="submit">Prepare my request</button>
-<div class="formmsg" role="status">Your request is ready. <a href="#">Open it in your email app</a> to send it, or email the details to <strong>${C.email}</strong>.</div>
-</form>`,
+  lead: 'Pick a service and fill out one short form. We review every order within one business day, and you can follow each step in your client portal.',
+  content: '',
+  extra: () => chooser('en'),
 }));
 
 // ---------- Legal ----------
@@ -450,3 +450,5 @@ module.exports = pages.map(p => p); // array of {html} strings with path inside
 module.exports.servicePage = servicePage;
 module.exports.linksCard = linksCard;
 module.exports.priceCard = priceCard;
+module.exports.chooser = chooser;
+module.exports.startUrl = startUrl;

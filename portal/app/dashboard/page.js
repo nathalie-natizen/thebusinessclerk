@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import Shell from '@/components/Shell';
 import { requireUser } from '@/lib/auth';
-import { fmtDate, MAIL_CATEGORY } from '@/lib/labels';
+import { fmtDate, MAIL_CATEGORY, statusLabel } from '@/lib/labels';
 
 export default async function Dashboard() {
   const { sb, profile } = await requireUser();
   const { data: entities } = await sb.from('entities').select('*').order('legal_name');
   const ids = (entities || []).map(e => e.id);
+  const { data: open } = ids.length ? await sb.from('orders').select('entity_id, service, status, kind').in('entity_id', ids).not('status', 'in', '(completed,delivered,cancelled)') : { data: [] };
   const { data: recent } = ids.length ? await sb.from('mail_items').select('*, entities(file_number, legal_name)').in('entity_id', ids).order('received_at', { ascending: false }).limit(8) : { data: [] };
   return (<Shell profile={profile}>
     <h1>My companies</h1>
@@ -19,6 +20,7 @@ export default async function Dashboard() {
         <h3 style={{ marginTop: 10 }}>{e.legal_name}</h3>
         <p className="muted">{e.entity_type} · {e.status}{e.sunbiz_doc_number ? ` · Doc #${e.sunbiz_doc_number}` : ''}</p>
         <p>{e.registered_agent && <span className="pill ok">Registered agent</span>} {e.mail_service && <span className="pill ok">Mail service</span>} {unread > 0 && <span className="pill urgent">{unread} new</span>}</p>
+        {(open || []).filter(o => o.entity_id === e.id).map((o, i) => <p key={i} style={{ margin: '4px 0' }}><span className="pill warn">{statusLabel(o.status, o.kind)}</span> <span className="muted">{o.service}</span></p>)}
       </Link>);
     })}</div>
     {!!recent?.length && <><h2>Latest mail</h2><div className="scroll"><table><thead><tr><th>Received</th><th>Company</th><th>Type</th><th>From</th></tr></thead><tbody>

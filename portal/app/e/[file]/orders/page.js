@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Shell, { EntityTabs } from '@/components/Shell';
 import { requireUser, getEntity } from '@/lib/auth';
-import { fmtDate, ORDER_STATUS } from '@/lib/labels';
+import { fmtDate, statusLabel } from '@/lib/labels';
 
 const ORDERABLE = [['annual_report', 'Annual report filing'], ['ein', 'EIN application'], ['ra', 'Registered agent'], ['mail', 'Business address & mail'], ['launch', 'Launch Pack']];
 
@@ -18,9 +18,9 @@ export default async function Orders({ params, searchParams }) {
       <p>{ORDERABLE.filter(([k]) => !(k === 'ra' && e.registered_agent) && !(k === 'mail' && e.mail_service)).map(([k, label]) => <a key={k} className="btn sec small" style={{ marginRight: 8, marginBottom: 8 }} href={`/api/stripe/checkout?product=${k}&entity=${e.file_number}`}>{label}</a>)}</p>
     </section>
     {!orders?.length ? <div className="note">No orders yet.</div> : <div className="grid">{orders.map(o => (
-      <div className="card" key={o.id}><h3>{o.service}</h3><p><span className={`pill ${o.status === 'information_needed' ? 'warn' : ['completed', 'delivered'].includes(o.status) ? 'ok' : ''}`}>{ORDER_STATUS[o.status]}</span></p>
+      <div className="card" key={o.id}><h3>{o.service}</h3><p><span className={`pill ${o.status === 'information_needed' ? 'warn' : ['completed', 'delivered'].includes(o.status) ? 'ok' : ''}`}>{statusLabel(o.status, o.kind)}</span></p>
         <p className="muted">Ordered {fmtDate(o.created_at)}</p>
-        <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(ev => <li key={ev.id}><strong>{ORDER_STATUS[ev.status] || ev.status}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul>
+        <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(ev => <li key={ev.id}><strong>{statusLabel(ev.status, o.kind)}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul>
       </div>))}</div>}
   </Shell>);
 }

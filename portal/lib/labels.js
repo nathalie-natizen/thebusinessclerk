@@ -18,8 +18,8 @@ export const HANDLING = {
   hold_pickup: 'Scan it and hold the original for pickup at the office',
 };
 export const ORDER_STATUS = {
-  received: 'Order received', payment_confirmed: 'Payment confirmed', information_needed: 'Information needed',
-  in_review: 'Under review', submitted: 'Submitted to the State of Florida', completed: 'Completed',
+  awaiting_payment: 'Awaiting payment', received: 'Order received', payment_confirmed: 'Payment confirmed', information_needed: 'Information needed',
+  in_review: 'Under review', submitted: 'Submitted', completed: 'Completed',
   delivered: 'Documents delivered', cancelled: 'Cancelled',
 };
 export const DOC_CATEGORY = {
@@ -37,3 +37,25 @@ export const SHIPPING = {
   courier_overnight: 'UPS or FedEx overnight',
 };
 export const SHIPPING_SHORT = { first_class: 'USPS First-Class', priority: 'USPS Priority', express: 'USPS Priority Express', courier_overnight: 'UPS/FedEx Overnight' };
+
+// Status label with the right agency for the service
+export const statusLabel = (status, kind) => status === 'submitted'
+  ? (kind === 'ein' ? 'Submitted to the IRS' : ['llc', 'corp', 'annual_report', 'amendment', 'ra_change'].includes(kind) ? 'Submitted to the State of Florida' : 'In progress')
+  : ORDER_STATUS[status] || status;
+
+// Pipeline columns, in order
+export const PIPELINE = [
+  ['awaiting_payment', 'Awaiting payment'], ['received', 'New'], ['payment_confirmed', 'Paid – to do'], ['information_needed', 'Waiting on client'],
+  ['in_review', 'Preparing'], ['submitted', 'Submitted'], ['completed', 'Completed'],
+];
+
+// Services that can be ordered
+export const KINDS = {
+  llc: { name: 'Florida LLC Formation', env: 'STRIPE_PRICE_LLC' },
+  corp: { name: 'Florida Corporation Formation', env: 'STRIPE_PRICE_CORP' },
+  ra: { name: 'Florida Registered Agent', env: 'STRIPE_PRICE_RA', recurring: true },
+  annual_report: { name: 'Annual Report Filing', env: 'STRIPE_PRICE_ANNUAL_REPORT' },
+  ein: { name: 'EIN Application', env: 'STRIPE_PRICE_EIN' },
+  mail: { name: 'Business Address & Mail', env: 'STRIPE_PRICE_MAIL', recurring: true },
+  launch: { name: 'Launch Pack', env: 'STRIPE_PRICE_LAUNCH' },
+};

@@ -12,7 +12,7 @@ export async function middleware(req) {
   });
   const { data: { user } } = await sb.auth.getUser();
   const p = req.nextUrl.pathname;
-  const open = p.startsWith('/login') || p.startsWith('/auth') || p.startsWith('/api/stripe/webhook') || p.startsWith('/api/stripe/checkout') || p.startsWith('/welcome');
+  const open = p.startsWith('/login') || p.startsWith('/auth') || p.startsWith('/api/stripe/webhook') || p.startsWith('/api/stripe/checkout') || p.startsWith('/welcome') || p.startsWith('/start');
   if (!user && !open) return NextResponse.redirect(new URL('/login', req.url));
   return res;
 }

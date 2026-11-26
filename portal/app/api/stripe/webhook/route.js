@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { stripe, PRODUCTS } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { setOrderStatus } from '@/lib/orders';
 
 // Stripe → portal. Creates the company file, order and client access after payment, and keeps service flags in sync.
 export async function POST(req) {
@@ -9,6 +10,27 @@ export async function POST(req) {
   try { event = stripe().webhooks.constructEvent(await req.text(), sig, process.env.STRIPE_WEBHOOK_SECRET); }
   catch { return new NextResponse('Invalid signature', { status: 400 }); }
   const db = supabaseAdmin();
+
+  // Website intake orders: the orders already exist, mark them paid
+  if (event.type === 'checkout.session.completed' && event.data.object.metadata?.order_ids) {
+    const s = event.data.object; const entityId = s.metadata.entity_id;
+    if (s.customer) await db.from('entities').update({ stripe_customer_id: s.customer }).eq('id', entityId).is('stripe_customer_id', null);
+    const ids = s.metadata.order_ids.split(',').filter(Boolean);
+    const { data: orders } = await db.from('orders').select('id, kind, status').in('id', ids);
+    for (const o of orders || []) if (o.status === 'awaiting_payment') await setOrderStatus({ orderId: o.id, status: 'payment_confirmed', note: 'Payment received. We\u2019re starting on it.' });
+    // Formation includes the first year of registered agent service; set up the yearly renewal to start in 12 months
+    const formation = (orders || []).some(o => ['llc', 'corp'].includes(o.kind));
+    if (formation && s.customer && process.env.STRIPE_PRICE_RA) {
+      try {
+        const st = stripe(); let pm = null;
+        if (s.payment_intent) pm = (await st.paymentIntents.retrieve(s.payment_intent)).payment_method;
+        else if (s.subscription) pm = (await st.subscriptions.retrieve(s.subscription)).default_payment_method;
+        if (pm) await st.customers.update(s.customer, { invoice_settings: { default_payment_method: pm } });
+        await st.subscriptions.create({ customer: s.customer, items: [{ price: process.env.STRIPE_PRICE_RA }], trial_period_days: 365, metadata: { entity_id: entityId, product: 'ra' }, ...(pm ? { default_payment_method: pm } : {}) });
+      } catch (err) { await db.from('entity_notes').upsert({ entity_id: entityId, notes: 'Set up the registered agent renewal in Stripe manually: ' + err.message }); }
+    }
+    return NextResponse.json({ received: true });
+  }
 
   if (event.type === 'checkout.session.completed') {
     const s = event.data.object; const key = s.metadata?.product; const p = PRODUCTS[key] || { name: key };
@@ -38,11 +60,15 @@ export async function POST(req) {
   }
 
   if (event.type === 'customer.subscription.deleted') {
-    const sub = event.data.object; const key = sub.metadata?.product;
-    const field = key === 'ra' ? 'registered_agent' : key === 'mail' ? 'mail_service' : null;
-    if (field) {
-      if (sub.metadata?.entity_id) await db.from('entities').update({ [field]: false }).eq('id', sub.metadata.entity_id);
-      else await db.from('entities').update({ [field]: false }).eq('stripe_customer_id', sub.customer);
+    const sub = event.data.object;
+    // Work out which services this subscription covered from its prices (one subscription can hold several)
+    const prices = sub.items?.data?.map(i => i.price?.id) || [];
+    const fields = {};
+    if (prices.includes(process.env.STRIPE_PRICE_RA) || sub.metadata?.product === 'ra') fields.registered_agent = false;
+    if (prices.includes(process.env.STRIPE_PRICE_MAIL) || sub.metadata?.product === 'mail') fields.mail_service = false;
+    if (Object.keys(fields).length) {
+      if (sub.metadata?.entity_id) await db.from('entities').update(fields).eq('id', sub.metadata.entity_id);
+      else await db.from('entities').update(fields).eq('stripe_customer_id', sub.customer);
     }
   }
   return NextResponse.json({ received: true });

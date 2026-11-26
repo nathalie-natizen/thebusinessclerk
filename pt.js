@@ -1,6 +1,6 @@
 const C = require('./config');
 const P = C.prices, F = C.stateFees;
-const { servicePage, priceCard, linksCard } = require('./pages');
+const { servicePage, priceCard, linksCard, chooser } = require('./pages');
 const { buildGuides } = require('./articles');
 const homeL = require('./homeL');
 const $ = n => `US$ ${n}`;
@@ -168,19 +168,9 @@ const start = servicePage({
   title: 'Começar: Abra Sua Empresa na Flórida | The Business Clerk',
   desc: 'Abra sua LLC na Flórida, contrate nosso agente registrado ou peça um registro. Conte o que você precisa e cuidamos do resto.',
   kicker: 'Começar', h1: 'Vamos registrar sua empresa', crumb: 'Começar',
-  lead: 'Conte o que você precisa. Confirmamos os detalhes e o preço exato, incluindo as taxas do estado, antes de registrar qualquer coisa.',
-  content: '## Seu pedido',
-  extra: () => `<form data-mail="Novo pedido (PT)">
-<label>Do que você precisa?<select name="Servico" required><option>Abertura de LLC na Flórida (${$(P.formation)})</option><option>Abertura de corporação (${$(P.formationCorp)})</option><option>Agente registrado (${$(P.raAnnual)}/ano)</option><option>Trocar meu agente registrado</option><option>Relatório anual (${$(P.annualReport)} + taxa estadual)</option><option>EIN (${$(P.ein)})</option><option>Endereço e correspondência</option><option>Pacote de lançamento</option><option>Outro registro</option></select></label>
-<label>Nome completo<input name="Nome" required autocomplete="name"></label>
-<label>E-mail<input name="Email" type="email" required autocomplete="email"></label>
-<label>Telefone / WhatsApp<input name="Telefone" type="tel" autocomplete="tel"></label>
-<label>Nome da empresa (ou o nome desejado)<input name="Empresa"></label>
-<label>País onde você mora<input name="Pais" autocomplete="country-name"></label>
-<label>Algo mais que devemos saber?<textarea name="Observacoes"></textarea></label>
-<button class="btn primary" type="submit">Preparar meu pedido</button>
-<div class="formmsg" role="status">Seu pedido está pronto. <a href="#">Abra no seu aplicativo de e-mail</a> para enviar, ou mande os detalhes para <strong>${C.email}</strong>.</div>
-</form>`,
+  lead: 'Escolha um serviço e preencha um formulário curto. Revisamos cada pedido em até um dia útil, e você acompanha cada etapa no portal do cliente.',
+  content: '',
+  extra: () => chooser('pt'),
 });
 
 const guides = buildGuides([

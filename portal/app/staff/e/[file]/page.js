@@ -5,7 +5,9 @@ import Shell from '@/components/Shell';
 import UploadForm from '@/components/UploadForm';
 import { requireStaff, getEntity } from '@/lib/auth';
 import { notifyEntity } from '@/lib/notify';
-import { fmtDate, fmtDay, MAIL_CATEGORY, MAIL_STATUS, ORDER_STATUS, DOC_CATEGORY, HANDLING } from '@/lib/labels';
+import { setOrderStatus } from '@/lib/orders';
+import OrderDetails from '@/components/OrderDetails';
+import { fmtDate, fmtDay, MAIL_CATEGORY, MAIL_STATUS, ORDER_STATUS, DOC_CATEGORY, HANDLING, statusLabel, KINDS } from '@/lib/labels';
 
 const clean = (v, n = 200) => String(v || '').trim().slice(0, n) || null;
 
@@ -48,7 +50,8 @@ async function recordDocument(fd) {
 async function createOrder(fd) {
   'use server';
   const { sb, user } = await requireStaff();
-  const { data: o } = await sb.from('orders').insert({ entity_id: String(fd.get('entity_id')), service: clean(fd.get('service')) || 'Service', status: 'received' }).select().single();
+  const kind = KINDS[fd.get('kind')] ? String(fd.get('kind')) : null;
+  const { data: o } = await sb.from('orders').insert({ entity_id: String(fd.get('entity_id')), kind, service: clean(fd.get('service')) || (kind ? KINDS[kind].name : 'Service'), status: 'received' }).select().single();
   if (o) await sb.from('order_events').insert({ order_id: o.id, status: 'received', note: clean(fd.get('note'), 500), created_by: user.id });
   revalidatePath('/staff/e/[file]', 'page');
 }
@@ -58,9 +61,7 @@ async function updateOrder(fd) {
   const { sb, user } = await requireStaff();
   const id = String(fd.get('order_id')); const status = String(fd.get('status')); const note = clean(fd.get('note'), 500);
   if (!ORDER_STATUS[status]) return;
-  const { data: o } = await sb.from('orders').update({ status, updated_at: new Date().toISOString() }).eq('id', id).select().single();
-  await sb.from('order_events').insert({ order_id: id, status, note, created_by: user.id });
-  if (o && fd.get('notify') === 'on') await notifyEntity(o.entity_id, { subject: `Order update: ${o.service}`, text: `Your order "${o.service}" is now: ${ORDER_STATUS[status]}.${note ? `\n\n${note}` : ''}`, sms: `THE BUSINESS CLERK: Your order "${o.service}" is now ${ORDER_STATUS[status]}.` });
+  await setOrderStatus({ orderId: id, status, note, notify: fd.get('notify') === 'on', userId: user.id });
   revalidatePath('/staff/e/[file]', 'page');
 }
 
@@ -72,7 +73,8 @@ async function updateEntity(fd) {
     legal_name: clean(fd.get('legal_name')), entity_type: String(fd.get('entity_type')), status: String(fd.get('status')),
     sunbiz_doc_number: clean(fd.get('sunbiz_doc_number')), formation_date: clean(fd.get('formation_date')),
     registered_agent: fd.get('registered_agent') === 'on', mail_service: fd.get('mail_service') === 'on',
-    stripe_customer_id: clean(fd.get('stripe_customer_id')),
+    stripe_customer_id: clean(fd.get('stripe_customer_id')), ein: clean(fd.get('ein'), 20),
+    contact_name: clean(fd.get('contact_name')), contact_email: clean(fd.get('contact_email')), contact_phone: clean(fd.get('contact_phone'), 40),
   }).eq('id', id);
   await sb.from('entity_notes').upsert({ entity_id: id, notes: clean(fd.get('notes'), 2000), updated_at: new Date().toISOString() });
   redirect(`/staff/e/${String(fd.get('file'))}?saved=1`);
@@ -156,10 +158,11 @@ export default async function StaffEntity({ params, searchParams }) {
     </tbody></table></div>}
 
     <h2>Orders</h2>
-    <form className="row" action={createOrder} style={{ marginBottom: 14 }}><input type="hidden" name="entity_id" value={e.id} /><input name="service" placeholder="Service, e.g. Annual report 2027" required /><input name="note" placeholder="Note (optional)" /><button className="btn sec" style={{ flex: '0 0 auto' }}>Add order</button></form>
-    <div className="grid">{(orders || []).map(o => <div className="card" key={o.id}><h3>{o.service}</h3><p><span className="pill">{ORDER_STATUS[o.status]}</span> <span className="muted">{fmtDate(o.created_at)}</span></p>
-      <form className="stack" action={updateOrder}><input type="hidden" name="order_id" value={o.id} /><select name="status" defaultValue={o.status}>{opts(ORDER_STATUS)}</select><input name="note" placeholder="Note shown to client (optional)" /><label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="notify" defaultChecked style={{ minHeight: 'auto' }} /> Notify client</label><button className="btn small">Update status</button></form>
-      <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(ev => <li key={ev.id}><strong>{ORDER_STATUS[ev.status] || ev.status}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul></div>)}</div>
+    <form className="row" action={createOrder} style={{ marginBottom: 14 }}><input type="hidden" name="entity_id" value={e.id} /><select name="kind" style={{ flex: '0 1 220px' }}><option value="">Other service</option>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select><input name="service" placeholder="Name shown to client, e.g. Annual report 2027 (optional)" /><input name="note" placeholder="Note (optional)" /><button className="btn sec" style={{ flex: '0 0 auto' }}>Add order</button></form>
+    <div className="grid">{(orders || []).map(o => <div className="card" key={o.id}><h3>{o.service}</h3><p><span className="pill">{statusLabel(o.status, o.kind)}</span> <span className="muted">{fmtDate(o.created_at)}</span></p>
+      <OrderDetails d={o.details} />
+      <form className="stack" action={updateOrder}><input type="hidden" name="order_id" value={o.id} /><select name="status" defaultValue={o.status}>{Object.keys(ORDER_STATUS).map(k => <option key={k} value={k}>{statusLabel(k, o.kind)}</option>)}</select><input name="note" placeholder="Note shown to client (optional)" /><label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="notify" defaultChecked style={{ minHeight: 'auto' }} /> Notify client</label><button className="btn small">Update status</button></form>
+      <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(ev => <li key={ev.id}><strong>{statusLabel(ev.status, o.kind)}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul></div>)}</div>
 
     <h2>Documents</h2>
     {!docs?.length ? <p className="muted">No documents.</p> : <ul>{docs.map(d => <li key={d.id}><a href={`/api/file?type=document&id=${d.id}`}>{d.title}</a> <span className="muted">· {DOC_CATEGORY[d.category]} · {fmtDay(d.created_at)}</span></li>)}</ul>}
@@ -176,7 +179,8 @@ export default async function StaffEntity({ params, searchParams }) {
       <label>Legal name<input name="legal_name" defaultValue={e.legal_name} required /></label>
       <div className="row"><label>Type<select name="entity_type" defaultValue={e.entity_type}><option>LLC</option><option>Corporation</option><option>Nonprofit</option><option>Other</option></select></label>
         <label>Status<select name="status" defaultValue={e.status}><option value="active">Active</option><option value="pending">Pending</option><option value="inactive">Inactive</option><option value="dissolved">Dissolved</option></select></label></div>
-      <div className="row"><label>Florida document #<input name="sunbiz_doc_number" defaultValue={e.sunbiz_doc_number || ''} /></label><label>Formation date<input name="formation_date" type="date" defaultValue={e.formation_date || ''} /></label></div>
+      <div className="row"><label>Florida document #<input name="sunbiz_doc_number" defaultValue={e.sunbiz_doc_number || ''} /></label><label>Formation date<input name="formation_date" type="date" defaultValue={e.formation_date || ''} /></label><label>EIN<input name="ein" defaultValue={e.ein || ''} placeholder="12-3456789" /></label></div>
+      <div className="row"><label>Contact name<input name="contact_name" defaultValue={e.contact_name || ''} /></label><label>Contact email<input name="contact_email" type="email" defaultValue={e.contact_email || ''} /></label><label>Contact phone<input name="contact_phone" defaultValue={e.contact_phone || ''} /></label></div>
       <label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="registered_agent" defaultChecked={e.registered_agent} style={{ minHeight: 'auto' }} /> Registered agent service</label>
       <label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="mail_service" defaultChecked={e.mail_service} style={{ minHeight: 'auto' }} /> Business address & mail service</label>
       <label>Stripe customer ID<input name="stripe_customer_id" defaultValue={e.stripe_customer_id || ''} /></label>
