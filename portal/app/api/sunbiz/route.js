@@ -20,6 +20,7 @@ export async function GET(req) {
     const order = name.replace(/[^A-Z0-9]/g, '');
     const r = await fetch(`${BASE}/Inquiry/CorporationSearch/SearchResults/EntityName/${encodeURIComponent(name)}/Page1?searchNameOrder=${order}`, { headers: { 'User-Agent': 'Mozilla/5.0 (THE BUSINESS CLERK portal)' }, cache: 'no-store' });
     const html = await r.text();
+    if (new URL(req.url).searchParams.get('debug')) return NextResponse.json({ status: r.status, len: html.length, hasDoc: html.includes(doc), detailLinks: (html.match(/SearchResultDetail/g) || []).length, title: (html.match(/<title>([^<]*)/i) || [])[1], name, order });
     // Each result row: <a href="/Inquiry/CorporationSearch/SearchResultDetail?...">NAME</a> … <td>DOCUMENT NUMBER</td>
     for (const row of html.split(/<tr[\s>]/i)) {
       if (!row.includes(doc)) continue;
