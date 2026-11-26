@@ -11,13 +11,13 @@ export default function Shell({ profile, children }) {
     <main>{children}</main>
   </>);
   return (<>
-    {missing.length > 0 && <div style={{ background: '#C0392B', color: '#fff', padding: '6px 20px', fontSize: 13.5, textAlign: 'center' }}><strong>Not live yet:</strong> {missing.join(', ')} not set up. Clients are NOT receiving {[missing.includes('email') && 'emails', missing.includes('texts') && 'texts'].filter(Boolean).join(' or ') || 'everything'}{missing.includes('payments') ? ' and nothing is charged' : ''}.{profile?.role === 'admin' && <> <Link href="/staff/setup" style={{ color: '#fff', textDecoration: 'underline' }}>Setup</Link></>}</div>}
+    {missing.length > 0 && <div style={{ background: '#C0392B', color: '#fff', padding: '6px 20px', fontSize: 13.5, textAlign: 'center' }}><strong>Not live yet:</strong> {missing.join(', ')} not set up. Clients are NOT receiving {[missing.includes('email') && 'emails', missing.includes('texts') && 'texts'].filter(Boolean).join(' or ') || 'everything'}{missing.includes('payments') ? ' and nothing is charged' : ''}.{profile?.role === 'admin' && <> <Link href="/admin" style={{ color: '#fff', textDecoration: 'underline' }}>Admin</Link></>}</div>}
     <header className={`top${staff ? ' staff' : ''}`}><div className="in">
       <Link className="brand" href={staff ? '/staff/pipeline' : '/dashboard'}>
         <img src="/favicon.svg" alt="" width="30" height="30" />
         <span>THE BUSINESS CLERK<small>{staff ? 'Staff portal' : 'Client portal'}</small></span>
       </Link>
-      {staff ? <><Link href="/staff/pipeline">Pipeline</Link><Link href="/staff">Entities</Link><Link href="/staff/queue">Mail</Link><Link href="/staff/billing">Billing</Link><Link href="/staff/reports">Reports</Link><Link href="/staff/guidelines">Guidelines</Link>{profile?.role === 'admin' && <Link href="/staff/setup">Setup</Link>}<Link href="/staff/resources">Resources</Link></>
+      {staff ? <><Link href="/staff/pipeline">Pipeline</Link><Link href="/staff">Entities</Link><Link href="/staff/queue">Mail</Link><Link href="/staff/billing">Billing</Link><Link href="/staff/reports">Reports</Link><Link href="/staff/guidelines">Guidelines</Link><Link href="/staff/resources">Resources</Link></>
              : <><Link href="/dashboard">My companies</Link><Link href="/billing">Billing</Link><Link href="/resources">Resources</Link><Link href="/account">Account</Link></>}
       <span className="who hide-sm">{profile?.email}</span>
       <form action="/auth/signout" method="post"><button className="btn small sec" style={{ background: 'transparent', color: '#fff', borderColor: '#fff' }}>Sign out</button></form>
