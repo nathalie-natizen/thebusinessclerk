@@ -14,7 +14,10 @@ export async function POST(req) {
     const s = event.data.object; const key = s.metadata?.product; const p = PRODUCTS[key] || { name: key };
     const email = s.customer_details?.email; const customer = s.customer;
     const company = s.custom_fields?.find(f => f.key === 'company')?.text?.value || 'New company';
-    let { data: entity } = customer ? await db.from('entities').select('*').eq('stripe_customer_id', customer).maybeSingle() : { data: null };
+    let entity = null;
+    if (s.metadata?.entity_id) ({ data: entity } = await db.from('entities').select('*').eq('id', s.metadata.entity_id).maybeSingle());
+    if (!entity && customer) ({ data: entity } = await db.from('entities').select('*').eq('stripe_customer_id', customer).maybeSingle());
+    if (entity && !entity.stripe_customer_id && customer) await db.from('entities').update({ stripe_customer_id: customer }).eq('id', entity.id);
     if (!entity) {
       ({ data: entity } = await db.from('entities').insert({ legal_name: company, status: 'pending', stripe_customer_id: customer || null,
         entity_type: key === 'corp' ? 'Corporation' : 'LLC' }).select().single());
@@ -37,7 +40,10 @@ export async function POST(req) {
   if (event.type === 'customer.subscription.deleted') {
     const sub = event.data.object; const key = sub.metadata?.product;
     const field = key === 'ra' ? 'registered_agent' : key === 'mail' ? 'mail_service' : null;
-    if (field) await db.from('entities').update({ [field]: false }).eq('stripe_customer_id', sub.customer);
+    if (field) {
+      if (sub.metadata?.entity_id) await db.from('entities').update({ [field]: false }).eq('id', sub.metadata.entity_id);
+      else await db.from('entities').update({ [field]: false }).eq('stripe_customer_id', sub.customer);
+    }
   }
   return NextResponse.json({ received: true });
 }
