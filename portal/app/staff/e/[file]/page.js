@@ -6,8 +6,9 @@ import UploadForm from '@/components/UploadForm';
 import { requireStaff, getEntity } from '@/lib/auth';
 import { notifyEntity } from '@/lib/notify';
 import { setOrderStatus } from '@/lib/orders';
+import { startTracking } from '@/lib/tracking';
 import OrderDetails from '@/components/OrderDetails';
-import { fmtDate, fmtDay, MAIL_CATEGORY, MAIL_STATUS, ORDER_STATUS, DOC_CATEGORY, HANDLING, statusLabel, KINDS } from '@/lib/labels';
+import { fmtDate, fmtDay, MAIL_CATEGORY, MAIL_STATUS, ORDER_STATUS, DOC_CATEGORY, HANDLING, statusLabel, KINDS, CARRIERS, TRACKING_STATUS } from '@/lib/labels';
 
 const clean = (v, n = 200) => String(v || '').trim().slice(0, n) || null;
 
@@ -104,7 +105,11 @@ async function setMailStatus(fd) {
   'use server';
   const { sb } = await requireStaff();
   const status = String(fd.get('status')); if (!MAIL_STATUS[status]) return;
-  await sb.from('mail_items').update({ status, tracking_number: clean(fd.get('tracking')) }).eq('id', String(fd.get('id')));
+  const id = String(fd.get('id'));
+  const { data: before } = await sb.from('mail_items').select('tracking_number, carrier').eq('id', id).single();
+  await sb.from('mail_items').update({ status }).eq('id', id);
+  const tn = clean(fd.get('tracking')) || ''; const carrier = String(fd.get('carrier') || 'USPS');
+  if (tn !== (before?.tracking_number || '') || (tn && carrier !== before?.carrier)) await startTracking(id, carrier, tn);
   revalidatePath('/staff/e/[file]', 'page');
 }
 
@@ -154,7 +159,7 @@ export default async function StaffEntity({ params, searchParams }) {
     {!mail?.length ? <p className="muted">No mail yet.</p> : <div className="scroll"><table><thead><tr><th>Received</th><th>Type</th><th>From</th><th>Client</th><th>Status</th></tr></thead><tbody>
       {mail.map(m => <tr key={m.id}><td>{fmtDate(m.received_at)}</td><td>{m.urgent && <span className="pill urgent">Urgent</span>} {MAIL_CATEGORY[m.category]}{m.file_path && <div><a href={`/api/file?type=mail&id=${m.id}`}>View scan</a></div>}</td><td>{m.sender || '—'}</td>
         <td className="muted">{m.notified_at ? `Notified ${fmtDate(m.notified_at)}` : 'Not notified'}<br />{m.viewed_at ? `Viewed ${fmtDate(m.viewed_at)}` : 'Not viewed'}</td>
-        <td><form action={setMailStatus} className="row" style={{ gap: 6 }}><input type="hidden" name="id" value={m.id} /><select name="status" defaultValue={m.status}>{opts(MAIL_STATUS)}</select><input name="tracking" defaultValue={m.tracking_number || ''} placeholder="Tracking #" /><button className="btn small sec">Update</button></form></td></tr>)}
+        <td><form action={setMailStatus} className="row" style={{ gap: 6 }}><input type="hidden" name="id" value={m.id} /><select name="status" defaultValue={m.status}>{opts(MAIL_STATUS)}</select><select name="carrier" defaultValue={m.carrier || 'USPS'} style={{ width: 'auto' }}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" defaultValue={m.tracking_number || ''} placeholder="Tracking #" /><button className="btn small sec">Update</button>{m.tracking_status && <div className="muted" style={{ flexBasis: '100%' }}>{TRACKING_STATUS[m.tracking_status] || m.tracking_status}{m.tracking_url && <> · <a href={m.tracking_url} target="_blank" rel="noopener noreferrer">Track</a></>}</div>}</form></td></tr>)}
     </tbody></table></div>}
 
     <h2>Orders</h2>

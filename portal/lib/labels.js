@@ -6,7 +6,7 @@ export const MAIL_CATEGORY = {
   package: 'Package',
 };
 export const MAIL_STATUS = {
-  received: 'Received', scanned: 'Scanned', forward_requested: 'Forward requested', forwarded: 'Forwarded',
+  received: 'Received', scanned: 'Scanned', forward_requested: 'Forward requested', forwarded: 'Forwarded', delivered: 'Delivered',
   shred_requested: 'Shred requested', shredded: 'Shredded', held: 'Held at office', picked_up: 'Picked up',
 };
 export const HANDLING = {
@@ -59,3 +59,16 @@ export const KINDS = {
   mail: { name: 'Business Address & Mail', env: 'STRIPE_PRICE_MAIL', recurring: true },
   launch: { name: 'Launch Pack', env: 'STRIPE_PRICE_LAUNCH' },
 };
+
+export const CARRIERS = { USPS: 'USPS', UPS: 'UPS', FedEx: 'FedEx', DHLExpress: 'DHL Express' };
+export const TRACKING_STATUS = {
+  unknown: 'Waiting for carrier scan', pre_transit: 'Label created', in_transit: 'In transit', out_for_delivery: 'Out for delivery',
+  delivered: 'Delivered', available_for_pickup: 'Available for pickup', return_to_sender: 'Returned to sender', failure: 'Delivery problem', cancelled: 'Cancelled', error: 'Tracking error',
+};
+// Carrier's own tracking page, used when no EasyPost link is available
+export const carrierUrl = (carrier, n) => !n ? null : ({
+  USPS: `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(n)}`,
+  UPS: `https://www.ups.com/track?tracknum=${encodeURIComponent(n)}`,
+  FedEx: `https://www.fedex.com/fedextrack/?trknbr=${encodeURIComponent(n)}`,
+  DHLExpress: `https://www.dhl.com/us-en/home/tracking.html?tracking-id=${encodeURIComponent(n)}`,
+}[carrier] || null);

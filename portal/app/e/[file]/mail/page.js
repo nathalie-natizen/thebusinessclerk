@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import Shell, { EntityTabs } from '@/components/Shell';
 import { requireUser, getEntity } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { fmtDate, MAIL_CATEGORY, MAIL_STATUS, SHIPPING, SHIPPING_SHORT } from '@/lib/labels';
+import { fmtDate, MAIL_CATEGORY, MAIL_STATUS, SHIPPING, SHIPPING_SHORT, TRACKING_STATUS, CARRIERS } from '@/lib/labels';
 
 // Client asks us to forward, shred or hold a specific item
 async function requestAction(formData) {
@@ -34,7 +34,7 @@ export default async function Mail({ params }) {
         <td>{fmtDate(m.received_at)}</td>
         <td>{m.urgent && <span className="pill urgent">Urgent</span>} {MAIL_CATEGORY[m.category]}{m.description && <div className="muted">{m.description}</div>}</td>
         <td>{m.sender || '—'}</td>
-        <td><span className="pill">{MAIL_STATUS[m.status]}</span>{m.tracking_number && <div className="muted">Tracking: {m.tracking_number}</div>}</td>
+        <td><span className="pill">{MAIL_STATUS[m.status]}</span>{m.tracking_number && <div className="muted">{CARRIERS[m.carrier] || ''} {m.tracking_url ? <a href={m.tracking_url} target="_blank" rel="noopener noreferrer">{m.tracking_number}</a> : m.tracking_number}{m.tracking_status && m.status !== 'delivered' && <div>{TRACKING_STATUS[m.tracking_status] || m.tracking_status}{m.est_delivery ? ` · expected ${new Date(m.est_delivery).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}</div>}</div>}</td>
         <td>{m.file_path ? <a className="btn small" href={`/api/file?type=mail&id=${m.id}`}>Download PDF</a> : <span className="muted">Not scanned</span>}</td>
         <td>{['received', 'scanned', 'held'].includes(m.status) ? <form action={requestAction} className="row" style={{ gap: 6 }}>
           <input type="hidden" name="id" value={m.id} />

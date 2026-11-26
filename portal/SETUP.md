@@ -43,3 +43,12 @@ Project → Settings → Environment Variables: add everything in `.env.example`
 - **Orders:** update the status; the client sees the timeline and gets notified.
 
 Security: every table uses row level security (clients only ever see their own companies), files live in private storage and download through 60-second links, staff notes are in a separate staff-only table, and secret keys live only in Vercel.
+
+## Carrier tracking (EasyPost)
+1. Create an account at easypost.com and copy the **Production API key**.
+2. In Vercel → thebusinessclerk-portal → Settings → Environment Variables add:
+   - `EASYPOST_API_KEY` = the production key
+   - `EASYPOST_WEBHOOK_TOKEN` = any long random string you make up
+3. In EasyPost → Webhooks, add `https://app.thebusinessclerk.com/api/tracking/webhook?token=<the same string>` (Production).
+4. Redeploy. From then on, when staff mark mail as forwarded with a carrier + tracking number, the item updates itself (in transit, out for delivery, delivered) and the client is notified.
+Without EasyPost, tracking numbers still show as a link to the carrier's site; statuses just don't update automatically.
