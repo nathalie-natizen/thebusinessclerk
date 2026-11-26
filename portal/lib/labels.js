@@ -19,10 +19,11 @@ export const HANDLING = {
   hold_pickup: 'Hold my mail for pickup at the office',
 };
 export const ORDER_STATUS = {
-  awaiting_payment: 'Awaiting payment', received: 'Order received', payment_confirmed: 'Payment confirmed', information_needed: 'Information needed',
-  in_review: 'Under review', submitted: 'Submitted', completed: 'Completed',
-  delivered: 'Documents delivered', cancelled: 'Cancelled',
+  awaiting_payment: 'Awaiting payment', received: 'In progress', payment_confirmed: 'In progress', in_review: 'In progress',
+  information_needed: 'Action needed', submitted: 'Submitted', completed: 'Completed', delivered: 'Completed', cancelled: 'Cancelled',
 };
+// The four stages staff move orders through (plus Cancel)
+export const STAFF_STATUSES = [['received', 'To do'], ['information_needed', 'Waiting on client'], ['submitted', 'Filed / submitted'], ['completed', 'Completed'], ['cancelled', 'Cancelled']];
 export const DOC_CATEGORY = {
   formation: 'Formation', filing: 'Filing', annual_report: 'Annual report', ein: 'EIN letter',
   certificate: 'Certificate', agreement: 'Agreement', other: 'Other',
@@ -46,8 +47,8 @@ export const statusLabel = (status, kind) => status === 'submitted'
 
 // Pipeline columns, in order
 export const PIPELINE = [
-  ['awaiting_payment', 'Awaiting payment'], ['received', 'New'], ['payment_confirmed', 'Paid – to do'], ['information_needed', 'Waiting on client'],
-  ['in_review', 'Preparing'], ['submitted', 'Submitted'], ['completed', 'Completed'],
+  ['To do', ['received', 'payment_confirmed', 'in_review']], ['Waiting on client', ['information_needed']],
+  ['Filed / submitted', ['submitted']], ['Completed', ['completed', 'delivered']],
 ];
 
 // Services that can be ordered

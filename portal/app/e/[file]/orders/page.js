@@ -1,26 +1,57 @@
-import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { notFound, redirect } from 'next/navigation';
 import Shell, { EntityTabs } from '@/components/Shell';
 import { requireUser, getEntity } from '@/lib/auth';
-import { fmtDate, statusLabel } from '@/lib/labels';
+import { fmtDate, statusLabel, KINDS } from '@/lib/labels';
+import { savedCard, priceFor, chargeOnFile, createPaidOrder } from '@/lib/charge';
+import { needsQuestionnaire } from '@/lib/questionnaires';
 
 const ORDERABLE = [['annual_report', 'Annual report filing'], ['ein', 'EIN application'], ['ra', 'Registered agent'], ['mail', 'Business address & mail'], ['launch', 'Launch Pack']];
+const money = c => '$' + (c / 100).toFixed(2).replace(/\.00$/, '');
+
+async function placeOrder(fd) {
+  'use server';
+  const { sb } = await requireUser();
+  const file = String(fd.get('file')); const kind = String(fd.get('kind'));
+  if (!KINDS[kind]) return;
+  const e = await getEntity(sb, file); if (!e) return; // RLS: only this company's people
+  const r = await chargeOnFile(e, kind);
+  if (!r.ok) redirect(r.reason === 'no_card' ? `/api/stripe/checkout?product=${kind}&entity=${file}` : `/e/${file}/orders?declined=1`);
+  const o = await createPaidOrder(e, kind, { amount: r.amount, source: 'portal', ref: r.ref });
+  redirect(needsQuestionnaire(kind) ? `/e/${file}/orders/${o.id}?new=1` : `/e/${file}/orders?paid=1`);
+}
 
 export default async function Orders({ params, searchParams }) {
   const { sb, profile } = await requireUser();
   const e = await getEntity(sb, params.file); if (!e) notFound();
-  const { data: orders } = await sb.from('orders').select('*, order_events(*)').eq('entity_id', e.id).order('created_at', { ascending: false });
+  const { data: orders } = await sb.from('orders').select('*, order_events(*)').eq('entity_id', e.id).neq('status', 'awaiting_payment').order('created_at', { ascending: false });
+  const pick = KINDS[searchParams?.order] ? searchParams.order : null;
+  const [card, price] = pick ? await Promise.all([savedCard(e.stripe_customer_id), priceFor(pick)]) : [null, null];
   return (<Shell profile={profile}>
     <span className="file">{e.file_number}</span><h1 style={{ marginTop: 8 }}>{e.legal_name}</h1>
     <EntityTabs file={e.file_number} active="orders" />
-    {searchParams?.paid && <div className="note">Payment received. Your order will appear below in a moment.</div>}
-    <section className="card" style={{ marginBottom: 18 }}><h3>Order a service for this company</h3>
-      <p className="muted">Charged to this company's card on file.</p>
-      <p>{ORDERABLE.filter(([k]) => !(k === 'ra' && e.registered_agent) && !(k === 'mail' && e.mail_service)).map(([k, label]) => <a key={k} className="btn sec small" style={{ marginRight: 8, marginBottom: 8 }} href={`/api/stripe/checkout?product=${k}&entity=${e.file_number}`}>{label}</a>)}</p>
-    </section>
+    {searchParams?.paid && <div className="note">Payment received. Your order is below.</div>}
+    {searchParams?.declined && <div className="note">Your card was declined. Update the card on the Billing tab and try again.</div>}
+
+    {pick ? <section className="card" style={{ marginBottom: 18 }}>
+      <h3>Confirm your order: {KINDS[pick].name}</h3>
+      {card && price ? <form action={placeOrder} className="stack">
+        <input type="hidden" name="file" value={e.file_number} /><input type="hidden" name="kind" value={pick} />
+        <p><strong>{money(price.unit_amount)}{price.recurring ? ` per ${price.recurring.interval}` : ''}</strong> will be charged now to {card.brand.toUpperCase()} ending {card.last4}{price.recurring ? ', renewing automatically until you cancel' : ''}.{['annual_report'].includes(pick) ? ' The Florida state fee is charged separately when we file.' : ''}</p>
+        <div className="row" style={{ gap: 8 }}><button className="btn" style={{ flex: '0 0 auto' }}>Pay {money(price.unit_amount)} and order</button><Link className="btn sec" style={{ flex: '0 0 auto' }} href={`/e/${e.file_number}/orders`}>Cancel</Link></div>
+      </form> : <p>You'll enter a card on the secure Stripe page. <a className="btn small" href={`/api/stripe/checkout?product=${pick}&entity=${e.file_number}`}>Continue to payment</a> <Link href={`/e/${e.file_number}/orders`}>Cancel</Link></p>}
+    </section> : <section className="card" style={{ marginBottom: 18 }}><h3>Order a service for this company</h3>
+      <p className="muted">Charged to this company's card on file after you confirm.</p>
+      <p>{ORDERABLE.filter(([k]) => !(k === 'ra' && e.registered_agent) && !(k === 'mail' && e.mail_service)).map(([k, label]) => <Link key={k} className="btn sec small" style={{ marginRight: 8, marginBottom: 8 }} href={`/e/${e.file_number}/orders?order=${k}`}>{label}</Link>)}</p>
+    </section>}
+
     {!orders?.length ? <div className="note">No orders yet.</div> : <div className="grid">{orders.map(o => (
-      <div className="card" key={o.id}><h3>{o.service}</h3><p><span className={`pill ${o.status === 'information_needed' ? 'warn' : ['completed', 'delivered'].includes(o.status) ? 'ok' : ''}`}>{statusLabel(o.status, o.kind)}</span></p>
+      <div className="card" key={o.id}><h3><Link href={`/e/${e.file_number}/orders/${o.id}`} style={{ color: 'inherit' }}>{o.service}</Link></h3>
+        <p><span className={`pill ${o.status === 'information_needed' ? 'urgent' : ['completed', 'delivered'].includes(o.status) ? 'ok' : ''}`}>{statusLabel(o.status, o.kind)}</span></p>
+        {o.status === 'information_needed' && <p><Link className="btn small" href={`/e/${e.file_number}/orders/${o.id}`}>{needsQuestionnaire(o.kind) && !o.details?.q ? 'Complete questionnaire' : 'See what we need'}</Link></p>}
         <p className="muted">Ordered {fmtDate(o.created_at)}</p>
-        <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(ev => <li key={ev.id}><strong>{statusLabel(ev.status, o.kind)}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul>
+        <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 3).map(ev => <li key={ev.id}><strong>{statusLabel(ev.status, o.kind)}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul>
+        <Link href={`/e/${e.file_number}/orders/${o.id}`}>Open order →</Link>
       </div>))}</div>}
   </Shell>);
 }

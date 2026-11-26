@@ -25,8 +25,22 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
     </fieldset>}
 
     <h2>{t.company}</h2>
-    <label>{existing ? t.nameExisting : t.name}{R}<input name="company" required maxLength={200} /></label>
-    {formation && <label>{t.alt}<input name="alt_name" maxLength={200} /></label>}
+    {formation ? <>
+      <p style={{ fontWeight: 600, margin: 0 }}>{t.names}</p><p className="muted" style={{ margin: 0 }}>{t.namesHelp} <a href="https://search.sunbiz.org/Inquiry/CorporationSearch/ByName" target="_blank" rel="noopener noreferrer">{t.checkSunbiz} ↗</a></p>
+      <label>{t.name1}{R}<input name="company" required maxLength={150} /></label>
+      <label>{t.name2}{R}<input name="name2" required maxLength={150} /></label>
+      <label>{t.name3}<input name="name3" maxLength={150} /></label>
+      <label>{t.ending}<select name="ending">{(service === 'corp' ? ['Inc.', 'Corp.', 'Corporation', 'Incorporated'] : ['LLC', 'L.L.C.', 'Limited Liability Company']).map(x => <option key={x}>{x}</option>)}</select></label>
+      <label style={{ display: 'flex', gap: 10, fontWeight: 400 }}><input type="checkbox" name="use_backup" defaultChecked style={{ minHeight: 'auto' }} />{t.useBackup}</label>
+      {service === 'llc' && <label>{t.management}<select name="management">{t.mgmt.map(m => <option key={m}>{m}</option>)}</select></label>}
+      {service === 'corp' && <>
+        <div className="row"><label>{t.shares}<input name="shares" type="number" min="1" defaultValue="1000" /></label><label>{t.par}<input name="par" defaultValue="$0.01" /></label></div>
+        <p className="muted" style={{ margin: 0 }}>{t.parHelp}</p>
+        <label>{t.incorporator}<input name="incorporator" /></label>
+        <label>{t.scorp}<select name="s_corp">{t.scorpOpt.map(m => <option key={m}>{m}</option>)}</select></label>
+      </>}
+      <label>{t.effective}<input name="effective_date" type="date" /></label>
+    </> : <label>{existing ? t.nameExisting : t.name}{R}<input name="company" required maxLength={200} /></label>}
     {existing && <label>{t.doc}<input name="doc" maxLength={20} /></label>}
     {formation && <label>{t.purpose}<input name="purpose" maxLength={300} /></label>}
 
@@ -37,6 +51,7 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
       <label>{t.line2}<input name="line2" autoComplete="address-line2" /></label>
       <div className="row"><label>{t.city}<input name="city" autoComplete="address-level2" /></label><label>{t.state}<input name="state" autoComplete="address-level1" /></label></div>
       <div className="row"><label>{t.postal}<input name="postal" autoComplete="postal-code" /></label><label>{t.country}<input name="country" autoComplete="country-name" defaultValue="United States" /></label></div>
+      {formation && <label>{t.mailing}<input name="mailing_address" /></label>}
     </>}
 
     {(formation || service === 'annual_report') && <>
@@ -49,6 +64,7 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
     </>}
     {hasEin && <p className="note">{t.einHelp}</p>}
 
+    {formation && <label>{t.signer}{R}<input name="signer" required /></label>}
     <h2>{t.contact}</h2>
     <label>{t.cname}{R}<input name="contact_name" required autoComplete="name" /></label>
     <label>{t.email}{R}<input name="email" type="email" required autoComplete="email" /></label>

@@ -18,6 +18,19 @@ export async function GET(req) {
     if (error) return new NextResponse('File unavailable', { status: 404 });
     return NextResponse.redirect(data.signedUrl);
   }
+  // Files clients attached to an order: ?type=upload&id=<order id>&key=<question field>|reply<N>
+  if (type === 'upload') {
+    const sb = supabaseServer();
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return NextResponse.redirect(new URL('/login', req.url));
+    const { data: o } = await sb.from('orders').select('details').eq('id', id).maybeSingle(); // RLS
+    const key = url.searchParams.get('key') || '';
+    const path = key.startsWith('reply') ? o?.details?.replies?.[parseInt(key.slice(5))]?.file : o?.details?.q?.[key];
+    if (!path || typeof path !== 'string') return new NextResponse('Not found', { status: 404 });
+    const { data, error } = await supabaseAdmin().storage.from('uploads').createSignedUrl(path, 300, url.searchParams.get('view') ? undefined : { download: true });
+    if (error) return new NextResponse('File unavailable', { status: 404 });
+    return NextResponse.redirect(data.signedUrl);
+  }
   const table = type === 'mail' ? 'mail_items' : type === 'document' ? 'documents' : null;
   if (!table || !id) return new NextResponse('Bad request', { status: 400 });
   const sb = supabaseServer();

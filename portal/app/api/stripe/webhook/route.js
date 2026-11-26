@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { stripe, PRODUCTS } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { setOrderStatus } from '@/lib/orders';
+import { createPaidOrder } from '@/lib/charge';
+import { needsQuestionnaire } from '@/lib/questionnaires';
+import { KINDS } from '@/lib/labels';
 
 // Stripe → portal. Creates the company file, order and client access after payment, and keeps service flags in sync.
 export async function POST(req) {
@@ -17,7 +20,10 @@ export async function POST(req) {
     if (s.customer) await db.from('entities').update({ stripe_customer_id: s.customer }).eq('id', entityId).is('stripe_customer_id', null);
     const ids = s.metadata.order_ids.split(',').filter(Boolean);
     const { data: orders } = await db.from('orders').select('id, kind, status').in('id', ids);
-    for (const o of orders || []) if (o.status === 'awaiting_payment') await setOrderStatus({ orderId: o.id, status: 'payment_confirmed', note: 'Payment received. We\u2019re starting on it.' });
+    for (const o of orders || []) if (o.status === 'awaiting_payment') {
+      const q = needsQuestionnaire(o.kind);
+      await setOrderStatus({ orderId: o.id, status: q ? 'information_needed' : 'received', note: q ? 'Payment received. Please complete the short questionnaire in your portal so we can start.' : 'Payment received. We\u2019re starting on it.' });
+    }
     // Formation includes the first year of registered agent service; set up the yearly renewal to start in 12 months
     const formation = (orders || []).some(o => ['llc', 'corp'].includes(o.kind));
     if (formation && s.customer && process.env.STRIPE_PRICE_RA) {
@@ -49,8 +55,7 @@ export async function POST(req) {
     if (key === 'ra' || p.withRa) flags.registered_agent = true;
     if (key === 'mail') flags.mail_service = true;
     if (Object.keys(flags).length) await db.from('entities').update(flags).eq('id', entity.id);
-    const { data: order } = await db.from('orders').insert({ entity_id: entity.id, service: p.name, status: 'payment_confirmed', stripe_session_id: s.id, amount_cents: s.amount_total }).select().single();
-    await db.from('order_events').insert({ order_id: order.id, status: 'payment_confirmed', note: 'Payment received through Stripe.' });
+    if (KINDS[key]) await createPaidOrder(entity, key, { amount: s.amount_total, source: s.metadata?.entity_id ? 'portal' : 'website', ref: s.id });
     if (email) {
       const { data: prof } = await db.from('profiles').select('id').ilike('email', email).maybeSingle();
       if (prof) await db.from('entity_members').upsert({ entity_id: entity.id, user_id: prof.id });

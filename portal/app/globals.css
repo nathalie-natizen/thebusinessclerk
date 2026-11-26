@@ -30,3 +30,4 @@ input,select,textarea{font:15px Inter,sans-serif;padding:10px 12px;border:1px so
 .muted{color:var(--soft);font-size:13.5px}
 .timeline{list-style:none;padding:0;margin:8px 0 0}.timeline li{border-left:2px solid var(--line);padding:0 0 12px 14px;position:relative}.timeline li:before{content:"";position:absolute;left:-6px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--gold)}
 @media(max-width:640px){.hide-sm{display:none}h1{font-size:25px}}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

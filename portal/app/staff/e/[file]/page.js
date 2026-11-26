@@ -9,7 +9,7 @@ import { notifyEntity } from '@/lib/notify';
 import { setOrderStatus } from '@/lib/orders';
 import { startTracking } from '@/lib/tracking';
 import OrderDetails from '@/components/OrderDetails';
-import { fmtDate, fmtDay, MAIL_CATEGORY, MAIL_STATUS, ORDER_STATUS, DOC_CATEGORY, HANDLING, statusLabel, KINDS, CARRIERS, TRACKING_STATUS, CMRA_STATUS, WITNESS } from '@/lib/labels';
+import { fmtDate, fmtDay, MAIL_CATEGORY, MAIL_STATUS, ORDER_STATUS, DOC_CATEGORY, HANDLING, statusLabel, STAFF_STATUSES, KINDS, CARRIERS, TRACKING_STATUS, CMRA_STATUS, WITNESS } from '@/lib/labels';
 
 const clean = (v, n = 200) => String(v || '').trim().slice(0, n) || null;
 
@@ -74,7 +74,7 @@ async function updateOrder(fd) {
   'use server';
   const { sb, user } = await requireStaff();
   const id = String(fd.get('order_id')); const status = String(fd.get('status')); const note = clean(fd.get('note'), 500);
-  if (!ORDER_STATUS[status]) return;
+  if (!STAFF_STATUSES.some(([k]) => k === status)) return;
   await setOrderStatus({ orderId: id, status, note, notify: fd.get('notify') === 'on', userId: user.id });
   revalidatePath('/staff/e/[file]', 'page');
 }
@@ -222,8 +222,8 @@ export default async function StaffEntity({ params, searchParams }) {
     <h2>Orders</h2>
     <form className="row" action={createOrder} style={{ marginBottom: 14 }}><input type="hidden" name="entity_id" value={e.id} /><select name="kind" style={{ flex: '0 1 220px' }}><option value="">Other service</option>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select><input name="service" placeholder="Name shown to client, e.g. Annual report 2027 (optional)" /><input name="note" placeholder="Note (optional)" /><button className="btn sec" style={{ flex: '0 0 auto' }}>Add order</button></form>
     <div className="grid">{(orders || []).map(o => <div className="card" key={o.id}><h3>{o.service}</h3><p><span className="pill">{statusLabel(o.status, o.kind)}</span> <span className="muted">{fmtDate(o.created_at)}</span></p>
-      <OrderDetails d={o.details} />
-      <form className="stack" action={updateOrder}><input type="hidden" name="order_id" value={o.id} /><select name="status" defaultValue={o.status}>{Object.keys(ORDER_STATUS).map(k => <option key={k} value={k}>{statusLabel(k, o.kind)}</option>)}</select><input name="note" placeholder="Note shown to client (optional)" /><label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="notify" defaultChecked style={{ minHeight: 'auto' }} /> Notify client</label><button className="btn small">Update status</button></form>
+      <OrderDetails d={o.details} kind={o.kind} orderId={o.id} />
+      <form className="stack" action={updateOrder}><input type="hidden" name="order_id" value={o.id} /><select name="status" defaultValue={STAFF_STATUSES.some(([k]) => k === o.status) ? o.status : 'received'}>{STAFF_STATUSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="note" placeholder="Note shown to client (optional)" /><label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="notify" defaultChecked style={{ minHeight: 'auto' }} /> Notify client</label><button className="btn small">Update status</button></form>
       <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(ev => <li key={ev.id}><strong>{statusLabel(ev.status, o.kind)}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul></div>)}</div>
 
     <h2>Documents</h2>
