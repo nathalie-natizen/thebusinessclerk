@@ -8,6 +8,7 @@ import Preview from '@/components/Preview';
 import Shell from '@/components/Shell';
 import UploadForm from '@/components/UploadForm';
 import { requireStaff, getEntity } from '@/lib/auth';
+import RecordMailForm from '@/components/RecordMailForm';
 import { notifyEntity } from '@/lib/notify';
 import { setOrderStatus } from '@/lib/orders';
 import { startTracking } from '@/lib/tracking';
@@ -17,42 +18,6 @@ import { fmtDate, fmtDay, MAIL_CATEGORY, MAIL_STATUS, ORDER_STATUS, DOC_CATEGORY
 const clean = (v, n = 200) => String(v || '').trim().slice(0, n) || null;
 
 // ----- Server actions (staff only; each one re-checks the role) -----
-async function recordMail(fd) {
-  'use server';
-  const { sb, user } = await requireStaff();
-  const entity_id = String(fd.get('entity_id')); const category = String(fd.get('category'));
-  if (!MAIL_CATEGORY[category]) return { error: 'Choose a mail type.' };
-  const urgent = fd.get('urgent') === 'on' || ['service_of_process', 'state_notice'].includes(category);
-  const legal = ['service_of_process', 'state_notice'].includes(category);
-  const content_path = clean(fd.get('content_path'), 300);
-  if (legal && !content_path) return { error: 'Legal papers and state notices must be opened and scanned now. Add the scanned contents.' };
-  // Apply the client's standing choice for new mail
-  const { data: pref } = await sb.from('mail_preferences').select('handling, forward_shipping').eq('entity_id', entity_id).maybeSingle();
-  const h = pref?.handling || 'notify';
-  let status = 'received', client_request = null, forward_shipping = null;
-  if (content_path) status = 'scanned';
-  else if (h === 'scan_all') { status = 'scan_requested'; client_request = 'scan (standing choice)'; }
-  else if (h.startsWith('forward_')) { status = 'forward_requested'; client_request = { forward_each: 'forward', forward_weekly: 'forward (weekly batch)', forward_biweekly: 'forward (every 2 weeks batch)', forward_monthly: 'forward (monthly batch)' }[h]; forward_shipping = pref?.forward_shipping || 'first_class'; }
-  else if (h === 'hold_pickup') status = 'held';
-  const { error } = await sb.from('mail_items').insert({
-    entity_id, category, urgent, sender: clean(fd.get('sender')), description: clean(fd.get('description'), 500),
-    file_path: clean(fd.get('file_path'), 300), content_path, pages: content_path ? Math.max(1, parseInt(fd.get('pages')) || 1) : null, scanned_at: content_path ? new Date().toISOString() : null,
-    status, client_request, forward_shipping, requested_at: client_request ? new Date().toISOString() : null,
-    received_at: fd.get('received_at') ? new Date(String(fd.get('received_at'))).toISOString() : new Date().toISOString(), received_by: user.id,
-  });
-  if (error) return { error: error.message };
-  const label = MAIL_CATEGORY[category];
-  const r = await notifyEntity(entity_id, {
-    category: ['service_of_process', 'state_notice'].includes(category) ? 'legal' : 'mail',
-    subject: urgent ? `URGENT: ${label} received for your company` : `New mail received for your company`,
-    text: `We received ${urgent ? 'an urgent item' : 'mail'} for your company${fd.get('sender') ? ` from ${clean(fd.get('sender'))}` : ''}: ${label}.${urgent ? ' Legal and state notices can have short deadlines. Please review it today.' : ''}`,
-    sms: urgent ? `THE BUSINESS CLERK: URGENT ${label} received for your company. View it in your portal:` : `THE BUSINESS CLERK: New mail received for your company. View it:`,
-  });
-  await sb.from('mail_items').update({ notified_at: new Date().toISOString() }).eq('entity_id', entity_id).is('notified_at', null);
-  revalidatePath('/staff/e/[file]', 'page');
-  return { message: `Mail recorded. ${r.filter(x => x.status === 'sent').length} notification(s) sent.` };
-}
-
 async function recordDocument(fd) {
   'use server';
   const { sb, user } = await requireStaff();
@@ -195,14 +160,7 @@ export default async function StaffEntity({ params, searchParams }) {
     {searchParams?.saved && <p className="ok-msg">Saved.</p>}
 
     {tab === 'mail' && <section className="card" id="record-mail" style={{ marginBottom: 18 }}><h2 style={{ marginTop: 0 }}>Record mail</h2>
-        <UploadForm bucket="mail" entityId={e.id} action={recordMail} submitLabel="Save and notify client">
-          <input type="hidden" name="entity_id" value={e.id} />
-          <div className="row"><label>Type<select name="category" defaultValue="general">{opts(MAIL_CATEGORY)}</select></label><label>From (sender)<input name="sender" placeholder="e.g. Florida Department of State" /></label></div>
-          <div className="row"><label>Received<input name="received_at" type="datetime-local" /></label><label>Short description<input name="description" placeholder="e.g. Summons, Orange County Circuit Court" /></label></div>
-          <div className="row"><label>Envelope photo (front)<input name="file" type="file" accept="image/*,application/pdf" capture="environment" /></label><label>Scanned contents (PDF; required for legal/state mail or a scan request)<input name="content_file" type="file" accept="application/pdf,image/*" /></label><label style={{ flex: '0 1 140px' }}>Pages scanned<input name="pages" type="number" min="1" placeholder="e.g. 3" /></label></div>
-          <p className="muted" style={{ margin: 0 }}>Client's standing choice: <strong>{HANDLING[prefs?.handling || 'notify']}</strong>. It is applied automatically when you save.</p>
-          <label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="urgent" style={{ minHeight: 'auto' }} /> Urgent (lawsuits and state notices are always urgent)</label>
-        </UploadForm>
+        <RecordMailForm entityId={e.id} handling={prefs?.handling} />
       </section>}
       {tab === 'documents' && <section className="card" id="add-document" style={{ marginBottom: 18 }}><h2 style={{ marginTop: 0 }}>Add document</h2>
         <UploadForm bucket="documents" entityId={e.id} action={recordDocument} submitLabel="Add document" requireFile>

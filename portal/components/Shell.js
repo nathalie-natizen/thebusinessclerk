@@ -8,7 +8,7 @@ export default function Shell({ profile, children }) {
         <img src="/favicon.svg" alt="" width="30" height="30" />
         <span>THE BUSINESS CLERK<small>{staff ? 'Staff portal' : 'Client portal'}</small></span>
       </Link>
-      {staff ? <><Link href="/staff/pipeline">Pipeline</Link><Link href="/staff">Entities</Link><Link href="/staff/queue">Mail queue</Link><Link href="/staff/new">New entity</Link><Link href="/staff/billing">Billing</Link><Link href="/staff/guidelines">Guidelines</Link><Link href="/staff/setup">Setup</Link><Link href="/resources">Resources</Link><Link href="/dashboard">Client view</Link></>
+      {staff ? <><Link href="/staff/pipeline">Pipeline</Link><Link href="/staff/record">Record mail</Link><Link href="/staff">Entities</Link><Link href="/staff/queue">Mail queue</Link><Link href="/staff/new">New entity</Link><Link href="/staff/billing">Billing</Link><Link href="/staff/guidelines">Guidelines</Link><Link href="/staff/setup">Setup</Link><Link href="/resources">Resources</Link><Link href="/dashboard">Client view</Link></>
              : <><Link href="/dashboard">My companies</Link><Link href="/billing">Billing</Link><Link href="/resources">Resources</Link><Link href="/account">Account</Link></>}
       <span className="who hide-sm">{profile?.email}</span>
       <form action="/auth/signout" method="post"><button className="btn small sec" style={{ background: 'transparent', color: '#fff', borderColor: '#fff' }}>Sign out</button></form>
