@@ -54,7 +54,7 @@ export default async function Queue() {
     <h2>Scan requests</h2>
     {!scans?.length ? <p className="muted">Nothing to scan.</p> : <div className="grid">{scans.map(m => <div className="card" key={m.id}>
       <Link className="file" href={`/staff/e/${m.entities.file_number}`}>{m.entities.file_number}</Link> <strong>{m.entities.legal_name}</strong>
-      <p className="muted">{MAIL_CATEGORY[m.category]} · {m.sender || 'Unknown sender'} · received {fmtDate(m.received_at)}{m.file_path && <> · <a href={`/api/file?type=mail&id=${m.id}`}>envelope</a></>}</p>
+      <p className="muted">{MAIL_CATEGORY[m.category]} · {m.sender || 'Unknown sender'} · received {fmtDate(m.received_at)}{m.file_path && <> · <a href={`/api/file?type=mail&id=${m.id}&view=1`} target="_blank" rel="noopener noreferrer">envelope</a></>}</p>
       <UploadForm bucket="mail" entityId={m.entities.id} action={completeScan} submitLabel="Upload scan and notify client">
         <input type="hidden" name="id" value={m.id} />
         <label>Scanned contents (PDF)<input name="content_file" type="file" accept="application/pdf,image/*" /></label>

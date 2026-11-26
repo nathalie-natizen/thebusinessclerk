@@ -28,7 +28,7 @@ export async function GET(req) {
   const path = row?.[part];
   if (!path) return new NextResponse('Not found', { status: 404 });
   const admin = supabaseAdmin();
-  const { data, error } = await admin.storage.from(type === 'mail' ? 'mail' : 'documents').createSignedUrl(path, 60, { download: true });
+  const { data, error } = await admin.storage.from(type === 'mail' ? 'mail' : 'documents').createSignedUrl(path, 300, url.searchParams.get('view') ? undefined : { download: true });
   if (error) return new NextResponse('File unavailable', { status: 404 });
   if (type === 'mail') {
     const { data: p } = await sb.from('profiles').select('role').eq('id', user.id).single();
