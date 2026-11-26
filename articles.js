@@ -152,7 +152,7 @@ If a Florida company doesn't file its annual report, the state **administrativel
 ## How to avoid it next time
 Use a registered agent that files your annual report automatically. With our auto-renew, we file it every year before May 1 for $${P.annualReport} plus the state fee.
 ## Need help?
-We prepare and file reinstatements starting at $175 plus state fees. [Business filings](business-filings.html).`,
+We prepare and file reinstatements for $175 plus the state fees for all missed years, charged at cost. [Business filings](business-filings.html).`,
 },
 {
   slug: 'llc-vs-corporation-florida', cat: 'Formation',

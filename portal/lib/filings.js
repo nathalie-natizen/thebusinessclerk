@@ -15,9 +15,9 @@ export const FILINGS = {
     ask: 'Which document(s) do you need certified copies of?', staff: 'Order the certified copy from the Division of Corporations; upload when received.' },
   dissolution: { name: 'Dissolution', cents: 9500, pt: 'Encerramento da empresa (dissolução)', es: 'Disolución de la empresa',
     ask: 'Effective date wanted, reason (optional), and confirmation that members/shareholders approved the dissolution', staff: 'Confirm approval; file Articles of Dissolution on Sunbiz; cancel the client’s recurring services after the effective date.' },
-  reinstatement: { name: 'Reinstatement', cents: 17500, pt: 'Reativação da empresa (reinstatement)', es: 'Reinstalación de la empresa',
+  reinstatement: { name: 'Reinstatement', cents: 17500, note: 'State fees for all missed years are charged at cost when we file', pt: 'Reativação da empresa (reinstatement)', es: 'Reinstalación de la empresa',
     ask: 'Since when has the company been inactive, and has anything changed (address, people)?', staff: 'Check years due on Sunbiz; tell the client the total state fees before filing; file the reinstatement with all due reports.' },
-  foreign: { name: 'Foreign Qualification in Florida', cents: 3900, pt: 'Registro de empresa de outro estado na Flórida', es: 'Registro de empresa de otro estado en Florida',
+  foreign: { name: 'Foreign Qualification in Florida', cents: 8800, withRa: true, pt: 'Registro de empresa de outro estado na Flórida (inclui o 1º ano de agente registrado)', es: 'Registro de empresa de otro estado en Florida (incluye el 1er año de agente registrado)',
     ask: 'Home state, date formed there, and the name to use in Florida. Upload a Certificate of Status from the home state (dated within 90 days)', staff: 'Check the name in Florida; file the Application for Authorization to Transact Business with the home-state certificate; we are named registered agent.' },
 };
 export const FILING_KINDS = Object.keys(FILINGS);

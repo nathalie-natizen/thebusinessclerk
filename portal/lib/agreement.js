@@ -93,7 +93,7 @@ const scheduleSection = (k, letter) => {
 };
 
 // Formation includes the first year of registered agent service, so its schedule comes with it
-export const sortKinds = kinds => { const ks = [...kinds]; if (ks.some(k => k === 'llc' || k === 'corp')) ks.push('ra'); return ORDER.filter(k => ks.includes(k) && SCHEDULE_TERMS[k]); };
+export const sortKinds = kinds => { const ks = [...kinds]; if (ks.some(k => k === 'llc' || k === 'corp' || k === 'foreign')) ks.push('ra'); return ORDER.filter(k => ks.includes(k) && SCHEDULE_TERMS[k]); };
 const letters = 'ABCDEFG';
 
 export function buildAgreement({ clientName, file, kinds, date = new Date() }) {

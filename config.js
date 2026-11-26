@@ -32,8 +32,8 @@ module.exports = {
     ["Certificate of Status request", 25, "cert_status"],
     ["Certified copy request", 35, "certified_copy"],
     ["Dissolution (LLC or corporation)", 95, "dissolution"],
-    ["Reinstatement", "from $175", "reinstatement"],
-    ["Foreign qualification in Florida", 39, "foreign"],
+    ["Reinstatement (state fees for all missed years at cost)", 175, "reinstatement"],
+    ["Foreign qualification in Florida (includes first year of registered agent)", 88, "foreign"],
   ],
   stateFees: {
     llcArticles: "125.00", corpArticles: "70.00",

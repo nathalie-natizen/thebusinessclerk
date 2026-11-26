@@ -39,7 +39,7 @@ export async function submitIntake(_prev, fd) {
   const db = supabaseAdmin();
   const { data: entity, error } = await db.from('entities').insert({
     legal_name: FORMATION.includes(service) && details.ending && !details.company.toUpperCase().endsWith(details.ending.toUpperCase()) ? `${details.company} ${details.ending}` : details.company, entity_type: service === 'corp' ? 'Corporation' : 'LLC', status: FORMATION.includes(service) ? 'pending' : 'active',
-    sunbiz_doc_number: details.sunbiz_doc_number || null, registered_agent: FORMATION.includes(service) || service === 'ra',
+    sunbiz_doc_number: details.sunbiz_doc_number || null, registered_agent: FORMATION.includes(service) || service === 'ra' || service === 'foreign',
     mail_service: service === 'mail' || addons.includes('mail'), contact_name: details.contact.name, contact_email: email, contact_phone: details.contact.phone || null, language: lang,
   }).select().single();
   if (error) return { error: 'server' };

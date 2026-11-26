@@ -23,7 +23,8 @@ export async function createPaidOrder(entity, kind, { amount = null, source = 'p
   const status = needsQuestionnaire(kind) ? 'information_needed' : 'received';
   const { data: o } = await db.from('orders').insert({ entity_id: entity.id, kind, service: KINDS[kind].name, status, source, stripe_session_id: ref, amount_cents: amount, details: { service_terms_version: GUIDELINES_VERSION } }).select().single();
   await db.from('order_events').insert({ order_id: o.id, status, note: status === 'information_needed' ? 'Payment received. Please complete the short questionnaire so we can start.' : 'Payment received. We’re starting on it.' });
-  if (kind === 'ra') await db.from('entities').update({ registered_agent: true }).eq('id', entity.id);
+  if (kind === 'ra' || kind === 'foreign') await db.from('entities').update({ registered_agent: true }).eq('id', entity.id);
+  if (kind === 'foreign') await startRaRenewal(entity).catch(() => {});
   if (kind === 'mail') await db.from('entities').update({ mail_service: true }).eq('id', entity.id);
   return o;
 }
@@ -64,4 +65,11 @@ export async function chargeStateFee(entity, order, cents) {
     await supabaseAdmin().from('orders').update({ details: { ...(order.details || {}), state_fee: { ref: inv.id, cents: paid.amount_paid, at: new Date().toISOString() } } }).eq('id', order.id);
     return { ok: true, cents: paid.amount_paid };
   } catch (e) { return { ok: false, reason: e.message }; }
+}
+
+// Foreign qualification includes the first registered agent year: renewal starts in 12 months on the card on file
+export async function startRaRenewal(entity) {
+  const price = await priceOf('ra'); const card = await savedCard(entity.stripe_customer_id);
+  if (!price || !card) return null;
+  return stripe().subscriptions.create({ customer: entity.stripe_customer_id, items: [{ price: price.id }], trial_period_days: 365, default_payment_method: card.id, metadata: { entity_id: entity.id, product: 'ra' } });
 }

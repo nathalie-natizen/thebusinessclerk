@@ -12,7 +12,7 @@ export const CATALOG = {
   ein: { name: 'EIN Application', cents: 7500 },
   mail: { name: 'Business Address & Mail (base plan)', cents: 2000, interval: 'month', desc: '30 items logged a month; usage billed at month end' },
   launch: { name: 'Launch Pack', cents: 35000, desc: 'Domain, email and website up to 5 pages, up to 2 revisions' },
-  ...Object.fromEntries(Object.entries(FILINGS).map(([k, f]) => [k, { name: `${f.name} (service fee)`, cents: f.cents, desc: 'Florida state fee charged separately when filed' }])),
+  ...Object.fromEntries(Object.entries(FILINGS).map(([k, f]) => [k, { name: `${f.name} (service fee)`, cents: f.cents, desc: f.withRa ? 'Service and first year of registered agent; Florida state fee charged separately when filed' : 'Florida state fee charged separately when filed' }])),
 };
 const key = k => `tbc_${k}`;
 let cache = null, cachedAt = 0;

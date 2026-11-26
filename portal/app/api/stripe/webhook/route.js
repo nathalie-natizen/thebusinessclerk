@@ -32,7 +32,7 @@ export async function POST(req) {
     if (ent?.contact_email) await sendEmail(ent.contact_email, `Payment received: ${ent.legal_name} (${ent.file_number})`, `Thank you, ${ent.contact_name || ''}. Your payment was received and your order is with our team.\n\nYour company file number is ${ent.file_number}. Follow every step and complete any questionnaire in your client portal. Sign in with this email: ${APP}/login\n\nTHE BUSINESS CLERK`).catch(() => {});
     await notifyStaff({ subject: `New paid order: ${ent?.legal_name} (${ent?.file_number})`, text: `${(orders || []).map(o => KINDS[o.kind]?.name || o.kind).join(', ')}\n\n${APP}/staff/pipeline` }).catch(() => {});
     // Formation includes the first year of registered agent service; set up the yearly renewal to start in 12 months
-    const formation = (orders || []).some(o => ['llc', 'corp'].includes(o.kind));
+    const formation = (orders || []).some(o => ['llc', 'corp', 'foreign'].includes(o.kind));
     const raPrice = formation && s.customer ? await priceOf('ra') : null;
     if (raPrice) {
       try {

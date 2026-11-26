@@ -9,7 +9,7 @@ export async function setOrderStatus({ orderId, status, note, notify = true, use
   const { data: o } = await db.from('orders').update({ status, updated_at: new Date().toISOString() }).eq('id', orderId).select('*, entities(id, status)').single();
   if (!o) return null;
   await db.from('order_events').insert({ order_id: o.id, status, note: note || null, created_by: userId });
-  if (status === 'completed' && ['llc', 'corp'].includes(o.kind)) await db.from('entities').update({ status: 'active' }).eq('id', o.entity_id);
+  if (status === 'completed' && ['llc', 'corp', 'foreign'].includes(o.kind)) await db.from('entities').update({ status: 'active' }).eq('id', o.entity_id);
   if (notify && status !== 'awaiting_payment') {
     const label = statusLabel(status, o.kind);
     await notifyEntity(o.entity_id, {
