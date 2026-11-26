@@ -4,6 +4,7 @@ import Preview from '@/components/Preview';
 import Shell from '@/components/Shell';
 import { requireStaff } from '@/lib/auth';
 import { startTracking } from '@/lib/tracking';
+import { mailDeadline, toneClass, addBizDays, bizDaysBetween, CMRA_REVIEW_DAYS } from '@/lib/sla';
 import { notifyEntity } from '@/lib/notify';
 import UploadForm from '@/components/UploadForm';
 import { fmtDate, MAIL_CATEGORY, MAIL_STATUS, ORDER_STATUS, HANDLING, SHIPPING, CARRIERS } from '@/lib/labels';
@@ -45,7 +46,7 @@ export default async function Queue() {
       {mail.map(m => { const p = m.entities?.mail_preferences; const pr = Array.isArray(p) ? p[0] : p; return <tr key={m.id}>
         <td><Link className="file" href={`/staff/e/${m.entities.file_number}`}>{m.entities.file_number}</Link><div className="muted">{m.entities.legal_name}</div></td>
         <td>{MAIL_CATEGORY[m.category]}<div className="muted">{m.sender} · {fmtDate(m.received_at)}</div></td>
-        <td><span className="pill warn">{MAIL_STATUS[m.status]}</span>{m.status === 'forward_requested' && <div><strong>{SHIPPING[m.forward_shipping || 'first_class']}</strong>{m.client_request && m.client_request !== 'forward' && <div className="muted">{m.client_request}</div>}</div>}</td>
+        <td><span className="pill warn">{MAIL_STATUS[m.status]}</span> {(() => { const d = mailDeadline(m); return <span className={`pill ${toneClass(d.tone)}`}>{d.text}</span>; })()}{m.status === 'forward_requested' && <div><strong>{SHIPPING[m.forward_shipping || 'first_class']}</strong>{m.client_request && m.client_request !== 'forward' && <div className="muted">{m.client_request}</div>}</div>}</td>
         <td className="muted">{m.status === 'forward_requested' && pr ? [pr.forward_name, pr.forward_line1, pr.forward_line2, [pr.forward_city, pr.forward_state, pr.forward_postal].filter(Boolean).join(', '), pr.forward_country].filter(Boolean).map((l, i) => <div key={i}>{l}</div>) : (pr ? HANDLING[pr.handling] : '')}</td>
         <td><form action={complete} className="row" style={{ gap: 6 }}><input type="hidden" name="id" value={m.id} />
           {m.status === 'forward_requested' ? <><select name="carrier" defaultValue={['courier_overnight'].includes(m.forward_shipping) ? 'UPS' : 'USPS'} style={{ width: 'auto' }}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" placeholder="Tracking #" /><input name="postage" placeholder="Postage $" inputMode="decimal" style={{ maxWidth: 110 }} /><button className="btn small" name="status" value="forwarded">Mark forwarded</button></> : <button className="btn small" name="status" value="shredded">Mark shredded</button>}
@@ -58,11 +59,11 @@ export default async function Queue() {
         <td>{m.sender || 'Unknown sender'}<div className="muted">received {fmtDate(m.received_at)}</div></td><td>{fmtDate(m.hold_notice_at)}</td>
         <td><form action={complete}><input type="hidden" name="id" value={m.id} /><button className="btn small" name="status" value="shredded">Mark shredded</button></form></td></tr>)}</tbody></table></div></>}
     <h2>Form 1583 to review</h2>
-    {!cmra?.length ? <p className="muted">Nothing to review.</p> : <ul>{cmra.map(c => <li key={c.entity_id}><Link className="file" href={`/staff/e/${c.entities.file_number}`}>{c.entities.file_number}</Link> {c.entities.legal_name} · {c.applicant_name} · {c.witness_method === 'in_person' ? 'sign in person: schedule an office visit' : c.witness_method === 'ron' ? 'online notary form uploaded' : 'notarized form uploaded'} · submitted {fmtDate(c.submitted_at)}</li>)}</ul>}
+    {!cmra?.length ? <p className="muted">Nothing to review.</p> : <ul>{cmra.map(c => <li key={c.entity_id}><Link className="file" href={`/staff/e/${c.entities.file_number}`}>{c.entities.file_number}</Link> {c.entities.legal_name} · {c.applicant_name} · {c.witness_method === 'in_person' ? 'sign in person: schedule an office visit' : c.witness_method === 'ron' ? 'online notary form uploaded' : 'notarized form uploaded'} · submitted {fmtDate(c.submitted_at)} {(() => { const late = bizDaysBetween(addBizDays(c.submitted_at, CMRA_REVIEW_DAYS), new Date()) > 0; return <span className={`pill ${late ? 'urgent' : 'ok'}`}>{late ? 'Review overdue' : `Review by ${addBizDays(c.submitted_at, CMRA_REVIEW_DAYS).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}</span>; })()}</li>)}</ul>}
     <h2>Scan requests</h2>
     {!scans?.length ? <p className="muted">Nothing to scan.</p> : <div className="grid">{scans.map(m => <div className="card" key={m.id}>
       <Link className="file" href={`/staff/e/${m.entities.file_number}`}>{m.entities.file_number}</Link> <strong>{m.entities.legal_name}</strong>
-      <p className="muted">{MAIL_CATEGORY[m.category]} · {m.sender || 'Unknown sender'} · received {fmtDate(m.received_at)}{m.file_path && <> · <Preview src={`/api/file?type=mail&id=${m.id}&view=1`} pdf title="Preview">envelope</Preview></>}</p>
+      <p className="muted">{(() => { const d = mailDeadline(m); return <span className={`pill ${toneClass(d.tone)}`}>{d.text}</span>; })()} {MAIL_CATEGORY[m.category]} · {m.sender || 'Unknown sender'} · received {fmtDate(m.received_at)}{m.file_path && <> · <Preview src={`/api/file?type=mail&id=${m.id}&view=1`} pdf title="Preview">envelope</Preview></>}</p>
       <UploadForm bucket="mail" entityId={m.entities.id} action={completeScan} submitLabel="Upload scan and notify client">
         <input type="hidden" name="id" value={m.id} />
         <label>Scanned contents (PDF)<input name="content_file" type="file" accept="application/pdf,image/*" /></label>

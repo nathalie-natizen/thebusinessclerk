@@ -34,7 +34,7 @@ async function recordMail(fd) {
   const { error } = await sb.from('mail_items').insert({
     entity_id, category, urgent, sender: clean(fd.get('sender')), description: clean(fd.get('description'), 500),
     file_path: clean(fd.get('file_path'), 300), content_path, pages: content_path ? Math.max(1, parseInt(fd.get('pages')) || 1) : null, scanned_at: content_path ? new Date().toISOString() : null,
-    status, client_request, forward_shipping,
+    status, client_request, forward_shipping, requested_at: client_request ? new Date().toISOString() : null,
     received_at: fd.get('received_at') ? new Date(String(fd.get('received_at'))).toISOString() : new Date().toISOString(), received_by: user.id,
   });
   if (error) return { error: error.message };

@@ -7,6 +7,7 @@ import { savedCard, priceFor, chargeOnFile, createPaidOrder } from '@/lib/charge
 import { needsQuestionnaire } from '@/lib/questionnaires';
 import AgreementBox from '@/components/AgreementBox';
 import { FILINGS } from '@/lib/filings';
+import { clientExpectation } from '@/lib/sla';
 import { draftFor, recordAcceptance } from '@/lib/agreements';
 
 const ORDERABLE = [['annual_report', 'Annual report filing'], ['ein', 'EIN application'], ['ra', 'Registered agent'], ['mail', 'Business address & mail'], ['launch', 'Launch Pack'], ...Object.entries(FILINGS).map(([k, f]) => [k, f.name])];
@@ -74,6 +75,7 @@ export default async function Orders({ params, searchParams }) {
         <p><span className={`pill ${o.status === 'information_needed' ? 'urgent' : ['completed', 'delivered'].includes(o.status) ? 'ok' : ''}`}>{statusLabel(o.status, o.kind)}</span></p>
         {o.status === 'information_needed' && <p><Link className="btn small" href={`/e/${e.file_number}/orders/${o.id}`}>{needsQuestionnaire(o.kind) && !o.details?.q ? 'Complete questionnaire' : 'See what we need'}</Link></p>}
         <p className="muted">Ordered {fmtDate(o.created_at)}</p>
+        {(() => { const x = clientExpectation({ ...o, entities: { status: e.status } }); return x ? <p style={{ fontSize: 14 }}>{x}</p> : null; })()}
         <ul className="timeline">{(o.order_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 3).map(ev => <li key={ev.id}><strong>{statusLabel(ev.status, o.kind)}</strong> <span className="muted">{fmtDate(ev.created_at)}</span>{ev.note && <div className="muted">{ev.note}</div>}</li>)}</ul>
         <Link href={`/e/${e.file_number}/orders/${o.id}`}>Open order →</Link>
       </div>))}</div>}

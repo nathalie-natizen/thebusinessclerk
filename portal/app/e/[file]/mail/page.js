@@ -17,7 +17,7 @@ async function requestAction(formData) {
   if (!item || ['forwarded', 'delivered', 'shredded', 'picked_up'].includes(item.status)) return;
   if (action === 'scan' && item.status === 'scanned') return;
   const ship = String(formData.get('shipping'));
-  await supabaseAdmin().from('mail_items').update({ status: map[action], client_request: action,
+  await supabaseAdmin().from('mail_items').update({ status: map[action], client_request: action, requested_at: new Date().toISOString(),
     forward_shipping: action === 'forward' ? (SHIPPING[ship] ? ship : 'first_class') : null }).eq('id', item.id);
   revalidatePath('/e/[file]/mail', 'page');
 }

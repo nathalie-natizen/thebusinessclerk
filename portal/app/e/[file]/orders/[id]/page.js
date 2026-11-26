@@ -14,6 +14,7 @@ const ping = (o, what) => notifyStaff({ subject: `${what}: ${o.entities?.legal_n
 import ServiceTerms from '@/components/ServiceTerms';
 import { revisions, AUTO_APPROVE_DAYS } from '@/lib/guidelines';
 import { KINDS } from '@/lib/labels';
+import { clientExpectation } from '@/lib/sla';
 import { fmtDate, statusLabel } from '@/lib/labels';
 import { QUESTIONNAIRES, collect } from '@/lib/questionnaires';
 
@@ -94,6 +95,7 @@ export default async function OrderPage({ params, searchParams }) {
     <p><Link href={`/e/${e.file_number}/orders`}>← All orders</Link></p>
     <h2 style={{ marginTop: 0 }}>{o.service}</h2>
     <p><span className={`pill ${o.status === 'information_needed' ? 'urgent' : ['completed', 'delivered'].includes(o.status) ? 'ok' : ''}`}>{statusLabel(o.status, o.kind)}</span> <span className="muted">Ordered {fmtDate(o.created_at)}</span></p>
+    {(() => { const x = clientExpectation({ ...o, entities: { status: e.status } }); return x ? <p className="muted" style={{ marginTop: 0 }}>{x}</p> : null; })()}
     {searchParams?.new && <div className="note">Payment received. Please complete the questionnaire below so we can start.</div>}
     {ask && <div className="note"><strong>Action needed:</strong> {ask.note}</div>}
 

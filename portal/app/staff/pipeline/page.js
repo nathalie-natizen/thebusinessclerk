@@ -6,6 +6,7 @@ import { requireStaff } from '@/lib/auth';
 import { setOrderStatus, logRevision } from '@/lib/orders';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { chargeStateFee } from '@/lib/charge';
+import { orderDeadline, toneClass } from '@/lib/sla';
 import { revisions, STAFF_STEPS } from '@/lib/guidelines';
 import { PIPELINE, ARCHIVED, KINDS, STAFF_STATUSES, fmtDate } from '@/lib/labels';
 
@@ -49,14 +50,16 @@ export default async function Pipeline({ searchParams }) {
   const kind = KINDS[searchParams?.kind] ? searchParams.kind : null;
   const stage = STAGES.find(x => x.key === searchParams?.stage) || STAGES[0];
   const term = String(searchParams?.q || '').trim().toLowerCase();
-  let q = sb.from('orders').select('*, entities(file_number, legal_name, contact_name, entity_type)').not('status', 'in', '(cancelled,awaiting_payment)').order('updated_at');
+  let q = sb.from('orders').select('*, entities(file_number, legal_name, contact_name, entity_type, status)').not('status', 'in', '(cancelled,awaiting_payment)').order('updated_at');
   if (kind) q = q.eq('kind', kind);
   const { data: all } = await q;
   const { data: unpaid } = await sb.from('entities').select('file_number, legal_name, payment_issue').not('payment_issue', 'is', null);
   const match = o => !term || [o.entities?.file_number, o.entities?.legal_name, o.entities?.contact_name, o.service].some(v => String(v || '').toLowerCase().includes(term));
   const count = st => (all || []).filter(o => st.sts.includes(o.status) && match(o)).length;
+  const late = st => (all || []).filter(o => st.sts.includes(o.status) && match(o) && orderDeadline(o).tone === 'late').length;
+  const rank = o => ({ late: 0, today: 1, ok: 2, info: 3 })[orderDeadline(o).tone];
   let list = (all || []).filter(o => stage.sts.includes(o.status) && match(o));
-  if (stage.key === 'archived') list = list.reverse();
+  if (stage.key === 'archived') list = list.reverse(); else list = list.sort((a, b) => rank(a) - rank(b) || (orderDeadline(a).due || 0) - (orderDeadline(b).due || 0));
   const url = (over = {}) => { const p = new URLSearchParams({ ...(kind ? { kind } : {}), stage: stage.key, ...(term ? { q: term } : {}), ...over }); [...p].forEach(([k, v]) => !v && p.delete(k)); return `/staff/pipeline?${p}`; };
   return (<Shell profile={profile}>
     <h1>Pipeline</h1>
@@ -64,7 +67,7 @@ export default async function Pipeline({ searchParams }) {
 
     <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '6px 0 14px' }}>{STAGES.map(st => { const on = st.key === stage.key; const n = count(st);
       return <Link key={st.key} href={url({ stage: st.key })} style={{ textDecoration: 'none', padding: '12px 18px', borderRadius: 12, border: `2px solid ${on ? 'var(--teal, #0E4A57)' : 'var(--line, #ddd)'}`, background: on ? 'var(--teal, #0E4A57)' : '#fff', color: on ? '#fff' : 'inherit', fontWeight: 700, minWidth: 150 }}>
-        <div style={{ fontSize: 13, opacity: .8, fontWeight: 600 }}>{st.key === 'archived' ? 'Completed' : 'Stage'}</div>{st.label} <span style={{ fontSize: 20, marginLeft: 6 }}>{n}</span></Link>; })}</nav>
+        <div style={{ fontSize: 13, opacity: .8, fontWeight: 600 }}>{st.key === 'archived' ? 'Completed' : 'Stage'}</div>{st.label} <span style={{ fontSize: 20, marginLeft: 6 }}>{n}</span>{late(st) > 0 && <div style={{ fontSize: 12, marginTop: 2, color: on ? '#FFD2CC' : '#C0392B' }}>{late(st)} overdue</div>}</Link>; })}</nav>
 
     <form method="get" action="/staff/pipeline" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
       <input type="hidden" name="stage" value={stage.key} />
@@ -72,16 +75,16 @@ export default async function Pipeline({ searchParams }) {
       <input name="q" defaultValue={term} placeholder="Search company, file number or contact" style={{ flex: '1 1 260px', maxWidth: 420 }} />
       <button className="btn small sec">Filter</button>{(kind || term) && <Link href={`/staff/pipeline?stage=${stage.key}`}>Clear</Link>}
     </form>
-    <p className="muted" style={{ marginTop: 0 }}>Oldest first. Click a row to open it, work it and move it. Moving an order updates the client's portal and notifies them unless you untick Notify. In Final review, choose Archive once the quality check passes.</p>
+    <p className="muted" style={{ marginTop: 0 }}>Most urgent first: deadlines follow what the website promises (Staff → Guidelines). Red = overdue, amber = due today or needs a check. Click a row to open it, work it and move it. Moving an order updates the client's portal and notifies them unless you untick Notify. In Final review, choose Archive once the quality check passes.</p>
 
-    {!list.length ? <div className="note">Nothing in {stage.label}.</div> : <div className="stack" style={{ gap: 8 }}>{list.map(o => { const age = bizDays(o.updated_at); const late = stage.key === 'to-do' && age > 1; const r = o.kind === 'launch' ? revisions(o.details) : null;
+    {!list.length ? <div className="note">Nothing in {stage.label}.</div> : <div className="stack" style={{ gap: 8 }}>{list.map(o => { const dl = orderDeadline(o); const r = o.kind === 'launch' ? revisions(o.details) : null;
       return (<details key={o.id} className="card" style={{ padding: 0 }}>
         <summary style={{ cursor: 'pointer', listStyle: 'none', display: 'grid', gridTemplateColumns: '110px minmax(180px, 2fr) minmax(150px, 1.4fr) 120px 150px', gap: 12, alignItems: 'center', padding: '14px 18px' }}>
           <span className="file">{o.entities?.file_number}</span>
           <span><strong>{o.entities?.legal_name}</strong><br /><span className="muted" style={{ fontSize: 13 }}>{o.entities?.contact_name || ''}</span></span>
           <span>{o.service}{r && <><br /><span className="pill" style={{ fontSize: 12 }}>Revision {r.used} of {r.allowed}</span></>}</span>
           <span className="muted" style={{ fontSize: 13 }}>{o.source === 'website' ? 'Website' : o.source === 'portal' ? 'Portal' : 'Staff'}<br />{fmtDate(o.created_at)}</span>
-          <span className={`pill ${late ? 'urgent' : ''}`} style={{ justifySelf: 'start' }}>{late ? `Overdue · ${age} business days` : `${age} business day${age === 1 ? '' : 's'} here`}</span>
+          <span className={`pill ${toneClass(dl.tone)}`} style={{ justifySelf: 'start' }}>{dl.text || 'Completed'}</span>
         </summary>
         <div style={{ padding: '0 18px 18px', display: 'grid', gridTemplateColumns: 'minmax(0, 1.6fr) minmax(260px, 1fr)', gap: 20, borderTop: '1px solid var(--line, #eee)' }}>
           <div>

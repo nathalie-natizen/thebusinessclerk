@@ -99,7 +99,7 @@ No incluye: enmiendas, registro de nombre comercial (DBA), documentos legales pe
 - Nombres y direcciones de los socios o gerentes
 - Si la LLC será administrada por los socios o por gerentes
 ## ¿Cuánto tarda?
-Las presentaciones en línea en Florida suelen procesarse en pocos días hábiles. El EIN para quien no tiene SSN se solicita por fax o correo y puede tardar algunas semanas. No controlamos los tiempos del estado ni del IRS, pero presentamos todo rápido y te mantenemos informado.`,
+Presentamos ante Florida en 1 día hábil tras recibir toda su información, y Florida suele procesar las presentaciones en línea en 2 a 5 días hábiles. El EIN para quien no tiene SSN se solicita por fax o correo y puede tardar algunas semanas. No controlamos los tiempos del estado ni del IRS, pero presentamos todo rápido y te mantenemos informado.`,
   aside: rel => priceCard('Formación de LLC', $(P.formation), 'pago único', ['Articles of Organization', `Tarifa estatal (US$ ${F.llcArticles}) incluida`, 'Modelo de acuerdo operativo', 'Primer año de agente registrado', `EIN opcional: ${$(P.ein)}`], 'es/empezar.html', 'Abrir mi LLC', rel) + linksCard('Guías', [['es/guias/como-abrir-una-llc-en-florida.html', 'Cómo abrir una LLC en Florida'], ['es/guias/llc-en-florida-para-no-residentes.html', 'LLC en Florida para no residentes']], rel),
   faqs: [
     ['¿Cuánto cuesta abrir una LLC en Florida?', `La tarifa del estado es de US$ ${F.llcArticles} (US$ 100 de presentación más US$ 25 por la designación del agente registrado). Nuestro paquete de ${$(P.formation)} incluye esa tarifa, nuestro servicio y un año de agente registrado.`],

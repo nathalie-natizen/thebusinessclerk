@@ -99,7 +99,7 @@ Prefere uma corporação (Inc.)? O pacote custa **${$(P.formationCorp)}**, com a
 - Nomes e endereços dos sócios ou administradores
 - Se a LLC será administrada pelos sócios ou por administradores
 ## Quanto tempo leva?
-Os registros online na Flórida costumam ser processados em poucos dias úteis. O EIN para quem não tem SSN é solicitado por fax ou correio e pode levar algumas semanas. Não controlamos os prazos do estado ou do IRS, mas enviamos tudo rapidamente e mantemos você informado.`,
+Protocolamos na Flórida em até 1 dia útil após recebermos todas as suas informações, e a Flórida costuma processar registros online em 2 a 5 dias úteis. O EIN para quem não tem SSN é solicitado por fax ou correio e pode levar algumas semanas. Não controlamos os prazos do estado ou do IRS, mas enviamos tudo rapidamente e mantemos você informado.`,
   aside: rel => priceCard('Abertura de LLC', $(P.formation), 'pagamento único', ['Articles of Organization', `Taxa estadual (US$ ${F.llcArticles}) incluída`, 'Modelo de acordo operacional', '1º ano de agente registrado', `EIN opcional: ${$(P.ein)}`], 'pt/comecar.html', 'Abrir minha LLC', rel) + linksCard('Guias', [['pt/guias/como-abrir-llc-na-florida.html', 'Como abrir uma LLC na Flórida'], ['pt/guias/llc-na-florida-para-nao-residentes.html', 'LLC na Flórida para não residentes']], rel),
   faqs: [
     ['Quanto custa abrir uma LLC na Flórida?', `A taxa do estado é de US$ ${F.llcArticles} (US$ 100 de registro mais US$ 25 de designação do agente registrado). Nosso pacote de ${$(P.formation)} inclui essa taxa, nosso serviço e um ano de agente registrado.`],
