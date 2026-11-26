@@ -19,9 +19,21 @@ async function recordMail(fd) {
   const entity_id = String(fd.get('entity_id')); const category = String(fd.get('category'));
   if (!MAIL_CATEGORY[category]) return { error: 'Choose a mail type.' };
   const urgent = fd.get('urgent') === 'on' || ['service_of_process', 'state_notice'].includes(category);
+  const legal = ['service_of_process', 'state_notice'].includes(category);
+  const content_path = clean(fd.get('content_path'), 300);
+  if (legal && !content_path) return { error: 'Legal papers and state notices must be opened and scanned now. Add the scanned contents.' };
+  // Apply the client's standing choice for new mail
+  const { data: pref } = await sb.from('mail_preferences').select('handling, forward_shipping').eq('entity_id', entity_id).maybeSingle();
+  const h = pref?.handling || 'notify';
+  let status = 'received', client_request = null, forward_shipping = null;
+  if (content_path) status = 'scanned';
+  else if (h === 'scan_all') { status = 'scan_requested'; client_request = 'scan (standing choice)'; }
+  else if (h.startsWith('forward_')) { status = 'forward_requested'; client_request = { forward_each: 'forward', forward_weekly: 'forward (weekly batch)', forward_monthly: 'forward (monthly batch)' }[h]; forward_shipping = pref?.forward_shipping || 'first_class'; }
+  else if (h === 'hold_pickup') status = 'held';
   const { error } = await sb.from('mail_items').insert({
     entity_id, category, urgent, sender: clean(fd.get('sender')), description: clean(fd.get('description'), 500),
-    file_path: clean(fd.get('file_path'), 300), status: fd.get('file_path') ? 'scanned' : 'received',
+    file_path: clean(fd.get('file_path'), 300), content_path, pages: content_path ? Math.max(1, parseInt(fd.get('pages')) || 1) : null, scanned_at: content_path ? new Date().toISOString() : null,
+    status, client_request, forward_shipping,
     received_at: fd.get('received_at') ? new Date(String(fd.get('received_at'))).toISOString() : new Date().toISOString(), received_by: user.id,
   });
   if (error) return { error: error.message };
@@ -129,7 +141,7 @@ export default async function StaffEntity({ params, searchParams }) {
   return (<Shell profile={profile}>
     <p><Link href="/staff">← All entities</Link></p>
     <span className="file" style={{ fontSize: 16 }}>{e.file_number}</span><h1 style={{ marginTop: 8 }}>{e.legal_name}</h1>
-    <p className="sub">Label the paper folder and the PMB line with <strong>{e.file_number}</strong>. Mail handling: {HANDLING[prefs?.handling || 'scan_hold']}.</p>
+    <p className="sub">Label the paper folder and the PMB line with <strong>{e.file_number}</strong>. Mail handling: {HANDLING[prefs?.handling || 'notify']}.</p>
     {searchParams?.saved && <p className="ok-msg">Saved.</p>}
 
     <div className="grid">
@@ -140,7 +152,10 @@ export default async function StaffEntity({ params, searchParams }) {
           <label>From (sender)<input name="sender" placeholder="e.g. Florida Department of State" /></label>
           <label>Received<input name="received_at" type="datetime-local" /></label>
           <label>Short description<input name="description" placeholder="e.g. Summons, Orange County Circuit Court" /></label>
-          <label>Scan (PDF)<input name="file" type="file" accept="application/pdf,image/*" /></label>
+          <label>Envelope photo (front)<input name="file" type="file" accept="image/*,application/pdf" capture="environment" /></label>
+          <label>Opened &amp; scanned contents (PDF): required for legal/state mail, or if the client asked for a scan<input name="content_file" type="file" accept="application/pdf,image/*" /></label>
+          <label>Pages scanned<input name="pages" type="number" min="1" placeholder="e.g. 3" /></label>
+          <p className="muted" style={{ margin: 0 }}>Client's standing choice: <strong>{HANDLING[prefs?.handling || 'notify']}</strong>. It is applied automatically when you save.</p>
           <label style={{ display: 'flex', gap: 8, fontWeight: 400 }}><input type="checkbox" name="urgent" style={{ minHeight: 'auto' }} /> Urgent (lawsuits and state notices are always urgent)</label>
         </UploadForm>
       </section>
@@ -157,7 +172,7 @@ export default async function StaffEntity({ params, searchParams }) {
 
     <h2>Mail log</h2>
     {!mail?.length ? <p className="muted">No mail yet.</p> : <div className="scroll"><table><thead><tr><th>Received</th><th>Type</th><th>From</th><th>Client</th><th>Status</th></tr></thead><tbody>
-      {mail.map(m => <tr key={m.id}><td>{fmtDate(m.received_at)}</td><td>{m.urgent && <span className="pill urgent">Urgent</span>} {MAIL_CATEGORY[m.category]}{m.file_path && <div><a href={`/api/file?type=mail&id=${m.id}`}>View scan</a></div>}</td><td>{m.sender || '—'}</td>
+      {mail.map(m => <tr key={m.id}><td>{fmtDate(m.received_at)}</td><td>{m.urgent && <span className="pill urgent">Urgent</span>} {MAIL_CATEGORY[m.category]}{m.file_path && <div><a href={`/api/file?type=mail&id=${m.id}`}>Envelope</a></div>}{m.content_path && <div><a href={`/api/file?type=mail&id=${m.id}&part=content`}>Scan ({m.pages || '?'} p.)</a></div>}</td><td>{m.sender || '—'}</td>
         <td className="muted">{m.notified_at ? `Notified ${fmtDate(m.notified_at)}` : 'Not notified'}<br />{m.viewed_at ? `Viewed ${fmtDate(m.viewed_at)}` : 'Not viewed'}</td>
         <td><form action={setMailStatus} className="row" style={{ gap: 6 }}><input type="hidden" name="id" value={m.id} /><select name="status" defaultValue={m.status}>{opts(MAIL_STATUS)}</select><select name="carrier" defaultValue={m.carrier || 'USPS'} style={{ width: 'auto' }}>{Object.entries(CARRIERS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select><input name="tracking" defaultValue={m.tracking_number || ''} placeholder="Tracking #" /><button className="btn small sec">Update</button>{m.tracking_status && <div className="muted" style={{ flexBasis: '100%' }}>{TRACKING_STATUS[m.tracking_status] || m.tracking_status}{m.tracking_url && <> · <a href={m.tracking_url} target="_blank" rel="noopener noreferrer">Track</a></>}</div>}</form></td></tr>)}
     </tbody></table></div>}

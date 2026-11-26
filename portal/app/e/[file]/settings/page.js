@@ -20,7 +20,7 @@ export default async function Settings({ params, searchParams }) {
   const { sb, profile } = await requireUser();
   const e = await getEntity(sb, params.file); if (!e) notFound();
   const { data: p } = await sb.from('mail_preferences').select('*').eq('entity_id', e.id).maybeSingle();
-  const v = p || { handling: 'scan_hold', forward_country: 'United States', forward_shipping: 'first_class' };
+  const v = p || { handling: 'notify', forward_country: 'United States', forward_shipping: 'first_class' };
   return (<Shell profile={profile}>
     <span className="file">{e.file_number}</span><h1 style={{ marginTop: 8 }}>{e.legal_name}</h1>
     <EntityTabs file={e.file_number} active="settings" />
@@ -30,7 +30,7 @@ export default async function Settings({ params, searchParams }) {
       <h2 style={{ marginTop: 0 }}>What should we do with your mail?</h2>
       <label>Default handling<select name="handling" defaultValue={v.handling}>{Object.entries(HANDLING).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
       <label>Default carrier service for forwarding<select name="forward_shipping" defaultValue={v.forward_shipping || 'first_class'}>{Object.entries(SHIPPING).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
-      <p className="muted">Legal papers and state notices are always scanned and sent to you the same business day. Forwarding is billed at postage cost. You can pick a different speed for any single item on the Mail page.</p>
+      <p className="muted">Legal papers and state notices are always scanned and sent to you the same business day. Forwarding is $2.50 per item plus postage at cost; opening and scanning is priced per item (the lowest rate for your monthly volume is applied automatically). You can pick a different speed for any single item on the Mail page.</p>
       <h2>Forwarding address</h2>
       <label>Name<input name="forward_name" defaultValue={v.forward_name || ''} autoComplete="name" /></label>
       <label>Address line 1<input name="forward_line1" defaultValue={v.forward_line1 || ''} autoComplete="address-line1" /></label>

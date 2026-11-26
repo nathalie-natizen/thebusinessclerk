@@ -8,36 +8,42 @@ import { MAIL_CATEGORY } from './labels';
 const FREE = ['service_of_process', 'state_notice'];
 const money = c => '$' + (c / 100).toFixed(2);
 
-export function tierFor(count, p) {
-  const tiers = [...(p.tiers || [])].sort((a, b) => a.up_to - b.up_to);
-  const t = tiers.find(x => count <= x.up_to);
-  if (t) return { cents: t.cents, label: `Mail plan: ${count} item${count === 1 ? '' : 's'} (tier up to ${t.up_to})`, extra: 0 };
-  const last = tiers[tiers.length - 1] || { up_to: 0, cents: 0 };
-  const over = count - last.up_to;
-  return { cents: last.cents + over * p.over_cents, label: `Mail plan: ${count} items (${last.up_to} + ${over} extra at ${money(p.over_cents)})`, extra: over };
+// Pick the cheapest scan level for this many scans (clients never choose a plan; the month-end bill always takes the lowest total)
+export function bestScanLevel(scans, p) {
+  const opts = (p.scan_levels || []).map(l => ({ ...l, total: l.cents + Math.max(0, scans - l.included) * l.extra_cents }));
+  if (!scans) return null;
+  return opts.sort((a, b) => a.total - b.total || b.included - a.included)[0];
 }
 
 // Build (or rebuild) the statement for one company and one month. Does not charge.
 export async function buildStatement(entity, start, end, pricing) {
   const db = supabaseAdmin();
-  const { data: items } = await db.from('mail_items').select('id, received_at, sender, category, status, client_request, forward_shipping, postage_cents, tracking_number')
+  const { data: items } = await db.from('mail_items').select('id, received_at, sender, category, status, client_request, forward_shipping, postage_cents, tracking_number, scanned_at, pages')
     .eq('entity_id', entity.id).gte('received_at', start + 'T00:00:00-05:00').lt('received_at', end + 'T00:00:00-05:00').order('received_at');
-  const billable = (items || []).filter(i => !FREE.includes(i.category));
-  const packages = billable.filter(i => i.category === 'package').length;
-  const forwarded = billable.filter(i => ['forwarded', 'delivered'].includes(i.status) || i.client_request === 'forward');
+  const all = items || [];
+  const counted = all.filter(i => !FREE.includes(i.category));
+  const packages = counted.filter(i => i.category === 'package');
+  const forwarded = counted.filter(i => ['forwarded', 'delivered'].includes(i.status));
+  const scanned = counted.filter(i => i.scanned_at);
+  const extraPages = scanned.reduce((s, i) => s + Math.max(0, (i.pages || 0) - pricing.scan_pages), 0);
   const postage = forwarded.reduce((s, i) => s + (i.postage_cents || 0), 0);
-  const tier = tierFor(billable.length, pricing);
-  const lines = [{ label: tier.label, cents: tier.cents }];
-  if (packages) lines.push({ label: `Packages received: ${packages} × ${money(pricing.package_cents)}`, cents: packages * pricing.package_cents });
-  if (forwarded.length) lines.push({ label: `Forwarding handling: ${forwarded.length} × ${money(pricing.forward_cents)}`, cents: forwarded.length * pricing.forward_cents });
+  const lines = [{ label: `Business address & mail plan (${counted.length} item${counted.length === 1 ? '' : 's'} logged, ${pricing.included_items} included)`, cents: entity.mail_service ? pricing.base_cents : 0 }];
+  const over = Math.max(0, counted.length - pricing.included_items);
+  if (over) lines.push({ label: `Mail above ${pricing.included_items} items: ${over} × ${money(pricing.over_item_cents)}`, cents: over * pricing.over_item_cents });
+  if (packages.length) lines.push({ label: `Packages received: ${packages.length} × ${money(pricing.package_cents)}`, cents: packages.length * pricing.package_cents });
+  if (forwarded.length) lines.push({ label: `Forwarding: ${forwarded.length} × ${money(pricing.forward_cents)}`, cents: forwarded.length * pricing.forward_cents });
   if (postage) lines.push({ label: 'Postage (at cost)', cents: postage });
+  const lvl = bestScanLevel(scanned.length, pricing);
+  if (lvl) lines.push({ label: `Open & scan: ${scanned.length} scan${scanned.length === 1 ? '' : 's'}, best price ${lvl.name}${lvl.cents ? ` (${money(lvl.cents)} for ${lvl.included})` : ''}${scanned.length > lvl.included ? ` + ${scanned.length - lvl.included} × ${money(lvl.extra_cents)}` : ''}`, cents: lvl.total });
+  if (extraPages) lines.push({ label: `Extra scanned pages (over ${pricing.scan_pages} per item): ${extraPages} × ${money(pricing.page_cents)}`, cents: extraPages * pricing.page_cents });
   const gross = lines.reduce((s, l) => s + l.cents, 0);
   const base = entity.mail_service ? pricing.base_cents : 0;
-  lines.push({ label: 'Less: monthly plan already paid', cents: -Math.min(base, gross) });
+  if (base) lines.push({ label: 'Less: monthly plan already paid by subscription', cents: -base });
   const total = Math.max(0, gross - base);
   const row = {
-    entity_id: entity.id, period_start: start, period_end: end, items_count: billable.length, lines, base_cents: base, total_cents: total,
-    items: (items || []).map(i => ({ date: i.received_at, sender: i.sender, type: MAIL_CATEGORY[i.category] || i.category, counted: !FREE.includes(i.category), forwarded: forwarded.some(f => f.id === i.id), postage_cents: i.postage_cents || 0, tracking: i.tracking_number })),
+    entity_id: entity.id, period_start: start, period_end: end, items_count: counted.length, lines, base_cents: base, total_cents: total,
+    items: all.map(i => ({ date: i.received_at, sender: i.sender, type: MAIL_CATEGORY[i.category] || i.category, counted: !FREE.includes(i.category),
+      scanned: !!i.scanned_at, pages: i.pages || null, forwarded: forwarded.some(f => f.id === i.id), postage_cents: i.postage_cents || 0, tracking: i.tracking_number })),
   };
   const { data } = await db.from('mail_statements').upsert(row, { onConflict: 'entity_id,period_start' }).select().single();
   return data;

@@ -6,16 +6,16 @@ export const MAIL_CATEGORY = {
   package: 'Package',
 };
 export const MAIL_STATUS = {
-  received: 'Received', scanned: 'Scanned', forward_requested: 'Forward requested', forwarded: 'Forwarded', delivered: 'Delivered',
+  received: 'Received', scan_requested: 'Scan requested', scanned: 'Opened & scanned', forward_requested: 'Forward requested', forwarded: 'Forwarded', delivered: 'Delivered',
   shred_requested: 'Shred requested', shredded: 'Shredded', held: 'Held at office', picked_up: 'Picked up',
 };
 export const HANDLING = {
-  scan_hold: 'Scan it, keep the original 90 days, then shred',
-  scan_shred: 'Scan it and shred the original after 30 days',
-  scan_forward_monthly: 'Scan it and mail me the originals once a month',
-  scan_forward_quarterly: 'Scan it and mail me the originals every 3 months',
-  forward_unopened: 'Forward each item to me unopened (no scan)',
-  hold_pickup: 'Scan it and hold the original for pickup at the office',
+  notify: 'Just notify me with a photo of the envelope. I will choose what to do with each item',
+  scan_all: 'Open and scan everything to my portal (per-scan pricing applies)',
+  forward_each: 'Forward each item to me as it arrives ($2.50 per item + postage)',
+  forward_weekly: 'Forward my mail once a week ($2.50 per item + postage)',
+  forward_monthly: 'Forward my mail once a month ($2.50 per item + postage)',
+  hold_pickup: 'Hold my mail for pickup at the office',
 };
 export const ORDER_STATUS = {
   awaiting_payment: 'Awaiting payment', received: 'Order received', payment_confirmed: 'Payment confirmed', information_needed: 'Information needed',

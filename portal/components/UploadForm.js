@@ -7,19 +7,22 @@ export default function UploadForm({ bucket, entityId, action, children, submitL
   const [busy, setBusy] = useState(false); const [err, setErr] = useState(''); const [done, setDone] = useState('');
   async function onSubmit(e) {
     e.preventDefault(); setErr(''); setDone('');
-    const form = e.currentTarget; const fd = new FormData(form); const file = fd.get('file');
-    if (requireFile && (!file || !file.size)) { setErr('Choose a PDF or image to upload.'); return; }
-    if (file && file.size > 50 * 1024 * 1024) { setErr('File is larger than 50 MB.'); return; }
+    const form = e.currentTarget; const fd = new FormData(form);
+    const files = [...fd.entries()].filter(([k, v]) => k.endsWith('file') && v && typeof v === 'object');
+    const main = fd.get('file');
+    if (requireFile && (!main || !main.size)) { setErr('Choose a PDF or image to upload.'); return; }
+    if (files.some(([, f]) => f.size > 50 * 1024 * 1024)) { setErr('File is larger than 50 MB.'); return; }
     setBusy(true);
     try {
-      if (file && file.size) {
+      for (const [name, file] of files) {
+        fd.delete(name);
+        if (!file.size) continue;
         const ext = (file.name.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '');
         const path = `${entityId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
         const { error } = await supabaseBrowser().storage.from(bucket).upload(path, file, { contentType: file.type || 'application/pdf' });
         if (error) throw error;
-        fd.set('file_path', path);
+        fd.set(name.replace(/file$/, 'path'), path);
       }
-      fd.delete('file');
       const r = await action(fd);
       if (r?.error) throw new Error(r.error);
       form.reset(); setDone(r?.message || 'Saved.');

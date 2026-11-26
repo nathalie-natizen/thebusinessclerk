@@ -18,8 +18,8 @@ export default async function Statement({ params }) {
       <tr><th style={{ textAlign: 'left' }}>Charged to your card on file</th><th style={{ textAlign: 'right' }}>{money(s.total_cents)}</th></tr>
     </tbody></table></div>
     <h2>Mail included</h2>
-    {!s.items.length ? <p className="muted">No mail this month.</p> : <div className="scroll"><table><thead><tr><th>Received</th><th>Type</th><th>From</th><th>Counted</th><th>Forwarded</th><th>Postage</th></tr></thead><tbody>
-      {s.items.map((it, i) => <tr key={i}><td>{fmtDay(it.date)}</td><td>{it.type}</td><td>{it.sender || '—'}</td><td>{it.counted ? 'Yes' : 'No (legal/state notice)'}</td><td>{it.forwarded ? `Yes${it.tracking ? ` · ${it.tracking}` : ''}` : ''}</td><td>{it.postage_cents ? money(it.postage_cents) : ''}</td></tr>)}
+    {!s.items.length ? <p className="muted">No mail this month.</p> : <div className="scroll"><table><thead><tr><th>Received</th><th>Type</th><th>From</th><th>Counted</th><th>Opened &amp; scanned</th><th>Forwarded</th><th>Postage</th></tr></thead><tbody>
+      {s.items.map((it, i) => <tr key={i}><td>{fmtDay(it.date)}</td><td>{it.type}</td><td>{it.sender || '—'}</td><td>{it.counted ? 'Yes' : 'No (legal/state notice, free)'}</td><td>{it.scanned ? `Yes${it.pages ? ` · ${it.pages} pages` : ''}` : ''}</td><td>{it.forwarded ? `Yes${it.tracking ? ` · ${it.tracking}` : ''}` : ''}</td><td>{it.postage_cents ? money(it.postage_cents) : ''}</td></tr>)}
     </tbody></table></div>}
   </Shell>);
 }
