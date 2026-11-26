@@ -46,9 +46,7 @@ Security: every table uses row level security (clients only ever see their own c
 
 ## Carrier tracking (EasyPost)
 1. Create an account at easypost.com and copy the **Production API key**.
-2. In Vercel → thebusinessclerk-portal → Settings → Environment Variables add:
-   - `EASYPOST_API_KEY` = the production key
-   - `EASYPOST_WEBHOOK_TOKEN` = any long random string you make up
-3. In EasyPost → Webhooks, add `https://app.thebusinessclerk.com/api/tracking/webhook?token=<the same string>` (Production).
+2. In Vercel → thebusinessclerk-portal → Settings → Environment Variables add `EASYPOST_API_KEY` = the production key.
+3. In EasyPost → Webhooks & Events, add `https://app.thebusinessclerk.com/api/tracking/webhook` (Production). Every update is re-checked with EasyPost using the API key, so the URL needs no secret.
 4. Redeploy. From then on, when staff mark mail as forwarded with a carrier + tracking number, the item updates itself (in transit, out for delivery, delivered) and the client is notified.
 Without EasyPost, tracking numbers still show as a link to the carrier's site; statuses just don't update automatically.
