@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import Shell, { EntityTabs } from '@/components/Shell';
 import UploadForm from '@/components/UploadForm';
 import { requireUser, getEntity } from '@/lib/auth';
-import { canActFor, upsertCmra } from '@/lib/compliance';
+import { canActFor, upsertCmra, maybeSubmit } from '@/lib/compliance';
 import { PRIMARY_IDS, SECONDARY_IDS, CMRA_STATUS, WITNESS, fmtDay } from '@/lib/labels';
 import { officeLine } from '@/lib/office';
 import { supabaseServer } from '@/lib/supabase/server';
@@ -27,7 +27,8 @@ async function saveInfo(fd) {
     business_name: g('business_name'), business_type: g('business_type'), business_phone: g('business_phone', 40), registration_place: g('registration_place'),
     receivers: g('receivers', 1000), witness_method: WITNESS[fd.get('witness_method')] ? String(fd.get('witness_method')) : null,
   });
-  redirect(`/e/${fd.get('file')}/compliance?saved=1`);
+  const sent = await maybeSubmit(id);
+  redirect(`/e/${fd.get('file')}/compliance?${sent ? 'submitted' : 'saved'}=1`);
 }
 async function saveId(fd) {
   'use server';
@@ -46,7 +47,7 @@ async function saveId(fd) {
   const DL = PRIMARY_IDS[0];
   if (t === DL && cur?.[which === 'id1' ? 'id2_type' : 'id1_type'] === DL) return { error: "USPS allows a driver's/state ID for only one of the two IDs. Choose a different type." };
   await upsertCmra(id, { status: 'in_progress', [`${which}_type`]: t, [`${which}_issuer`]: c(fd.get('issuer')), [`${which}_expires`]: exp, ...(path ? { [`${which}_path`]: path } : {}), ...(which === 'id1' ? { id1_number: c(fd.get('number'), 40) } : {}) });
-  return { message: 'ID saved.' };
+  return { message: (await maybeSubmit(id)) ? 'ID saved. Your file is complete and was sent to our team for review. Refresh to see the status.' : 'ID saved.' };
 }
 async function phoneLink(fd) {
   'use server';
@@ -62,19 +63,8 @@ async function saveForm(fd) {
   if (!(await canActFor(id))) return { error: 'Not allowed.' };
   const path = c(fd.get('file_path')); if (!path?.startsWith(id + '/')) return { error: 'Choose the signed form.' };
   await upsertCmra(id, { status: 'in_progress', form_path: path });
-  return { message: 'Signed form saved.' };
+  return { message: (await maybeSubmit(id)) ? 'Signed form saved. Your file is complete and was sent to our team for review. Refresh to see the status.' : 'Signed form saved.' };
 }
-async function submit(fd) {
-  'use server';
-  const { sb } = await requireUser(); const id = String(fd.get('entity_id'));
-  if (!(await canActFor(id))) return;
-  const { data: a } = await sb.from('cmra_applications').select('*').eq('entity_id', id).maybeSingle();
-  const missing = !a?.last_name || !a?.first_name || !a?.home_street || !a?.id1_path || !a?.id1_number || !a?.id1_type || !a?.id2_path || !a?.id2_type || !a?.witness_method || (['notary', 'ron'].includes(a.witness_method) && !a.form_path);
-  if (missing) redirect(`/e/${fd.get('file')}/compliance?missing=1`);
-  await upsertCmra(id, { status: 'submitted', submitted_at: new Date().toISOString(), client_note: c(fd.get('client_note'), 1000) });
-  redirect(`/e/${fd.get('file')}/compliance?submitted=1`);
-}
-
 export default async function Compliance({ params, searchParams }) {
   const { sb, profile } = await requireUser();
   const e = await getEntity(sb, params.file); if (!e) notFound();
@@ -93,7 +83,6 @@ export default async function Compliance({ params, searchParams }) {
     <p>Status: <span className={`pill ${['verified', 'filed'].includes(a.status) ? 'ok' : a.status === 'needs_changes' ? 'urgent' : 'warn'}`}>{CMRA_STATUS[a.status]}</span>
       {a.status === 'needs_changes' && a.staff_note && <span className="note" style={{ display: 'block' }}>From our team: {a.staff_note}</span>}</p>
     {searchParams?.saved && <p className="ok-msg">Saved.</p>}
-    {searchParams?.missing && <p className="err">Please complete every step first: your details, both IDs (with your photo ID number), how you'll sign, and (if using a notary) the notarized form.</p>}
     {searchParams?.submitted && <p className="ok-msg">Submitted. We'll review it within one business day{a.witness_method === 'in_person' ? ' and contact you to schedule your office visit' : ''}.</p>}
 
     <Step n="1" done={!!a.home_address} title="Your details (as they appear on Form 1583)">
@@ -148,10 +137,7 @@ export default async function Compliance({ params, searchParams }) {
       </UploadForm>}
     </Step>
 
-    {!ro && <form action={submit} className="card stack"><H name="entity_id" value={e.id} /><H name="file" value={e.file_number} />
-      <h2 style={{ margin: 0 }}>5. Submit for review</h2>
-      <label>Anything we should know? (optional)<input name="client_note" /></label>
-      <button className="btn">Submit for review</button></form>}
+    {!ro && <p className="muted">When all the steps above are done, your file is sent to our team for review automatically.</p>}
     {['verified', 'filed'].includes(a.status) && <p className="ok-msg">Your Form 1583 is verified{a.crd_filed_at ? ` and was filed with USPS on ${fmtDay(a.crd_filed_at)}` : ''}. If any of your details or IDs change, let us know: USPS requires a new form.</p>}
   </Shell>);
 }

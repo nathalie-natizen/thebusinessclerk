@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { checkToken, SLOTS } from '@/lib/capture';
+import { maybeSubmit } from '@/lib/compliance';
 
 // Receives a photo taken on the client's phone (one-time link). The image is compressed on the phone first.
 export async function POST(req) {
@@ -16,5 +17,6 @@ export async function POST(req) {
   const { error } = await db.storage.from('compliance').upload(path, Buffer.from(await img.arrayBuffer()), { contentType: img.type });
   if (error) return NextResponse.json({ error: 'Upload failed. Try again.' }, { status: 500 });
   await db.from('cmra_applications').upsert({ entity_id: t.entity_id, [col]: path, status: 'in_progress', updated_at: new Date().toISOString() }, { onConflict: 'entity_id' });
+  await maybeSubmit(t.entity_id);
   return NextResponse.json({ ok: true });
 }
