@@ -14,7 +14,7 @@ export async function GET(req) {
     if (!user) return NextResponse.redirect(new URL('/login', req.url));
     const { data: row } = part ? await sb.from('cmra_applications').select(part).eq('entity_id', id).maybeSingle() : { data: null }; // RLS: members/staff only
     if (!row?.[part]) return new NextResponse('Not found', { status: 404 });
-    const { data, error } = await supabaseAdmin().storage.from('compliance').createSignedUrl(row[part], 60);
+    const { data, error } = await supabaseAdmin().storage.from('compliance').createSignedUrl(row[part], 300, url.searchParams.get('view') ? undefined : { download: true });
     if (error) return new NextResponse('File unavailable', { status: 404 });
     return NextResponse.redirect(data.signedUrl);
   }

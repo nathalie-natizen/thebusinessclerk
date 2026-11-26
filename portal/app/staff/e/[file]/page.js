@@ -196,9 +196,9 @@ export default async function StaffEntity({ params, searchParams }) {
         <tr><th style={{ textAlign: 'left' }}>Home address</th><td>{cmra.home_address}</td></tr>
         <tr><th style={{ textAlign: 'left' }}>Business</th><td>{cmra.business_name} · {cmra.business_type} · {cmra.registration_place}{cmra.business_address ? ` · ${cmra.business_address}` : ''}</td></tr>
         {cmra.receivers && <tr><th style={{ textAlign: 'left' }}>Other receivers</th><td>{cmra.receivers}</td></tr>}
-        <tr><th style={{ textAlign: 'left' }}>Photo ID</th><td>{cmra.id1_path ? <><a href={`/api/file?type=compliance&id=${e.id}&part=id1`}>{cmra.id1_type}</a> · {cmra.id1_issuer} · exp. {cmra.id1_expires || '—'}</> : 'Missing'}</td></tr>
-        <tr><th style={{ textAlign: 'left' }}>Address ID</th><td>{cmra.id2_path ? <><a href={`/api/file?type=compliance&id=${e.id}&part=id2`}>{cmra.id2_type}</a> · {cmra.id2_issuer} · exp. {cmra.id2_expires || '—'}</> : 'Missing'}</td></tr>
-        <tr><th style={{ textAlign: 'left' }}>Signed form</th><td>{cmra.form_path ? <a href={`/api/file?type=compliance&id=${e.id}&part=form`}>View PS 1583</a> : 'Not uploaded yet'}</td></tr>
+        <tr><th style={{ textAlign: 'left' }}>Photo ID</th><td>{cmra.id1_path ? <><a href={`/api/file?type=compliance&id=${e.id}&part=id1&view=1`} target="_blank" rel="noopener noreferrer">{cmra.id1_type}</a> · #{cmra.id1_number || '—'} · {cmra.id1_issuer} · exp. {cmra.id1_expires || '—'}</> : 'Missing'}</td></tr>
+        <tr><th style={{ textAlign: 'left' }}>Address ID</th><td>{cmra.id2_path ? <><a href={`/api/file?type=compliance&id=${e.id}&part=id2&view=1`} target="_blank" rel="noopener noreferrer">{cmra.id2_type}</a> · {cmra.id2_issuer} · exp. {cmra.id2_expires || '—'}</> : 'Missing'}</td></tr>
+        <tr><th style={{ textAlign: 'left' }}>Form 1583</th><td><a href={`/api/cmra/form?entity=${e.id}`} target="_blank" rel="noopener noreferrer">Pre-filled form</a> · {cmra.form_path ? <a href={`/api/file?type=compliance&id=${e.id}&part=form&view=1`} target="_blank" rel="noopener noreferrer">Signed form</a> : 'Signed form not uploaded yet'}{cmra.protected_individual && <strong> · Court-ordered protected individual: get the court order</strong>}</td></tr>
         {cmra.client_note && <tr><th style={{ textAlign: 'left' }}>Client note</th><td>{cmra.client_note}</td></tr>}
       </tbody></table>}
       <UploadForm bucket="compliance" entityId={e.id} action={reviewCmra} submitLabel="Save review">
@@ -207,7 +207,7 @@ export default async function StaffEntity({ params, searchParams }) {
         <label>Note to client (shown if changes are needed)<input name="staff_note" defaultValue={cmra?.staff_note || ''} /></label>
         <label>Upload the final signed form (after the video/in-person signing), optional<input name="file" type="file" accept="application/pdf,image/*" /></label>
       </UploadForm>
-      <p className="muted" style={{ marginTop: 8 }}>Checklist: both IDs current and matching the name; second ID shows the home address; you watched the client sign (video or in person) or the form is notarized; you signed as CMRA agent; then enter it in the USPS CMRA Customer Registration Database and mark "Complete".</p>
+      <p className="muted" style={{ marginTop: 8 }}>Checklist: both IDs current and matching the name; second ID shows the home address; a driver's/state ID used for only one of the two; the form is notarized (or you watched the client sign in person); you signed item 14 as CMRA agent; then enter it in the USPS CMRA Customer Registration Database and mark "Complete".</p>
     </section>
 
     <h2>Mail log</h2>
