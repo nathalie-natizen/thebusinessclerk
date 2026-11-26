@@ -6,6 +6,7 @@ import { createPaidOrder } from '@/lib/charge';
 import { needsQuestionnaire } from '@/lib/questionnaires';
 import { KINDS } from '@/lib/labels';
 import { flagPaymentIssue, clearPaymentIssue } from '@/lib/payments';
+import { priceOf, isRa, isMail } from '@/lib/prices';
 
 // Stripe → portal. Creates the company file, order and client access after payment, and keeps service flags in sync.
 export async function POST(req) {
@@ -27,13 +28,14 @@ export async function POST(req) {
     }
     // Formation includes the first year of registered agent service; set up the yearly renewal to start in 12 months
     const formation = (orders || []).some(o => ['llc', 'corp'].includes(o.kind));
-    if (formation && s.customer && process.env.STRIPE_PRICE_RA) {
+    const raPrice = formation && s.customer ? await priceOf('ra') : null;
+    if (raPrice) {
       try {
         const st = stripe(); let pm = null;
         if (s.payment_intent) pm = (await st.paymentIntents.retrieve(s.payment_intent)).payment_method;
         else if (s.subscription) pm = (await st.subscriptions.retrieve(s.subscription)).default_payment_method;
         if (pm) await st.customers.update(s.customer, { invoice_settings: { default_payment_method: pm } });
-        await st.subscriptions.create({ customer: s.customer, items: [{ price: process.env.STRIPE_PRICE_RA }], trial_period_days: 365, metadata: { entity_id: entityId, product: 'ra' }, ...(pm ? { default_payment_method: pm } : {}) });
+        await st.subscriptions.create({ customer: s.customer, items: [{ price: raPrice.id }], trial_period_days: 365, metadata: { entity_id: entityId, product: 'ra' }, ...(pm ? { default_payment_method: pm } : {}) });
       } catch (err) { await db.from('entity_notes').upsert({ entity_id: entityId, notes: 'Set up the registered agent renewal in Stripe manually: ' + err.message }); }
     }
     return NextResponse.json({ received: true });
@@ -68,10 +70,10 @@ export async function POST(req) {
   if (event.type === 'customer.subscription.deleted') {
     const sub = event.data.object;
     // Work out which services this subscription covered from its prices (one subscription can hold several)
-    const prices = sub.items?.data?.map(i => i.price?.id) || [];
+    const items = sub.items?.data?.map(i => i.price) || [];
     const fields = {};
-    if (prices.includes(process.env.STRIPE_PRICE_RA) || sub.metadata?.product === 'ra') fields.registered_agent = false;
-    if (prices.includes(process.env.STRIPE_PRICE_MAIL) || sub.metadata?.product === 'mail') fields.mail_service = false;
+    if (items.some(isRa) || sub.metadata?.product === 'ra') fields.registered_agent = false;
+    if (items.some(isMail) || sub.metadata?.product === 'mail') fields.mail_service = false;
     if (Object.keys(fields).length) {
       if (sub.metadata?.entity_id) await db.from('entities').update(fields).eq('id', sub.metadata.entity_id);
       else await db.from('entities').update(fields).eq('stripe_customer_id', sub.customer);

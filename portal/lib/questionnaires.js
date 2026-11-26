@@ -3,6 +3,8 @@
 const US_ENDINGS_LLC = ['LLC', 'L.L.C.', 'Limited Liability Company'];
 const US_ENDINGS_CORP = ['Inc.', 'Corp.', 'Corporation', 'Incorporated', 'Company'];
 
+import { FILING_KINDS, filingQuestionnaire } from './filings';
+
 export const QUESTIONNAIRES = {
   ein: {
     title: 'EIN application details',
@@ -65,6 +67,7 @@ export const QUESTIONNAIRES = {
   },
 };
 
+for (const k of FILING_KINDS) QUESTIONNAIRES[k] = filingQuestionnaire(k);
 export const needsQuestionnaire = kind => !!QUESTIONNAIRES[kind];
 export const ENDINGS = { llc: US_ENDINGS_LLC, corp: US_ENDINGS_CORP };
 

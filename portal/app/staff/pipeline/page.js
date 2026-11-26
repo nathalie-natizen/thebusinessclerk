@@ -5,6 +5,7 @@ import OrderDetails from '@/components/OrderDetails';
 import { requireStaff } from '@/lib/auth';
 import { setOrderStatus, logRevision } from '@/lib/orders';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { chargeStateFee } from '@/lib/charge';
 import { revisions, STAFF_STEPS } from '@/lib/guidelines';
 import { PIPELINE, ARCHIVED, KINDS, STAFF_STATUSES, fmtDate } from '@/lib/labels';
 
@@ -28,6 +29,18 @@ async function staffRevision(fd) {
   revalidatePath('/staff/pipeline');
 }
 
+async function stateFee(fd) {
+  'use server';
+  const { user } = await requireStaff();
+  const db = supabaseAdmin();
+  const { data: o } = await db.from('orders').select('*, entities(*)').eq('id', String(fd.get('order_id'))).single();
+  if (!o || !(o.kind === 'annual_report' || KINDS[o.kind]?.filing)) return;
+  const cents = Math.round(parseFloat(String(fd.get('amount') || '').replace(/[^0-9.]/g, '')) * 100);
+  const r = await chargeStateFee(o.entities, o, cents);
+  await db.from('order_events').insert({ order_id: o.id, status: o.status, note: r.ok ? (r.already ? 'State fee was already charged.' : `Florida state fee charged: $${(r.cents / 100).toFixed(2)}.`) : `State fee not charged: ${r.reason}`, created_by: user.id });
+  revalidatePath('/staff/pipeline');
+}
+
 const bizDays = d => { let n = 0; const t = new Date(d); const now = new Date(); t.setHours(0, 0, 0, 0); now.setHours(0, 0, 0, 0); while (t < now) { t.setDate(t.getDate() + 1); if (t.getDay() % 6) n++; } return n; };
 const STAGES = [...PIPELINE.map(([label, sts]) => ({ key: label.toLowerCase().replace(/[^a-z]+/g, '-').replace(/-$/, ''), label, sts })), { key: 'archived', label: 'Archived', sts: ARCHIVED }];
 
@@ -36,7 +49,7 @@ export default async function Pipeline({ searchParams }) {
   const kind = KINDS[searchParams?.kind] ? searchParams.kind : null;
   const stage = STAGES.find(x => x.key === searchParams?.stage) || STAGES[0];
   const term = String(searchParams?.q || '').trim().toLowerCase();
-  let q = sb.from('orders').select('*, entities(file_number, legal_name, contact_name)').not('status', 'in', '(cancelled,awaiting_payment)').order('updated_at');
+  let q = sb.from('orders').select('*, entities(file_number, legal_name, contact_name, entity_type)').not('status', 'in', '(cancelled,awaiting_payment)').order('updated_at');
   if (kind) q = q.eq('kind', kind);
   const { data: all } = await q;
   const { data: unpaid } = await sb.from('entities').select('file_number, legal_name, payment_issue').not('payment_issue', 'is', null);
@@ -84,6 +97,7 @@ export default async function Pipeline({ searchParams }) {
               <label style={{ display: 'flex', gap: 8, fontWeight: 400, fontSize: 14 }}><input type="checkbox" name="notify" defaultChecked style={{ minHeight: 'auto' }} /> Notify client</label>
               <button className="btn">Move</button>
             </form>
+            {(o.kind === 'annual_report' || KINDS[o.kind]?.filing) && (o.details?.state_fee?.ref ? <p className="muted" style={{ marginTop: 14 }}>State fee charged ${(o.details.state_fee.cents / 100).toFixed(2)} on {fmtDate(o.details.state_fee.at)}.</p> : <form action={stateFee} className="stack" style={{ marginTop: 14, gap: 6 }}><input type="hidden" name="order_id" value={o.id} /><label>Florida state fee ($)<input name="amount" required defaultValue={o.kind === 'annual_report' ? (/corp/i.test(o.entities?.entity_type || '') ? '150.00' : '138.75') : ''} placeholder="Amount shown on Sunbiz" /></label><button className="btn small sec">Charge state fee to card on file</button><div className="muted" style={{ fontSize: 13 }}>Do this when you file. The result is logged on the order.</div></form>)}
             {r && r.used < r.allowed && <form action={staffRevision} className="stack" style={{ gap: 6, marginTop: 14 }}><input type="hidden" name="order_id" value={o.id} /><label>Log revision (phone/email request)<input name="note" placeholder="What the client asked for" required /></label><button className="btn small sec">Log revision {r.used + 1} of {r.allowed}</button></form>}
           </div>
         </div>

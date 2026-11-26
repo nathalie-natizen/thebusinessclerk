@@ -3,7 +3,7 @@ import { supabaseAdmin } from './supabase/admin';
 
 const APP = process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com';
 
-async function sendEmail(to, subject, text) {
+export async function sendEmail(to, subject, text) {
   if (!process.env.RESEND_API_KEY) return { ok: false, error: 'email not configured' };
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -13,7 +13,7 @@ async function sendEmail(to, subject, text) {
   return r.ok ? { ok: true } : { ok: false, error: await r.text() };
 }
 
-async function sendSms(to, body) {
+export async function sendSms(to, body) {
   const { TWILIO_ACCOUNT_SID: sid, TWILIO_AUTH_TOKEN: tok, TWILIO_FROM_NUMBER: from } = process.env;
   if (!sid || !tok || !from) return { ok: false, error: 'sms not configured' };
   const twilio = (await import('twilio')).default(sid, tok);

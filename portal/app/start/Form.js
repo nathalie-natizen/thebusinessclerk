@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { submitIntake } from './actions';
 import ServiceTerms from '@/components/ServiceTerms';
+import { FILINGS } from '@/lib/filings';
 import { headings } from '@/lib/guidelines';
 import { buildAgreement } from '@/lib/agreement';
 import AgreementBox from '@/components/AgreementBox';
@@ -30,7 +31,7 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
     <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }} />
     {state?.error && state.error !== 'spam' && <p className="err">{t.err}</p>}
 
-    <label style={{ fontSize: 20, fontWeight: 700 }}>{t.service}<select name="service" value={service} onChange={e => setService(e.target.value)}>{Object.entries(t.s).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+    <label style={{ fontSize: 20, fontWeight: 700 }}>{t.service}<select name="service" value={service} onChange={e => setService(e.target.value)}>{Object.entries(t.s).filter(([k]) => !FILINGS[k]).map(([k, l]) => <option key={k} value={k}>{l}</option>)}<optgroup label={t.otherFilings}>{Object.entries(t.s).filter(([k]) => FILINGS[k]).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</optgroup></select></label>
     {formation && <fieldset className="stack" style={{ border: 0, padding: 0, margin: 0 }}><legend style={{ fontWeight: 700, marginBottom: 6 }}>{t.addons}</legend>
       {Object.entries(t.a).map(([k, l]) => <label key={k} style={{ display: 'flex', gap: 10, fontWeight: 400 }}><input type="checkbox" name={'addon_' + k} checked={!!addons[k]} onChange={e => setAddons({ ...addons, [k]: e.target.checked })} style={{ minHeight: 'auto' }} />{l}</label>)}
     </fieldset>}

@@ -7,6 +7,7 @@ import { KINDS } from '@/lib/labels';
 import { needsQuestionnaire } from '@/lib/questionnaires';
 import { GUIDELINES_VERSION } from '@/lib/guidelines';
 import { recordAcceptance } from '@/lib/agreements';
+import { prices } from '@/lib/prices';
 
 const FORMATION = ['llc', 'corp'];
 const clip = (v, n = 200) => String(v ?? '').trim().slice(0, n);
@@ -46,7 +47,8 @@ export async function submitIntake(_prev, fd) {
 
   // Pay online only when every needed Stripe price is set up; otherwise we send a payment link later
   const kinds = [service, ...addons];
-  const canPay = !!process.env.STRIPE_SECRET_KEY && kinds.every(k => process.env[KINDS[k].env]);
+  const pr = await prices();
+  const canPay = !!process.env.STRIPE_SECRET_KEY && kinds.every(k => pr[k]);
   const orders = [];
   for (const k of kinds) {
     const { data: o } = await db.from('orders').insert({ entity_id: entity.id, kind: k, service: KINDS[k].name, status: canPay ? 'awaiting_payment' : needsQuestionnaire(k) ? 'information_needed' : 'received', source: 'website', details: k === service ? details : { parent_service: service, service_terms_version: GUIDELINES_VERSION } }).select().single();
@@ -65,7 +67,7 @@ export async function submitIntake(_prev, fd) {
   const meta = { entity_id: entity.id, order_ids: orders.map(o => o.id).join(',') };
   const session = await stripe().checkout.sessions.create({
     mode: recurring ? 'subscription' : 'payment',
-    line_items: kinds.map(k => ({ price: process.env[KINDS[k].env], quantity: 1 })),
+    line_items: kinds.map(k => ({ price: pr[k].id, quantity: 1 })),
     customer_email: email,
     billing_address_collection: 'required',
     ...(recurring ? { subscription_data: { metadata: meta } } : { customer_creation: 'always', invoice_creation: { enabled: true }, payment_intent_data: { setup_future_usage: 'off_session' } }),

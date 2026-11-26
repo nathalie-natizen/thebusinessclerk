@@ -1,3 +1,4 @@
+import { FILINGS } from './filings';
 export const MAIL_CATEGORY = {
   service_of_process: 'Service of process (lawsuit)',
   state_notice: 'Florida state notice',
@@ -42,7 +43,7 @@ export const SHIPPING_SHORT = { first_class: 'USPS First-Class', priority: 'USPS
 
 // Status label with the right agency for the service
 export const statusLabel = (status, kind) => status === 'submitted'
-  ? (kind === 'launch' ? 'Delivered for your review' : kind === 'ein' ? 'Submitted to the IRS' : ['llc', 'corp', 'annual_report', 'amendment', 'ra_change'].includes(kind) ? 'Submitted to the State of Florida' : 'In progress')
+  ? (kind === 'launch' ? 'Delivered for your review' : kind === 'ein' ? 'Submitted to the IRS' : (['llc', 'corp', 'annual_report'].includes(kind) || FILINGS[kind]) ? 'Submitted to the State of Florida' : 'In progress')
   : ORDER_STATUS[status] || status;
 
 // Pipeline columns, in order
@@ -61,6 +62,7 @@ export const KINDS = {
   ein: { name: 'EIN Application', env: 'STRIPE_PRICE_EIN' },
   mail: { name: 'Business Address & Mail', env: 'STRIPE_PRICE_MAIL', recurring: true },
   launch: { name: 'Launch Pack', env: 'STRIPE_PRICE_LAUNCH' },
+  ...Object.fromEntries(Object.entries(FILINGS).map(([k, f]) => [k, { name: f.name, filing: true }])),
 };
 
 export const CARRIERS = { USPS: 'USPS', UPS: 'UPS', FedEx: 'FedEx', DHLExpress: 'DHL Express' };

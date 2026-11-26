@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { stripe, PRODUCTS } from '@/lib/stripe';
 import { supabaseServer } from '@/lib/supabase/server';
+import { priceOf } from '@/lib/prices';
 
 // Public checkout link used by the website, e.g. https://app.thebusinessclerk.com/api/stripe/checkout?product=llc
 export async function GET(req) {
   const url = new URL(req.url); const key = url.searchParams.get('product'); const p = PRODUCTS[key];
-  const price = p && process.env[p.env];
+  const price = p && (await priceOf(key))?.id;
   if (!price) return new NextResponse('Unknown or unconfigured product', { status: 400 });
   const app = process.env.NEXT_PUBLIC_APP_URL;
   const line_items = [{ price, quantity: 1 }];

@@ -2,12 +2,14 @@
 // Adding a service later creates a dated Addendum with only that service's schedule.
 // DRAFT pending attorney review. Change the text here and bump AGREEMENT_VERSION; signed copies are stored as accepted.
 import { clientTerms } from './guidelines';
+import { FILINGS, FILING_KINDS } from './filings';
 
 export const AGREEMENT_VERSION = '2026-11-26-draft1';
 const CO = 'THE BUSINESS CLERK LLC';
 
 const NAMES = { llc: 'Florida LLC Formation', corp: 'Florida Corporation Formation', ra: 'Florida Registered Agent', annual_report: 'Annual Report Filing', ein: 'EIN Application', mail: 'Business Address & Mail (Mail Service Addendum)', launch: 'Launch Pack' };
-const ORDER = ['llc', 'corp', 'ra', 'annual_report', 'ein', 'mail', 'launch'];
+for (const [k, f] of Object.entries(FILINGS)) NAMES[k] = f.name;
+const ORDER = ['llc', 'corp', 'ra', 'annual_report', 'ein', 'mail', 'launch', ...FILING_KINDS];
 const fmt = d => new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' });
 
 const GENERAL = [
@@ -74,6 +76,13 @@ const SCHEDULE_TERMS = {
     'You confirm you have the rights to logos, text and images you provide. The trademark check is a basic search, not legal clearance.'],
 };
 SCHEDULE_TERMS.corp = SCHEDULE_TERMS.llc;
+for (const k of FILING_KINDS) SCHEDULE_TERMS[k] = [
+  `You authorize us to prepare and file the ${FILINGS[k].name} for your company with the Florida Division of Corporations, using the information you confirm, signed by the authorized person you name.`,
+  'The Florida state fee is passed through at cost and charged to the card on file when we file. You are responsible for the accuracy of the information and for any approvals your company documents require.',
+  ...(k === 'dba' ? ['Florida requires the fictitious name to be advertised in a newspaper in the county of the business before registration. Arranging and paying for that notice is your responsibility unless we agree otherwise in writing.'] : []),
+  ...(k === 'dissolution' ? ['You confirm the dissolution was approved as your company documents require. Dissolving does not settle debts or taxes; after the effective date we cancel your recurring services with us.'] : []),
+  ...(k === 'reinstatement' ? ['Before filing we tell you the total state fees due for all missed years; you authorize those charges when you confirm.'] : []),
+];
 
 const scheduleSection = (k, letter) => {
   const t = clientTerms(k, 'en') || {};

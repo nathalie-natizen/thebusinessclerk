@@ -4,6 +4,7 @@ import { supabaseAdmin } from './supabase/admin';
 import { KINDS } from './labels';
 import { needsQuestionnaire } from './questionnaires';
 import { GUIDELINES_VERSION } from './guidelines';
+import { priceOf } from './prices';
 
 // The company's saved card (null if none)
 export async function savedCard(customerId) {
@@ -14,10 +15,7 @@ export async function savedCard(customerId) {
   if (!pm || typeof pm === 'string') pm = (await s.paymentMethods.list({ customer: customerId, type: 'card', limit: 1 }).catch(() => ({ data: [] }))).data[0];
   return pm?.card ? { id: pm.id, ...pm.card } : null;
 }
-export async function priceFor(kind) {
-  const id = process.env[KINDS[kind]?.env]; if (!id || !process.env.STRIPE_SECRET_KEY) return null;
-  return stripe().prices.retrieve(id).catch(() => null);
-}
+export async function priceFor(kind) { return priceOf(kind); }
 
 // Create the order record after payment (website, checkout or card on file)
 export async function createPaidOrder(entity, kind, { amount = null, source = 'portal', ref = null } = {}) {
@@ -47,4 +45,23 @@ export async function chargeOnFile(entity, kind) {
     if (paid.status !== 'paid') { await s.invoices.voidInvoice(inv.id).catch(() => {}); return { ok: false, reason: 'declined' }; }
     return { ok: true, amount: paid.amount_paid, ref: inv.id };
   } catch (e) { return { ok: false, reason: 'declined', message: e.message }; }
+}
+
+// Annual report: charge the Florida state fee to the card on file when staff file the report
+export async function chargeStateFee(entity, order, cents) {
+  if (order.details?.state_fee?.ref) return { ok: true, already: true };
+  if (!(cents > 0)) return { ok: false, reason: 'Enter the state fee amount.' };
+  if (!process.env.STRIPE_SECRET_KEY) return { ok: false, reason: 'Stripe is not connected yet.' };
+  const card = await savedCard(entity.stripe_customer_id);
+  if (!card) return { ok: false, reason: 'No card on file for this company.' };
+  const s = stripe();
+  try {
+    const inv = await s.invoices.create({ customer: entity.stripe_customer_id, collection_method: 'charge_automatically', auto_advance: false, pending_invoice_items_behavior: 'exclude', default_payment_method: card.id, description: `Florida state fee (${order.service}) for ${entity.legal_name} (${entity.file_number})`, metadata: { entity_id: entity.id, product: 'annual_report_fee', order_id: order.id } });
+    await s.invoiceItems.create({ customer: entity.stripe_customer_id, invoice: inv.id, currency: 'usd', amount: cents, description: `Florida Division of Corporations fee: ${order.service}` });
+    await s.invoices.finalizeInvoice(inv.id);
+    const paid = await s.invoices.pay(inv.id, { payment_method: card.id });
+    if (paid.status !== 'paid') { await s.invoices.voidInvoice(inv.id).catch(() => {}); return { ok: false, reason: 'Card declined.' }; }
+    await supabaseAdmin().from('orders').update({ details: { ...(order.details || {}), state_fee: { ref: inv.id, cents: paid.amount_paid, at: new Date().toISOString() } } }).eq('id', order.id);
+    return { ok: true, cents: paid.amount_paid };
+  } catch (e) { return { ok: false, reason: e.message }; }
 }

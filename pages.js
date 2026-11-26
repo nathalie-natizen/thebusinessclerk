@@ -197,7 +197,7 @@ pages.push(servicePage({
 - **Foreign qualification**: register an out-of-state company to do business in Florida
 - **Certificate of Status** and **certified copies** for banks, licenses and contracts
 Our service fees are listed below. Florida state fees are additional and billed at cost.`,
-  extra: rel => `<div class="scroll"><table class="stack"><thead><tr><th>Filing</th><th class="n">Our fee</th></tr></thead><tbody>${C.alaCarte.map(([n, p]) => `<tr><td>${n}</td><td class="n">${typeof p === "number" ? "$" + p : p}</td></tr>`).join('')}</tbody></table></div>`,
+  extra: rel => `<div class="scroll"><table class="stack"><thead><tr><th>Filing</th><th class="n">Our fee (state fee at cost)</th><th></th></tr></thead><tbody>${C.alaCarte.map(([n, p, k]) => `<tr><td>${n}</td><td class="n">${typeof p === "number" ? "$" + p : p}</td><td class="n"><a href="https://app.thebusinessclerk.com/start?service=${k}&lang=en">Order →</a></td></tr>`).join('')}</tbody></table></div>`,
   aside: rel => linksCard('Most requested', [['florida-annual-report.html', 'Annual report'], ['florida-change-registered-agent.html', 'Change registered agent'], ['resources/florida-llc-reinstatement.html', 'Reinstatement'], ['pricing.html', 'Full price list']], rel),
 }));
 
@@ -251,6 +251,7 @@ pages.push(servicePage({
 - **Website of up to 5 pages** from a professional template, with your logo, services and contact form
 - **Mobile-friendly design**, SSL and basic SEO setup
 - **Up to 2 revisions** (each revision is one round of changes, as many as you like)
+- **Ready in 5 business days** after you complete the questionnaire; each revision within 3 business days
 - **Handover**: every account is in your name and you keep full control
 ## You own your accounts
 We set things up with you on a screen-share. You create the accounts and add your own payment method, so domain, email and hosting bills go straight to the provider. No lock-in, no markup on third-party costs.
@@ -308,7 +309,7 @@ pages.push(servicePage({
 - **Launch Pack: from $${P.launch}** (name and trademark search, domain, professional email, website up to 5 pages, up to 2 revisions). Third-party costs paid directly by you.
 ## Individual filings
 Service fee shown; Florida state fees are additional.`,
-  extra: rel => `<div class="scroll"><table class="stack"><thead><tr><th>Filing</th><th class="n">Our fee</th></tr></thead><tbody>${C.alaCarte.map(([n, p]) => `<tr><td>${n}</td><td class="n">${typeof p === "number" ? "$" + p : p}</td></tr>`).join('')}</tbody></table></div><p style="margin-top:16px;color:var(--soft)">See our <a href="${rel}refund-policy.html">refund policy</a>. Prices may change; the price shown when you order is the price you pay.</p>`,
+  extra: rel => `<div class="scroll"><table class="stack"><thead><tr><th>Filing</th><th class="n">Our fee (state fee at cost)</th><th></th></tr></thead><tbody>${C.alaCarte.map(([n, p, k]) => `<tr><td>${n}</td><td class="n">${typeof p === "number" ? "$" + p : p}</td><td class="n"><a href="https://app.thebusinessclerk.com/start?service=${k}&lang=en">Order →</a></td></tr>`).join('')}</tbody></table></div><p style="margin-top:16px;color:var(--soft)">See our <a href="${rel}refund-policy.html">refund policy</a>. Prices may change; the price shown when you order is the price you pay.</p>`,
 }));
 
 // ---------- Company ----------
@@ -406,7 +407,7 @@ const legal = (path, h1, desc, content) => pages.push(servicePage({ path, h1, cr
 
 legal('terms.html', 'Terms of Service', 'Terms of service for THE BUSINESS CLERK LLC: registered agent, business filing, mail and launch services, fees, auto-renewal and limits of liability.', `
 ## 1. Who we are
-These terms govern your use of the services of THE BUSINESS CLERK LLC ("we", "us"), a Florida limited liability company. By ordering a service you agree to these terms.
+These terms govern your use of the services of THE BUSINESS CLERK LLC ("we", "us"), a Florida limited liability company. When you order, you also sign our Client Service Agreement, which includes a schedule for each service you choose; services you add later are covered by a dated addendum. If these terms and your signed agreement differ, the signed agreement controls.
 ## 2. Our services
 We provide administrative business filing, registered agent, mail-handling and business launch services. We are **not a law firm, CPA firm or government agency** and do not give legal, tax, accounting or immigration advice. Using our services does not create an attorney-client or accountant-client relationship.
 ## 3. Your responsibilities
@@ -414,7 +415,7 @@ You are responsible for the accuracy of the information you give us, for choosin
 ## 4. Registered agent service
 When we serve as your registered agent, we will accept service of process and official notices for your company at our Florida office during business hours, scan them and notify you through your client account and by email. You must keep your contact details current. We are not responsible for consequences of notices you do not read or act on. If your service lapses for non-payment, we may resign as your registered agent as allowed by Florida law after notice to you.
 ## 5. Mail services
-Mail services require a completed USPS Form 1583 and acceptable identification. We may refuse or return items that are prohibited, hazardous, oversized or addressed to persons not on your account.
+Mail services require a completed USPS Form 1583 and two acceptable forms of identification. Until the form is approved, mail is held and not opened or forwarded. We may refuse or return items that are prohibited, hazardous, oversized or addressed to persons not on your account. Items with no instruction are held 30 days; after a further 15-day notice, ordinary mail may be shredded (never checks, legal papers or packages).
 ## 6. Fees
 Service fees are listed on our pricing page. Government fees and third-party costs are separate unless a package says they are included. Registered agent service, annual report filing and mail plans renew automatically by default until you cancel. Annual report filings are charged (${C.prices.annualReport} plus the state fee) when we file each year. You can turn off auto-renew anytime in your account or by emailing us before the renewal date.
 ## 7. Processing times
@@ -448,7 +449,9 @@ If you cancel before we submit anything to a government agency, we refund your s
 ## After we file
 Government fees are paid to the state and cannot be refunded once submitted. Service fees for work already completed are not refundable.
 ## Recurring services
-Registered agent and mail plans can be cancelled at any time and will not renew. Annual registered agent fees are not prorated after the service year begins.
+Registered agent service can be cancelled at any time and will not renew; the current service year is not prorated. Mail plans can be cancelled at any time, effective at the end of the month; that month's usage is billed.
+## Launch Pack
+Full refund until your domain is registered. After the domain is registered, the Launch Pack service fee is not refundable. Third-party costs (domain, email, hosting) are paid by you directly to those providers.
 ## Rejected filings
 If a filing is rejected because of our error, we correct and refile it at no charge.
 ## Questions

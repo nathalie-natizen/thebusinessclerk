@@ -1,5 +1,7 @@
 // Service terms shown to clients (only for the services they choose) and staff steps per service.
 // Source: "Service Guidelines & Operations Manual". Change a rule there first, then here.
+import { FILINGS, FILING_KINDS } from './filings';
+
 export const REVISIONS_ALLOWED = 2;
 export const AUTO_APPROVE_DAYS = 14;
 export const GUIDELINES_VERSION = '2026-11-26b';
@@ -64,6 +66,13 @@ const CLIENT = {
   },
 };
 
+const FILING_TERMS = {
+  en: { inc: ['Preparing and filing this document with the Florida Division of Corporations', 'The filed document or confirmation uploaded to your portal'], exc: ['The Florida state fee, charged at cost to your card on file when we file', 'Legal or tax advice', 'Newspaper publication (DBA) and any back taxes or penalties'], you: ['The short questionnaire in your portal', 'Authorization from a manager, member or officer'], time: ['We file within 1 business day of your completed questionnaire', 'Florida processing times vary; we don’t control state timing'], refund: ['Full refund if you cancel before we file', 'State fees are not refundable once submitted'] },
+  pt: { inc: ['Preparo e protocolo deste documento na Divisão de Corporações da Flórida', 'Documento protocolado ou confirmação disponível no seu portal'], exc: ['A taxa estadual da Flórida, cobrada ao custo no seu cartão quando protocolarmos', 'Consultoria jurídica ou tributária', 'Publicação em jornal (DBA) e impostos ou multas atrasados'], you: ['O questionário curto no portal', 'Autorização de um administrador, sócio ou diretor'], time: ['Protocolamos em até 1 dia útil após o questionário completo', 'Os prazos da Flórida variam; não controlamos o prazo do estado'], refund: ['Reembolso total se cancelar antes do protocolo', 'Taxas estaduais não são reembolsáveis após o envio'] },
+  es: { inc: ['Preparación y presentación de este documento ante la División de Corporaciones de Florida', 'Documento presentado o confirmación disponible en su portal'], exc: ['La tarifa estatal de Florida, cobrada al costo en su tarjeta al presentar', 'Asesoría legal o fiscal', 'Publicación en periódico (DBA) e impuestos o multas atrasados'], you: ['El cuestionario corto en su portal', 'Autorización de un administrador, miembro o directivo'], time: ['Presentamos en 1 día hábil tras completar el cuestionario', 'Los plazos de Florida varían; no controlamos los plazos del estado'], refund: ['Reembolso total si cancela antes de presentar', 'Las tarifas estatales no son reembolsables una vez presentadas'] },
+};
+for (const k of FILING_KINDS) CLIENT[k] = FILING_TERMS;
+
 export const clientTerms = (kind, lang = 'en') => { const t = CLIENT[kind]; return t ? (t[lang] || t.en) : null; };
 
 // Staff steps by stage (English)
@@ -76,5 +85,6 @@ export const STAFF_STEPS = {
   launch: [['Waiting on client', 'Automatic until the questionnaire is done.'], ['To do', 'Trademark check + domain research; schedule the screen-share; domain, email and first draft within 5 business days.'], ['Filed (delivered)', 'Put the site link and notes in the order note and move to Filed / submitted: the client sees "Delivered for your review" and can approve or request a revision.'], ['To do (revision)', 'Card shows "Revision N of 2". Apply the whole request within 3 business days. Revision asked by phone/email → press Log revision first.'], ['Final review', `Client approves, or auto-approved after ${AUTO_APPROVE_DAYS} days. Confirm all accounts are in the client's name; upload a handover sheet.`], ['Archive', 'Quality check passed → Archive (completed).']],
 };
 STAFF_STEPS.corp = STAFF_STEPS.llc;
+for (const [k, f] of Object.entries(FILINGS)) STAFF_STEPS[k] = [['Waiting on client', 'Automatic until the questionnaire is done.'], ['To do', f.staff], ['Filed', 'Press "Charge state fee" with the Sunbiz amount; note the confirmation number.'], ['Final review', 'Quality check: filed document uploaded to Documents; company record updated.'], ['Archive', 'Archive (completed).']];
 
 export const revisions = d => ({ allowed: d?.revisions?.allowed ?? REVISIONS_ALLOWED, used: d?.revisions?.used ?? 0, log: d?.revisions?.log || [] });

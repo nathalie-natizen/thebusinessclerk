@@ -6,9 +6,10 @@ import { fmtDate, statusLabel, KINDS } from '@/lib/labels';
 import { savedCard, priceFor, chargeOnFile, createPaidOrder } from '@/lib/charge';
 import { needsQuestionnaire } from '@/lib/questionnaires';
 import AgreementBox from '@/components/AgreementBox';
+import { FILINGS } from '@/lib/filings';
 import { draftFor, recordAcceptance } from '@/lib/agreements';
 
-const ORDERABLE = [['annual_report', 'Annual report filing'], ['ein', 'EIN application'], ['ra', 'Registered agent'], ['mail', 'Business address & mail'], ['launch', 'Launch Pack']];
+const ORDERABLE = [['annual_report', 'Annual report filing'], ['ein', 'EIN application'], ['ra', 'Registered agent'], ['mail', 'Business address & mail'], ['launch', 'Launch Pack'], ...Object.entries(FILINGS).map(([k, f]) => [k, f.name])];
 const money = c => '$' + (c / 100).toFixed(2).replace(/\.00$/, '');
 
 async function placeOrder(fd) {
