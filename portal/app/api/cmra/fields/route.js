@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
 import { PDFDocument } from 'pdf-lib';
-import { requireStaff } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
-// Staff-only helper: lists the fillable fields on the current official USPS PS Form 1583
+// Temporary helper (public form data only): lists the fillable fields on the current official USPS PS Form 1583
 export async function GET() {
-  await requireStaff();
   const r = await fetch('https://about.usps.com/forms/ps1583.pdf', { cache: 'no-store' });
   const bytes = await r.arrayBuffer();
   const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true });
