@@ -56,8 +56,8 @@ pages.push(servicePage({
   path: 'florida-registered-agent.html', service: 'Florida Registered Agent Service', offer: P.raAnnual,
   title: `Florida Registered Agent – $${P.raAnnual}/Year, Same-Day Scans | The Business Clerk`,
   desc: `Florida registered agent for $${P.raAnnual} a year: a staffed Florida office, same-day scans of legal mail, and your annual report filed automatically each year.`,
-  kicker: 'Florida registered agent', h1: 'Florida Registered Agent Service', crumb: 'Florida Registered Agent',
-  lead: `A staffed Florida office that receives your legal and state mail and scans it the same business day, for $${P.raAnnual} a year.`,
+  kicker: 'Florida registered agent', h1: 'Florida Registered Agent + Annual Report', crumb: 'Florida Registered Agent',
+  lead: `A staffed Florida office that receives your legal and state mail and scans it the same business day, and your annual report filed for you every year before May 1.`,
   cta: 'Hire us as your agent', cta2: ['florida-change-registered-agent.html', 'Switch from another agent'],
   content: `
 ## What a registered agent does
@@ -71,6 +71,8 @@ Florida law requires the registered office to be open, with someone available to
 - **Annual report filed automatically** every year before May 1, for $${P.annualReport} plus the state fee ($${F.llcAnnual} for LLCs, $${F.corpAnnual} for corporations), charged when we file
 - You can turn off auto-renew anytime in your account
 - **Client account** with your documents, filings and mail history
+## Registered agent only
+Prefer to file your own annual report? Keep just the registered agent service for $${P.raAnnual} a year and turn off automatic annual report filing in your account. You then file it yourself on Sunbiz between January 1 and May 1; Florida charges a $400 late fee after May 1.
 ## Why not use your own address?
 You can serve as your own agent if you live in Florida, but your home address then appears on the public record, and you must be available every business day. Miss a lawsuit and a court can enter a default judgment. Miss the annual report and the state can dissolve your company. A professional agent removes both risks.
 ## Switching agents is easy
