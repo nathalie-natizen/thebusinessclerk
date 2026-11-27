@@ -125,7 +125,7 @@ const intl = servicePage({
 - **Cuenta bancaria**: algunos bancos estadounidenses exigen una visita en persona; otros abren cuentas en línea. Te explicamos los requisitos, pero no podemos garantizar la aprobación.
 - **Obligaciones fiscales**: las LLC de un solo dueño extranjero generalmente deben presentar cada año el Formulario 5472 del IRS con un Formulario 1120 pro forma, aunque no tengan ingresos. La multa por no presentarlo puede llegar a US$ 25,000. Te referimos a un profesional de impuestos calificado.
 - **Inmigración**: tener una empresa en EE. UU. no te da, por sí solo, derecho a vivir o trabajar en el país. Consulta con un abogado de inmigración.
-> No somos un bufete de abogados ni una firma de contadores. Para asesoría legal, fiscal o migratoria, te referimos a profesionales independientes y autorizados.`,
+> No somos un bufete de abogados ni una firma de contadores. Para asesoría legal, fiscal o migratoria, consulta a un profesional independiente y autorizado.`,
   aside: rel => priceCard('LLC en Florida', $(P.formation), 'pago único', ['Tarifa estatal incluida', 'Primer año de agente registrado', `EIN sin SSN: +${$(P.ein)}`, 'Atención en español'], 'es/empezar.html', 'Empezar ahora', rel) + linksCard('Guías', [['es/guias/llc-en-florida-para-no-residentes.html', 'LLC en Florida para no residentes'], ['es/guias/que-es-un-agente-registrado.html', '¿Qué es un agente registrado?']], rel),
 });
 
