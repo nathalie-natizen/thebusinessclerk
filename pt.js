@@ -47,8 +47,8 @@ const ra = servicePage({
   lang: 'pt', path: 'pt/agente-registrado-florida.html', service: 'Agente Registrado na Flórida', offer: P.raAnnual,
   title: `Agente Registrado na Flórida por ${$(P.raAnnual)}/ano | The Business Clerk`,
   desc: `Agente registrado na Flórida por ${$(P.raAnnual)} por ano: escritório com equipe, digitalização no mesmo dia e relatório anual automático. Atendimento em português.`,
-  kicker: 'Agente registrado', h1: 'Agente registrado na Flórida', crumb: 'Agente Registrado',
-  lead: `Um escritório com equipe na Flórida que recebe sua correspondência legal e do estado e digitaliza no mesmo dia útil, por ${$(P.raAnnual)} por ano.`,
+  kicker: 'Agente registrado', h1: 'Agente registrado + relatório anual na Flórida', crumb: 'Agente Registrado',
+  lead: `Um escritório com equipe na Flórida que recebe sua correspondência legal e do estado e digitaliza no mesmo dia útil, e seu relatório anual enviado por nós todo ano antes de 1º de maio.`,
   cta: 'Contratar agente registrado',
   content: `
 ## O que faz um agente registrado
@@ -61,6 +61,8 @@ A lei da Flórida exige que o escritório do agente fique aberto, com alguém di
 - **Renovação automática**: sua empresa nunca fica sem agente
 - **Relatório anual automático** todo ano antes de 1º de maio, por ${$(P.annualReport)} mais a taxa estadual (US$ ${F.llcAnnual} para LLC), cobrado no momento do envio
 - Você pode desativar a renovação automática quando quiser
+## Somente agente registrado
+Prefere enviar o relatório anual você mesmo? Fique só com o agente registrado por ${$(P.raAnnual)} por ano e desative o envio automático do relatório anual na sua conta. Aí você envia pelo Sunbiz entre 1º de janeiro e 1º de maio; depois de 1º de maio, a Flórida cobra multa de US$ 400.
 ## Por que não usar seu próprio endereço?
 Se você mora na Flórida, pode ser seu próprio agente, mas o endereço da sua casa fica público e você precisa estar disponível todos os dias úteis. Se perder uma citação, a Justiça pode decidir contra sua empresa sem que você se defenda. Se esquecer o relatório anual, o estado pode dissolver a empresa.
 ## Trocar de agente é simples
