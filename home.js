@@ -53,7 +53,6 @@ const services = [
   ['form', 'LLC & Corporation Formation', `We file your Articles with the Florida Division of Corporations, serve as your agent and deliver your documents.`, 'florida-llc-formation.html', `$${C.prices.formation} all-in`],
   ['cal', 'Annual Reports & Filings', `Annual reports, amendments, agent changes, reinstatements, dissolutions and certificates.`, 'business-filings.html', `Annual report $${C.prices.annualReport}`],
   ['mail', 'Business Address & Mail', `A professional Florida mailing address. For each piece of mail you choose: forward it, open and scan it to your portal, or shred it.`, 'business-address-mail.html', `from $${C.prices.mailBasic}/month`],
-  ['launch', 'Launch Pack', `Name and trademark search, domain, professional email and a website of up to 5 pages, all in your name.`, 'launch-pack.html', `from $${C.prices.launch}`],
   ['globe', 'International Founders', `Living outside the U.S.? Form a Florida LLC remotely, in English, Portuguese or Spanish.`, 'international-founders.html', 'Remote-friendly'],
 ];
 
@@ -95,7 +94,7 @@ const body = rel => `
 
 <section class="band"><div class="wrap">
 <div class="section-title"><p class="kicker">How it works</p><h2>Four steps to an active Florida company.</h2></div>
-<ol class="steps"><li><strong>Choose a service</strong><span>Pick formation, registered agent, filings or a launch pack.</span></li><li><strong>Tell us about your business</strong><span>A short online form. No legal jargon.</span></li><li><strong>We file with Florida</strong><span>We review, submit and track your filing with the Division of Corporations.</span></li><li><strong>Get your documents</strong><span>Filed documents, EIN letter and mail scans arrive in your client account.</span></li></ol>
+<ol class="steps"><li><strong>Choose a service</strong><span>Pick formation, registered agent or filings.</span></li><li><strong>Tell us about your business</strong><span>A short online form. No legal jargon.</span></li><li><strong>We file with Florida</strong><span>We review, submit and track your filing with the Division of Corporations.</span></li><li><strong>Get your documents</strong><span>Filed documents, EIN letter and mail scans arrive in your client account.</span></li></ol>
 <p style="margin-top:24px"><a href="${rel}how-it-works.html">See the full process →</a></p>
 </div></section>
 
