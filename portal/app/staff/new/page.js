@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Shell from '@/components/Shell';
 import { requireStaff } from '@/lib/auth';
+import StaffLookup from './StaffLookup';
 
 async function create(formData) {
   'use server';
@@ -32,6 +33,7 @@ export default async function NewEntity({ searchParams }) {
     <p className="sub">Use this only for a client who didn't order on the website or portal (for example, an existing company moving its registered agent to us by phone). Website and portal orders create the file automatically. A file number (TBC-#####) is assigned automatically. Use it on the PMB/suite line, the paper folder label and everywhere else.</p>
     {searchParams?.error && <p className="err">{searchParams.error}</p>}
     <form className="stack" action={create}>
+      <StaffLookup />
       <label>Legal name<input name="legal_name" required /></label>
       <div className="row"><label>Type<select name="entity_type"><option>LLC</option><option>Corporation</option><option>Nonprofit</option><option>Other</option></select></label>
         <label>Status<select name="status"><option value="pending">Pending (not filed yet)</option><option value="active">Active</option><option value="inactive">Inactive</option><option value="dissolved">Dissolved</option></select></label></div>

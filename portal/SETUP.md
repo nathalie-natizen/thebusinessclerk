@@ -50,3 +50,12 @@ Security: every table uses row level security (clients only ever see their own c
 3. In EasyPost → Webhooks & Events, add `https://app.thebusinessclerk.com/api/tracking/webhook` (Production). Every update is re-checked with EasyPost using the API key, so the URL needs no secret.
 4. Redeploy. From then on, when staff mark mail as forwarded with a carrier + tracking number, the item updates itself (in transit, out for delivery, delivered) and the client is notified.
 Without EasyPost, tracking numbers still show as a link to the carrier's site; statuses just don't update automatically.
+
+## Florida company lookup (Sunbiz records)
+The order form ("Find your company in the Florida records") and Staff → New entity search our own copy of the state's public data files. The state publishes them free on its SFTP server (no API); a GitHub Action loads them into Supabase.
+1. **Supabase plan:** the full list of Florida companies (active ones plus inactive ones from the last 5 years) needs roughly 2–4 GB of database space, more than the free plan's 500 MB. Use the Pro plan (8 GB included).
+2. **SQL Editor:** run `supabase/23_sunbiz_registry.sql`.
+3. **Supabase → Connect → Session pooler:** copy the connection string and put your database password in it. (Use the session pooler, not the direct connection: GitHub's servers can't reach the direct one.)
+4. **GitHub → repository → Settings → Secrets and variables → Actions → New repository secret:** name `SUPABASE_DB_URL`, value = that string.
+5. **GitHub → Actions → Sunbiz records sync → Run workflow → mode `full`.** The first load takes about 30–90 minutes. After that it runs by itself: daily files Tuesday–Saturday, and a full refresh on the 15th of January, April, July and October.
+Check it worked: `select count(*) from sunbiz_entities;` and `select * from sunbiz_sync_log order by id desc limit 5;`. Until step 2 is done the box says the search is unavailable, and until the first load finishes it finds nothing; either way clients can still type their details as before.

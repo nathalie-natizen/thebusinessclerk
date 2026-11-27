@@ -1,0 +1,13 @@
+{
+  "name": "sunbiz-sync",
+  "private": true,
+  "type": "module",
+  "description": "Nightly import of the Florida Division of Corporations data files into Supabase (run by GitHub Actions)",
+  "scripts": { "daily": "node sync.mjs daily", "full": "node sync.mjs full" },
+  "dependencies": {
+    "pg": "^8.13.1",
+    "pg-copy-streams": "^6.0.6",
+    "ssh2-sftp-client": "^11.0.0",
+    "unzipper": "^0.12.3"
+  }
+}

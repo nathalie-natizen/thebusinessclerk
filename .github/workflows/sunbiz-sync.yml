@@ -1,0 +1,28 @@
+# Keeps the Florida company records (Sunbiz data files) in the portal database up to date.
+# Needs the repository secret SUPABASE_DB_URL (Supabase → Connect → Session pooler string).
+name: Sunbiz records sync
+on:
+  schedule:
+    - cron: '0 11 * * 2-6'      # daily files: Tue–Sat 11:00 UTC (the state posts them on work days)
+    - cron: '0 8 15 1,4,7,10 *' # full refresh after each quarterly file: 15 Jan/Apr/Jul/Oct
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'daily or full'
+        default: daily
+        type: choice
+        options: [daily, full]
+concurrency: { group: sunbiz-sync, cancel-in-progress: false }
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    defaults: { run: { working-directory: portal/scripts/sunbiz } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci --no-audit --no-fund
+      - run: node sync.mjs ${{ inputs.mode || (github.event.schedule == '0 8 15 1,4,7,10 *' && 'full' || 'daily') }}
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}

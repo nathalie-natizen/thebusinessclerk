@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { submitIntake } from './actions';
 import ServiceTerms from '@/components/ServiceTerms';
@@ -7,6 +7,8 @@ import { FILINGS } from '@/lib/filings';
 import { headings } from '@/lib/guidelines';
 import { buildAgreement } from '@/lib/agreement';
 import AgreementBox from '@/components/AgreementBox';
+import SunbizLookup from '@/components/SunbizLookup';
+import { isCorp, personName, oneLine, country, roleIndex, fillForm } from '@/lib/sunbiz-fill';
 
 const AG = {
   en: { h: 'Client Service Agreement', lead: 'It includes our general terms and a schedule for each service you chose.', sign: 'Type your full name to sign', ack: 'I have read and agree to the Client Service Agreement above.', note: '' },
@@ -20,13 +22,23 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
   const [service, setService] = useState(initial);
   const [addons, setAddons] = useState({});
   const [company, setCompany] = useState('');
+  const [picked, setPicked] = useState(null); // company chosen from the Florida records
+  const formRef = useRef(null);
   const [state, action] = useFormState(submitIntake, null);
   const formation = service === 'llc' || service === 'corp';
   const existing = !formation && service !== 'mail' && service !== 'launch';
   const hasMail = service === 'mail' || service === 'bundle' || (formation && addons.mail);
   const hasEin = service === 'ein' || (formation && addons.ein);
+  const corpRoles = service === 'corp' || (service !== 'llc' && isCorp(picked));
   const R = ' *';
-  return (<form className="stack wide" action={action}>
+  // Fill the rest of the form from the picked record (after the role lists have switched to match the company type)
+  useEffect(() => {
+    if (!picked) return;
+    const p = picked.principal || {}; const people = picked.officers || [];
+    fillForm(formRef.current, { doc: picked.doc_number, line1: p.line1 || '', line2: p.line2 || '', city: p.city || '', state: p.state || '', postal: p.zip || '', country: country(p.country),
+      ...Object.fromEntries([0, 1, 2, 3].flatMap(i => { const o = people[i]; return [[`p${i + 1}_name`, o ? personName(o) : ''], [`p${i + 1}_address`, o ? oneLine(o) : ''], [`p${i + 1}_title`, o ? roleIndex(o.title, corpRoles) ?? 0 : 0]]; })) });
+  }, [picked, service]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (<form ref={formRef} className="stack wide" action={action}>
     <input type="hidden" name="lang" value={lang} />
     <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }} />
     {state?.error && state.error !== 'spam' && <p className="err">{t.err}</p>}
@@ -37,6 +49,7 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
     </fieldset>}
 
     <h2>{t.company}</h2>
+    {existing && <SunbizLookup lang={lang} onPick={r => { setPicked(r); setCompany(r.name); }} />}
     {formation ? <>
       <p style={{ fontWeight: 600, margin: 0 }}>{t.names}</p><p className="muted" style={{ margin: 0 }}>{t.namesHelp} <a href="https://search.sunbiz.org/Inquiry/CorporationSearch/ByName" target="_blank" rel="noopener noreferrer">{t.checkSunbiz} ↗</a></p>
       <label>{t.name1}{R}<input name="company" required maxLength={150} value={company} onChange={e => setCompany(e.target.value)} /></label>
@@ -70,7 +83,7 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
       <h2>{t.people}</h2><p className="muted">{t.peopleHelp}</p>
       {[1, 2, 3, 4].map(i => <div key={i} className="row" style={{ alignItems: 'end' }}>
         <label>{t.pname}{i === 1 && formation && R}<input name={`p${i}_name`} required={i === 1 && formation} /></label>
-        <label style={{ maxWidth: 220 }}>{t.ptitle}<select name={`p${i}_title`}>{t.roles[service === 'corp' ? 'corp' : 'llc'].map(r => <option key={r}>{r}</option>)}</select></label>
+        <label style={{ maxWidth: 220 }}>{t.ptitle}<select name={`p${i}_title`}>{t.roles[corpRoles ? 'corp' : 'llc'].map(r => <option key={r}>{r}</option>)}</select></label>
         <label>{t.paddr}<input name={`p${i}_address`} /></label>
       </div>)}
     </>}
