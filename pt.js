@@ -143,7 +143,7 @@ const pricing = servicePage({
 ## Manutenção anual
 - **Agente registrado na Flórida: ${$(P.raAnnual)}/ano**
 - **Relatório anual: ${$(P.annualReport)}** por envio, mais a taxa estadual (US$ ${F.llcAnnual} LLC, US$ ${F.corpAnnual} corporação)
-- **[Pacote Anual Empresa em Dia](pacote-anual.html): ${$(P.bundle)}/ano, nosso plano mais escolhido.** Agente registrado, relatório anual e endereço comercial na Flórida com correspondência encaminhada na sua frequência, em uma só assinatura anual (economia de US$ ${P.raAnnual + P.annualReport + 12 * P.mailBasic - P.bundle}). Sem taxa por envelope, pacote ou encaminhamento: você paga só a postagem e a taxa estadual do relatório anual.
+- **[Pacote Anual Essencial](pacote-anual.html): ${$(P.bundle)}/ano, nosso plano mais escolhido.** Agente registrado, relatório anual e endereço comercial na Flórida com correspondência encaminhada na sua frequência, em uma só assinatura anual (economia de US$ ${P.raAnnual + P.annualReport + 12 * P.mailBasic - P.bundle}). Sem taxa por envelope, pacote ou encaminhamento: você paga só a postagem e a taxa estadual do relatório anual.
 > O agente registrado, o relatório anual e o pacote anual renovam automaticamente, para sua empresa ficar sempre em dia sem você precisar fazer nada. Você pode desativar a renovação automática quando quiser.
 ## Endereço e correspondência
 - Endereço comercial e correspondência: **${$(P.mailBasic)}/mês**, com ${P.mailIncluded} itens por mês registrados com foto do envelope e aviso no portal (depois, US$ ${P.mailOverItem.replace(".", ",")} por item)
