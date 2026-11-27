@@ -61,7 +61,7 @@ export const KINDS = {
   annual_report: { name: 'Annual Report Filing', env: 'STRIPE_PRICE_ANNUAL_REPORT' },
   ein: { name: 'EIN Application', env: 'STRIPE_PRICE_EIN' },
   mail: { name: 'Business Address & Mail', env: 'STRIPE_PRICE_MAIL', recurring: true },
-  bundle: { name: 'Annual Compliance Pack (agent + annual report + address)', recurring: true },
+  bundle: { name: 'Annual Essentials Pack (agent + annual report + address)', recurring: true },
   launch: { name: 'Launch Pack', env: 'STRIPE_PRICE_LAUNCH' },
   ...Object.fromEntries(Object.entries(FILINGS).map(([k, f]) => [k, { name: f.name, filing: true }])),
   mail_batch: { name: 'Mail forwarding (scheduled shipment)', internal: true },
