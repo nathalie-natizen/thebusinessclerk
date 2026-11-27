@@ -48,6 +48,6 @@ export default async function Network({ searchParams }) {
         </details>
       </div>))}</div>
     {!rows?.length && <p className="muted">No partners listed yet.</p>}
-    <p className="muted" style={{ fontSize: 13, marginTop: 24 }}>These professionals are independent and are not part of The Business Clerk. Choosing one is entirely up to you, and they set their own fees and terms. The Ledger Practice is affiliated with The Business Clerk, and we may receive a referral fee from some partners.</p>
+    <p className="muted" style={{ fontSize: 13, marginTop: 24 }}>These professionals are independent and are not part of The Business Clerk. Choosing one is entirely up to you, and they set their own fees and terms.</p>
   </Shell>);
 }
