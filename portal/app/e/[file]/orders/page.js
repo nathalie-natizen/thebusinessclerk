@@ -13,7 +13,7 @@ const stateFeeNote = k => (k === 'annual_report' || FILINGS[k]) ? ' The Florida 
 import { clientExpectation } from '@/lib/sla';
 import { draftFor, recordAcceptance } from '@/lib/agreements';
 
-const ORDERABLE = [['bundle', 'Annual Compliance Pack (agent + annual report + address)'], ['annual_report', 'Annual report filing'], ['ein', 'EIN application'], ['ra', 'Registered agent'], ['mail', 'Business address & mail'], ['launch', 'Launch Pack'], ...Object.entries(FILINGS).map(([k, f]) => [k, f.name])];
+const ORDERABLE = [['bundle', 'Annual Essentials Pack (agent + annual report + address)'], ['annual_report', 'Annual report filing'], ['ein', 'EIN application'], ['ra', 'Registered agent'], ['mail', 'Business address & mail'], ['launch', 'Launch Pack'], ...Object.entries(FILINGS).map(([k, f]) => [k, f.name])];
 const money = c => '$' + (c / 100).toFixed(2).replace(/\.00$/, '');
 
 async function placeOrder(fd) {
