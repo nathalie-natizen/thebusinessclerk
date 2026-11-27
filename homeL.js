@@ -15,7 +15,7 @@ module.exports = (lang, t) => page({
 <div class="actions"><a class="btn primary" href="${rel}${t.start}">${t.cta1}</a><a class="btn ghost" href="${rel}${t.raHref}">${t.cta2}</a></div>
 <ul class="checks">${t.checks.map(c => `<li>${c}</li>`).join('')}</ul>
 </div>
-<div>${scene}</div>
+<div>${require('./pack').packCard(lang, rel)}</div>
 </div></section>
 
 <section class="band"><div class="wrap">

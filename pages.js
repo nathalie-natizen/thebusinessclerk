@@ -14,10 +14,10 @@ function servicePage(o) {
     body: rel => `<section class="pagehead band"><div class="wrap">
 <p class="crumbs"><a href="${rel}${homeP}">${T.home}</a> / ${esc(o.crumb || o.h1)}</p>
 ${o.kicker ? `<p class="kicker">${o.kicker}</p>` : ''}<h1>${o.h1}</h1><p>${o.lead}</p>
-${o.noCta ? '' : `<div class="actions"><a class="btn primary" href="${rel}${o.ctaHref || (lang === 'en' ? 'get-started.html' : lang === 'pt' ? 'pt/comecar.html' : 'es/empezar.html')}">${o.cta || T.getStarted}</a>${o.cta2 ? `<a class="btn ghost" href="${rel}${o.cta2[0]}">${o.cta2[1]}</a>` : ''}</div>`}
+${o.noCta ? '' : `<div class="actions"><a class="btn primary" href="${o.ctaHref && /^https?:/.test(o.ctaHref) ? '' : rel}${o.ctaHref || (lang === 'en' ? 'get-started.html' : lang === 'pt' ? 'pt/comecar.html' : 'es/empezar.html')}">${o.cta || T.getStarted}</a>${o.cta2 ? `<a class="btn ghost" href="${rel}${o.cta2[0]}">${o.cta2[1]}</a>` : ''}</div>`}
 </div></section>
 <section class="band"><div class="wrap ${o.aside ? 'layout' : ''}">
-<article class="prose">${md(o.content, rel)}${o.extra ? o.extra(rel) : ''}${o.faqs ? `<h2 id="faq">${T.faq}</h2>${faqHtml(o.faqs, rel)}` : ''}</article>
+<article class="prose">${o.before ? o.before(rel) : ''}${md(o.content, rel)}${o.extra ? o.extra(rel) : ''}${o.faqs ? `<h2 id="faq">${T.faq}</h2>${faqHtml(o.faqs, rel)}` : ''}</article>
 ${o.aside ? `<aside class="aside">${o.aside(rel)}</aside>` : ''}
 </div></section>
 ${o.noCta ? '' : ctaBand(rel, o.ctaH, o.ctaP, lang)}`,
@@ -32,9 +32,9 @@ const priceCard = (title, price, unit, items, href, btn, rel) => `<div class="ca
 
 // Service chooser used on the Get started pages (EN/PT/ES): each button opens the portal order form
 const CHOOSER = {
-  en: { h: 'Choose a service', other: 'Need a different filing (amendment, change of agent, DBA, dissolution)? <a href="contact.html">Contact us</a> and we\'ll send you a quote.', items: [['llc', 'Form a Florida LLC', `$${P.formation} one time, state fee and first-year agent included`], ['corp', 'Form a Florida corporation', `$${P.formationCorp} one time, state fee included`], ['bundle', 'Annual bundle: registered agent + annual report + address', `$${P.bundle} per year + state fee`], ['ra', 'Registered agent', `$${P.raAnnual} per year`], ['annual_report', 'Annual report', `$${P.annualReport} + state fee`], ['ein', 'EIN application', `$${P.ein}`], ['mail', 'Business address & mail', `$${P.mailBasic} per month`], ['launch', 'Launch Pack', `$${P.launch} one time`]], btn: 'Start' },
-  pt: { h: 'Escolha um serviço', other: 'Precisa de outro registro (alteração, troca de agente, DBA, encerramento)? <a href="../contact.html">Fale conosco</a> e enviamos um orçamento.', items: [['llc', 'Abrir uma LLC na Flórida', `US$ ${P.formation} pagamento único, taxa estadual e 1º ano de agente incluídos`], ['corp', 'Abrir uma corporação', `US$ ${P.formationCorp} pagamento único, taxa estadual incluída`], ['bundle', 'Pacote anual: agente registrado + relatório anual + endereço', `US$ ${P.bundle} por ano + taxa estadual`], ['ra', 'Agente registrado', `US$ ${P.raAnnual} por ano`], ['annual_report', 'Relatório anual', `US$ ${P.annualReport} + taxa estadual`], ['ein', 'Solicitação de EIN', `US$ ${P.ein}`], ['mail', 'Endereço e correspondência', `US$ ${P.mailBasic} por mês`], ['launch', 'Launch Pack', `US$ ${P.launch} pagamento único`]], btn: 'Começar' },
-  es: { h: 'Elija un servicio', other: '¿Necesita otro trámite (enmienda, cambio de agente, DBA, disolución)? <a href="../contact.html">Contáctenos</a> y le enviamos una cotización.', items: [['llc', 'Abrir una LLC en Florida', `US$ ${P.formation} pago único, tarifa estatal y primer año de agente incluidos`], ['corp', 'Abrir una corporación', `US$ ${P.formationCorp} pago único, tarifa estatal incluida`], ['bundle', 'Paquete anual: agente registrado + reporte anual + dirección', `US$ ${P.bundle} por año + tarifa estatal`], ['ra', 'Agente registrado', `US$ ${P.raAnnual} por año`], ['annual_report', 'Reporte anual', `US$ ${P.annualReport} + tarifa estatal`], ['ein', 'Solicitud de EIN', `US$ ${P.ein}`], ['mail', 'Dirección comercial y correo', `US$ ${P.mailBasic} por mes`], ['launch', 'Launch Pack', `US$ ${P.launch} pago único`]], btn: 'Empezar' },
+  en: { h: 'Choose a service', other: 'Need a different filing (amendment, change of agent, DBA, dissolution)? <a href="contact.html">Contact us</a> and we\'ll send you a quote.', items: [['bundle', 'Annual Compliance Pack (most popular): registered agent + annual report + address & mail forwarding', `$${P.bundle} per year + state fee`], ['llc', 'Form a Florida LLC', `$${P.formation} one time, state fee and first-year agent included`], ['corp', 'Form a Florida corporation', `$${P.formationCorp} one time, state fee included`], ['ra', 'Registered agent', `$${P.raAnnual} per year`], ['annual_report', 'Annual report', `$${P.annualReport} + state fee`], ['ein', 'EIN application', `$${P.ein}`], ['mail', 'Business address & mail', `$${P.mailBasic} per month`], ['launch', 'Launch Pack', `$${P.launch} one time`]], btn: 'Start' },
+  pt: { h: 'Escolha um serviço', other: 'Precisa de outro registro (alteração, troca de agente, DBA, encerramento)? <a href="../contact.html">Fale conosco</a> e enviamos um orçamento.', items: [['bundle', 'Pacote Anual Empresa em Dia (mais escolhido): agente registrado + relatório anual + endereço e encaminhamento', `US$ ${P.bundle} por ano + taxa estadual`], ['llc', 'Abrir uma LLC na Flórida', `US$ ${P.formation} pagamento único, taxa estadual e 1º ano de agente incluídos`], ['corp', 'Abrir uma corporação', `US$ ${P.formationCorp} pagamento único, taxa estadual incluída`], ['ra', 'Agente registrado', `US$ ${P.raAnnual} por ano`], ['annual_report', 'Relatório anual', `US$ ${P.annualReport} + taxa estadual`], ['ein', 'Solicitação de EIN', `US$ ${P.ein}`], ['mail', 'Endereço e correspondência', `US$ ${P.mailBasic} por mês`], ['launch', 'Launch Pack', `US$ ${P.launch} pagamento único`]], btn: 'Começar' },
+  es: { h: 'Elija un servicio', other: '¿Necesita otro trámite (enmienda, cambio de agente, DBA, disolución)? <a href="../contact.html">Contáctenos</a> y le enviamos una cotización.', items: [['bundle', 'Paquete Anual Empresa al Día (el más elegido): agente registrado + reporte anual + dirección y reenvío', `US$ ${P.bundle} por año + tarifa estatal`], ['llc', 'Abrir una LLC en Florida', `US$ ${P.formation} pago único, tarifa estatal y primer año de agente incluidos`], ['corp', 'Abrir una corporación', `US$ ${P.formationCorp} pago único, tarifa estatal incluida`], ['ra', 'Agente registrado', `US$ ${P.raAnnual} por año`], ['annual_report', 'Reporte anual', `US$ ${P.annualReport} + tarifa estatal`], ['ein', 'Solicitud de EIN', `US$ ${P.ein}`], ['mail', 'Dirección comercial y correo', `US$ ${P.mailBasic} por mes`], ['launch', 'Launch Pack', `US$ ${P.launch} pago único`]], btn: 'Empezar' },
 };
 const chooser = lang => { const c = CHOOSER[lang]; return `<div class="grid">${c.items.map(([k, h, d]) => `<div class="card"><h3>${h}</h3><p>${d}</p><a class="btn primary" href="${startUrl(k, lang)}">${c.btn}</a></div>`).join('')}</div><p style="margin-top:18px">${c.other}</p>`; };
 const linksCard = (title, links, rel) => `<div class="card"><h3>${title}</h3><ul style="padding-left:18px;margin:0">${links.map(([h, t]) => `<li><a href="${rel}${h}">${t}</a></li>`).join('')}</ul></div>`;
@@ -310,7 +310,7 @@ pages.push(servicePage({
 ## Ongoing compliance
 - **Florida registered agent: $${P.raAnnual}/year**
 - **Annual report filing: $${P.annualReport}** per filing, plus the state fee ($${F.llcAnnual} LLC, $${F.corpAnnual} corporation)
-- **Annual bundle: $${P.bundle}/year.** Registered agent, annual report filing and 12 months of business address & mail in one yearly payment (you save $${P.raAnnual + P.annualReport + 12 * P.mailBasic - P.bundle}). The annual report state fee and mail usage (scans, forwarding, packages, items over ${P.mailIncluded} a month) are billed separately.
+- **[Annual Compliance Pack](compliance-pack.html): $${P.bundle}/year, our most popular plan.** Registered agent, annual report filing and a Florida business address with mail forwarded on your schedule, in one yearly subscription (you save $${P.raAnnual + P.annualReport + 12 * P.mailBasic - P.bundle}). No per-envelope, package or forwarding fees: you pay only postage and the annual report state fee.
 > Registered agent service, annual report filing and the annual bundle renew automatically by default, so your company stays in good standing without you having to do anything. You can turn off auto-renew anytime.
 ## Address & mail
 - Business address & mail: **$${P.mailBasic}/month**, ${P.mailIncluded} items logged with envelope photo (then $${P.mailOverItem}/item)
@@ -472,7 +472,23 @@ THE BUSINESS CLERK LLC is not a law firm, CPA firm or government agency, and is 
 The information on this website is general information, not legal, tax or financial advice. Laws and fees change; confirm current requirements with the relevant agency or a licensed professional before acting.
 Any referrals we make to attorneys, accountants or other professionals are to independent providers who are responsible for their own services.`);
 
-module.exports = pages.map(p => p); // array of {html} strings with path inside
+// ---------- Annual Compliance Pack (EN/PT/ES pages) ----------
+const PK = require('./pack');
+// Markdown with pipe tables: tables become HTML, the rest goes through md()
+const mdTables = (src, rel) => { const out = []; let buf = [], tbl = [];
+  const flushBuf = () => { if (buf.length) { out.push(md(buf.join('\n'), rel)); buf = []; } };
+  const cell = c => c.trim().replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  const flushTbl = () => { if (!tbl.length) return; const rows = tbl.filter(r => !/^\|?\s*-+/.test(r.replace(/\|/g, '').trim() ? r : '-')).map(r => r.trim().replace(/^\||\|$/g, '').split('|'));
+    const [h, ...b] = rows.filter(r => !r.every(c => /^\s*-+\s*$/.test(c)));
+    out.push(`<div class="scroll"><table><thead><tr>${h.map(c => `<th>${cell(c)}</th>`).join('')}</tr></thead><tbody>${b.map(r => `<tr>${r.map(c => `<td>${cell(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`); tbl = []; };
+  for (const l of src.split('\n')) { if (l.trim().startsWith('|')) { flushBuf(); tbl.push(l); } else { flushTbl(); buf.push(l); } }
+  flushTbl(); flushBuf(); return out.join('\n'); };
+const packPage = lang => { const p = PK.PAGE[lang]; return servicePage({ ...p, lang, service: 'Annual Compliance Pack', offer: P.bundle, ctaHref: PK.START(lang),
+  before: rel => `<h2>${p.benefitsH}</h2><div class="benefits">${p.benefits.map(([h, d]) => `<div><h3>${h}</h3><p>${d}</p></div>`).join('')}</div>` + mdTables(p.content, rel), content: '',
+  aside: rel => PK.packCard(lang, rel).replace(/<a class="pk-more"[^>]*>[^<]*<\/a>/, '') }); };
+pages.push(packPage('en'));
+module.exports = pages.map(p => p);
+module.exports.packPage = packPage; // array of {html} strings with path inside
 module.exports.servicePage = servicePage;
 module.exports.linksCard = linksCard;
 module.exports.priceCard = priceCard;

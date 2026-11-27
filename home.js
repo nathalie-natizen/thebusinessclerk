@@ -74,7 +74,7 @@ const body = rel => `
 <div class="actions"><a class="btn primary" href="${rel}get-started.html">Start your business</a><a class="btn ghost" href="${rel}florida-registered-agent.html">Registered agent service</a></div>
 <ul class="checks"><li>Florida LLC for $${C.prices.formation}, state fee and first-year agent included</li><li>Registered agent for $${C.prices.raAnnual} a year</li><li>Legal mail scanned and sent to you the same business day</li><li>Service in English, Português and Español</li></ul>
 </div>
-<div>${scene}</div>
+<div>${require('./pack').packCard('en', rel)}</div>
 </div></section>
 
 <section class="band"><div class="wrap">

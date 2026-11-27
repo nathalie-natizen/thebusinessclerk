@@ -109,6 +109,7 @@ nav.main a:hover,nav.main a[aria-current]{background:var(--sand);color:var(--lin
 .price small{font:500 15px Inter,sans-serif;color:var(--soft)}
 .plan ul{padding-left:20px;margin:16px 0 20px}.plan li{margin-bottom:6px}
 .plan.best{border:2px solid var(--orange);position:relative}
+${require('./pack').PACK_CSS}
 .plan .tag{position:absolute;top:-13px;left:22px;background:var(--orange);color:#fff;font-size:13px;font-weight:700;padding:3px 12px;border-radius:20px}
 .plan .btn{margin-top:auto}
 table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--line)}
