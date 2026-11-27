@@ -16,5 +16,6 @@ export default async function Resources() {
     {staff && <p><a className="btn small" href="/staff/resources">Manage links</a></p>}
     <List items={group('client')} />
     {staff && <><h2 style={{ marginTop: 28 }}>Staff only</h2><List items={group('staff')} /></>}
+    <p className="muted" style={{ fontSize: 13, marginTop: 28 }}>Need an attorney, tax professional or bookkeeper? <a href="/network">See our trusted network</a>.</p>
   </Shell>);
 }
