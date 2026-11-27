@@ -8,17 +8,17 @@ const FS = P.packScans; // free scans per month in the pack
 const START = lang => `https://app.thebusinessclerk.com/start?service=bundle&lang=${lang}`;
 
 const T = {
-  en: { cur: '$', name: 'Annual Compliance Pack', tag: 'Most popular', per: 'per year', sep: `$${SEP} if bought separately`,
+  en: { cur: '$', name: 'Annual Compliance Pack', tag: 'Most popular', per: 'per year', sep: `$${SEP}+ if bought separately`,
     items: ['Florida registered agent, all year', 'Annual report filed for you before May 1', 'Professional Florida business address', 'Mail forwarding on the schedule you choose', `Up to ${FS} mail scans a month included`, 'Never miss a deadline: renews automatically'],
     whyH: 'Why owners choose it', incH: 'What’s included',
     why: [['home', 'Home address kept private', 'Our office goes on the public record, not your house.'], ['pin', 'Real Florida business address', 'Look established on your website, invoices and cards.'], ['mail', 'Mail forwarded to you', 'We collect it and forward it on your schedule.'], ['cal', 'No missed deadlines', 'No $400 late fee. We file your annual report for you.']],
     note: 'Plus Florida state fees and forwarding shipping, at cost.', cta: 'Get the pack', more: 'See everything included →', href: 'compliance-pack.html' },
-  pt: { cur: 'US$ ', name: 'Pacote Anual Empresa em Dia', tag: 'Mais escolhido', per: 'por ano', sep: `US$ ${SEP} se contratado separadamente`,
+  pt: { cur: 'US$ ', name: 'Pacote Anual Empresa em Dia', tag: 'Mais escolhido', per: 'por ano', sep: `US$ ${SEP}+ se contratado separadamente`,
     items: ['Agente registrado na Flórida o ano todo', 'Relatório anual enviado por nós antes de 1º de maio', 'Endereço comercial profissional na Flórida', 'Encaminhamento de correspondência na frequência que você escolher', `Até ${FS} digitalizações por mês incluídas`, 'Nunca perca um prazo: renova automaticamente'],
     whyH: 'Por que os empresários escolhem', incH: 'O que está incluído',
     why: [['home', 'Endereço residencial em sigilo', 'Nosso escritório vai no registro público, não a sua casa.'], ['pin', 'Endereço comercial na Flórida', 'Mais credibilidade no site, nas faturas e nos cartões.'], ['mail', 'Correspondência encaminhada', 'Recebemos e encaminhamos na frequência que você escolher.'], ['cal', 'Nenhum prazo perdido', 'Sem multa de US$ 400. Enviamos seu relatório anual por você.']],
     note: 'Mais as taxas estaduais da Flórida e o frete do encaminhamento, pelo custo.', cta: 'Quero o pacote', more: 'Veja tudo o que está incluído →', href: 'pt/pacote-anual.html' },
-  es: { cur: 'US$ ', name: 'Paquete Anual Empresa al Día', tag: 'El más elegido', per: 'por año', sep: `US$ ${SEP} si se contrata por separado`,
+  es: { cur: 'US$ ', name: 'Paquete Anual Empresa al Día', tag: 'El más elegido', per: 'por año', sep: `US$ ${SEP}+ si se contrata por separado`,
     items: ['Agente registrado en Florida todo el año', 'Reporte anual presentado por nosotros antes del 1 de mayo', 'Dirección comercial profesional en Florida', 'Reenvío de correo con la frecuencia que elijas', `Hasta ${FS} escaneos de correo al mes incluidos`, 'Nunca pierdas una fecha límite: se renueva automáticamente'],
     whyH: 'Por qué lo eligen los empresarios', incH: 'Qué incluye',
     why: [['home', 'Tu dirección de casa, privada', 'Nuestra oficina va en el registro público, no tu casa.'], ['pin', 'Dirección comercial en Florida', 'Más credibilidad en tu web, facturas y tarjetas.'], ['mail', 'Correo reenviado a ti', 'Lo recibimos y te lo reenviamos con la frecuencia que elijas.'], ['cal', 'Ningún plazo perdido', 'Sin multa de US$ 400. Presentamos tu reporte anual por ti.']],
