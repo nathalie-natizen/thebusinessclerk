@@ -61,6 +61,10 @@ p{margin:0 0 1em}
 nav.main{margin-left:auto;display:flex;gap:2px;flex-wrap:nowrap;flex:none}
 nav.main a{color:var(--ink);text-decoration:none;font-size:14.5px;font-weight:500;padding:10px 9px;border-radius:8px;white-space:nowrap}
 nav.main a:hover,nav.main a[aria-current]{background:var(--sand);color:var(--link)}
+.dd{position:relative}.dd>button{background:none;border:0;font:500 14.5px Inter,system-ui,sans-serif;color:var(--ink);padding:10px 9px;border-radius:8px;cursor:pointer;white-space:nowrap}.dd>button:after{content:"";display:inline-block;width:6px;height:6px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg);margin:0 0 3px 7px}
+.dd>button:hover,.dd.cur>button{background:var(--sand);color:var(--link)}
+.ddm{display:none;position:absolute;top:100%;left:0;min-width:250px;background:var(--bg);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.12);padding:8px;z-index:30;flex-direction:column}
+.dd:hover .ddm,.dd:focus-within .ddm,.dd.open .ddm{display:flex}.ddm a{padding:9px 12px}.ddm .star{color:var(--orange)}
 .btn{white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:12px 22px;border-radius:10px;font-weight:700;font-size:15.5px;text-decoration:none;border:2px solid transparent;cursor:pointer;font-family:inherit}
 .btn.primary{background:var(--orange);color:#fff}.btn.primary:hover{background:#D4632B}
 .btn.ghost{border-color:currentColor;color:var(--link);background:transparent}
@@ -71,7 +75,7 @@ nav.main a:hover,nav.main a[aria-current]{background:var(--sand);color:var(--lin
 @media(max-width:600px){nav.main.open .navlangs{display:flex;gap:6px;border-top:1px solid var(--line);margin-top:6px;padding-top:6px}}
 .langs{flex:none;display:flex;gap:2px;font-size:13px;font-weight:700}.langs a{color:var(--soft);text-decoration:none;padding:6px 7px;border-radius:6px}.langs a[aria-current]{color:var(--link);background:var(--sand)}
 .menu{flex:none;display:none;margin-left:8px;background:none;border:1px solid var(--line);border-radius:8px;min-height:44px;padding:0 14px;color:var(--ink);font:600 15px Inter,sans-serif}
-@media(max-width:1300px){nav.main{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:var(--bg);padding:10px max(5vw,18px) 18px;border-bottom:1px solid var(--line)}nav.main.open{display:flex}.menu{display:block}.top .cta{display:none}.menu{margin-left:auto}}
+@media(max-width:1300px){nav.main{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:var(--bg);padding:10px max(5vw,18px) 18px;border-bottom:1px solid var(--line)}nav.main.open{display:flex}.dd>button{display:block;width:100%;text-align:left;font-weight:700;cursor:default}.dd>button:after{display:none}.ddm{display:flex;position:static;box-shadow:none;border:0;padding:0 0 4px 12px;min-width:0}.menu{display:block}.top .cta{display:none}.menu{margin-left:auto}}
 /* hero */
 .hero{background:var(--teal);color:#F3F7F6;position:relative;overflow:hidden}
 .hero .wrap{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);align-items:center}
@@ -188,11 +192,13 @@ function header(path, rel, lang) {
   const start = { en: 'get-started.html', pt: 'pt/comecar.html', es: 'es/empezar.html' }[lang];
   const sw = ['en', 'pt', 'es'].map(l => `<a href="${rel}${(alts && alts[l]) || home[l]}" hreflang="${l}" lang="${l}"${l === lang ? ' aria-current="true"' : ''}>${l.toUpperCase()}</a>`).join('');
   const section = p => p.split('/').slice(0, -1).join('/');
+  const isCur = h => path === h || (h.endsWith('index.html') && h !== home[lang] && section(h) && path.startsWith(section(h) + '/'));
+  const link = ([h, t, star]) => `<a href="${rel}${h}"${isCur(h) ? ' aria-current="page"' : ''}>${t}${star ? ' <span class="star" aria-hidden="true">★</span>' : ''}</a>`;
   return `<a class="skip" href="#main">${T.skip}</a>
 <div class="util"><div class="wrap"><a class="portal" href="${PORTAL}">${T.portal}</a><span class="sep" aria-hidden="true"></span><div class="langs" aria-label="Language">${sw}</div></div></div>
 <header class="top"><div class="wrap">
 <a class="brand" href="${rel}${home[lang]}">${logo}<span>THE BUSINESS CLERK<small>${esc(T.subtitle)}</small></span></a>
-<nav class="main" id="nav" aria-label="Main">${''}${T.nav.map(([h, t]) => `<a href="${rel}${h}"${path === h || (h.endsWith('index.html') && h !== home[lang] && section(h) && path.startsWith(section(h) + '/')) ? ' aria-current="page"' : ''}>${t}</a>`).join('')}</nav>
+<nav class="main" id="nav" aria-label="Main">${T.nav.map(n => Array.isArray(n) ? link(n) : `<div class="dd${n.items.some(([h]) => isCur(h)) ? ' cur' : ''}"><button type="button" aria-expanded="false">${n.label}</button><div class="ddm">${n.items.map(link).join('')}</div></div>`).join('')}</nav>
 <button class="menu" aria-expanded="false" aria-controls="nav">${T.menu}</button>
 <a class="btn primary cta" href="${rel}${start}">${T.getStarted}</a>
 </div></header>`;
@@ -211,6 +217,8 @@ ${col(T.fLegal, T.legal)}
 <p class="legal">© ${new Date().getFullYear()} THE BUSINESS CLERK LLC. ${T.legalLine}</p>
 </div></footer>
 <script>{const b=document.querySelector('.menu'),n=document.getElementById('nav');b&&b.addEventListener('click',()=>{const o=n.classList.toggle('open');b.setAttribute('aria-expanded',o)});
+for(const d of document.querySelectorAll('.dd>button'))d.addEventListener('click',()=>{const p=d.parentNode,o=!p.classList.contains('open');document.querySelectorAll('.dd.open').forEach(x=>{x.classList.remove('open');x.firstChild.setAttribute('aria-expanded','false')});if(o){p.classList.add('open');d.setAttribute('aria-expanded','true')}});
+document.addEventListener('click',e=>{if(!e.target.closest('.dd'))document.querySelectorAll('.dd.open').forEach(x=>{x.classList.remove('open');x.firstChild.setAttribute('aria-expanded','false')})});
 for(const f of document.querySelectorAll('form[data-mail]')){f.addEventListener('submit',e=>{e.preventDefault();const d=new FormData(f),lines=[];for(const [k,v] of d)if(v)lines.push(k+': '+v);const subj=encodeURIComponent(f.dataset.mail),body=encodeURIComponent(lines.join('\\n'));const m=f.querySelector('.formmsg');m.style.display='block';m.querySelector('a').href='mailto:${C.email}?subject='+subj+'&body='+body;m.scrollIntoView({block:'nearest'})})}}</script>
 </body></html>`;
 }
