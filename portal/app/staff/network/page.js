@@ -5,7 +5,7 @@ import { requireStaff } from '@/lib/auth';
 
 const fields = fd => {
   const g = k => String(fd.get(k) || '').trim();
-  return { name: g('name'), firm: g('firm'), category: g('category'), bio: g('bio') || null, note: g('note') || null, website: g('website') || null, photo_url: g('photo_url') || null, sort: Number(g('sort')) || 100 };
+  return { languages: g('languages') ? g('languages').split(',').map(x => x.trim()).filter(Boolean) : null, email: g('email') || null, name: g('name'), firm: g('firm'), category: g('category'), bio: g('bio') || null, note: g('note') || null, website: g('website') || null, photo_url: g('photo_url') || null, sort: Number(g('sort')) || 100 };
 };
 const fail = e => redirect('/staff/network?error=' + encodeURIComponent(/website|photo/.test(e.message) ? 'Links must start with https://' : e.message));
 
@@ -35,9 +35,11 @@ const Form = ({ p, action, label }) => (
     {p && <input type="hidden" name="id" value={p.id} />}
     <div className="row"><label>Firm<input name="firm" required defaultValue={p?.firm} /></label><label>Person<input name="name" required defaultValue={p?.name} /></label></div>
     <div className="row"><label>Category<input name="category" required defaultValue={p?.category} placeholder="Immigration attorney" /></label><label>Order (lower shows first)<input name="sort" type="number" defaultValue={p?.sort ?? 100} /></label></div>
+    <label>Partner email (receives client requests)<input name="email" type="email" defaultValue={p?.email || ''} /></label>
+    <label>Languages (comma separated)<input name="languages" defaultValue={(p?.languages || []).join(', ')} placeholder="English, Spanish" /></label>
     <label>Short bio (2-3 lines)<textarea name="bio" rows="2" defaultValue={p?.bio || ''} /></label>
     <label>Required notice (e.g. bar admission)<input name="note" defaultValue={p?.note || ''} /></label>
-    <div className="row"><label>Website (https://…)<input name="website" type="url" defaultValue={p?.website || ''} /></label><label>Photo or logo link (https://…)<input name="photo_url" type="url" defaultValue={p?.photo_url || ''} /></label></div>
+    <div className="row"><label>Website, for your records only (https://…)<input name="website" type="url" defaultValue={p?.website || ''} /></label><label>Photo or logo link (https://…)<input name="photo_url" type="url" defaultValue={p?.photo_url || ''} /></label></div>
     {p && <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" name="active" defaultChecked={p.active} style={{ width: 'auto' }} />Show to clients</label>}
     <button className="btn small">{label}</button>
   </form>);
@@ -53,10 +55,10 @@ export default async function ManageNetwork({ searchParams }) {
     <p className="sub">Partners show only on the client portal page <a href="/network">/network</a>, never on the public site.</p>
     {searchParams?.error && <div className="note">{searchParams.error}</div>}
     {searchParams?.saved && <p className="ok-msg">Saved.</p>}
-    <h2>Introduction requests</h2>
+    <h2>Requests sent to partners</h2>
     <div className="scroll"><table><thead><tr><th>Date</th><th>Client</th><th>Partner</th><th>Note</th><th>Status</th></tr></thead><tbody>
       {(intros || []).map(i => <tr key={i.id}><td>{new Date(i.created_at).toLocaleDateString('en-US')}</td><td>{i.profiles?.full_name || i.profiles?.email}<div className="muted">{i.profiles?.email}</div></td><td>{i.network_partners?.firm}</td><td>{i.message || <span className="muted">-</span>}</td>
-        <td><form action={setStatus} style={{ display: 'flex', gap: 6 }}><input type="hidden" name="id" value={i.id} /><select name="status" defaultValue={i.status}><option value="new">New</option><option value="introduced">Introduced</option><option value="closed">Closed</option></select><button className="btn small sec">Save</button></form></td></tr>)}
+        <td><form action={setStatus} style={{ display: 'flex', gap: 6 }}><input type="hidden" name="id" value={i.id} /><select name="status" defaultValue={i.status}><option value="new">New</option><option value="introduced">Became their client</option><option value="closed">Closed</option></select><button className="btn small sec">Save</button></form></td></tr>)}
       {!intros?.length && <tr><td colSpan="5" className="muted">No requests yet.</td></tr>}
     </tbody></table></div>
     <h2 style={{ marginTop: 28 }}>Partners</h2>
