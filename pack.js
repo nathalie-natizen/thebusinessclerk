@@ -1,4 +1,4 @@
-// Annual Compliance Pack: the main recurring plan. Hero card (home EN/PT/ES) and its own page in each language.
+// Annual Essentials Pack: the main recurring plan. Hero card (home EN/PT/ES) and its own page in each language.
 const C = require('./config');
 const P = C.prices, F = C.stateFees;
 const SEP = P.raAnnual + P.annualReport + 12 * P.mailBasic; // price if bought separately
@@ -6,17 +6,17 @@ const SAVE = SEP - P.bundle;
 const START = lang => `https://app.thebusinessclerk.com/start?service=bundle&lang=${lang}`;
 
 const T = {
-  en: { cur: '$', name: 'Annual Compliance Pack', tag: 'Most popular', per: 'per year', sep: `$${SEP}+ if bought separately`,
+  en: { cur: '$', name: 'Annual Essentials Pack', tag: 'Most popular', per: 'per year', sep: `$${SEP}+ if bought separately`,
     items: ['Florida registered agent, all year', 'Annual report filed for you before May 1', 'Professional Florida business address', 'Mail forwarded on your schedule, or a “no mail” notice', 'Legal documents scanned to your portal same day', 'Renews automatically, nothing to remember'],
     whyH: 'Why owners choose it', incH: 'What’s included',
     why: [['home', 'Home address kept private', 'Our office goes on the public record, not your house.'], ['pin', 'Real Florida business address', 'Look established on your website, invoices and cards.'], ['mail', 'Mail forwarded to you', 'We collect it and forward it on your schedule.'], ['cal', 'No missed deadlines', 'No $400 late fee. We file your annual report for you.']],
     note: 'Plus Florida state fees and forwarding shipping, at cost.', cta: 'Get the pack', more: 'See everything included →', href: 'compliance-pack.html' },
-  pt: { cur: 'US$ ', name: 'Pacote Anual Empresa em Dia', tag: 'Mais escolhido', per: 'por ano', sep: `US$ ${SEP}+ se contratado separadamente`,
+  pt: { cur: 'US$ ', name: 'Pacote Anual Essencial', tag: 'Mais escolhido', per: 'por ano', sep: `US$ ${SEP}+ se contratado separadamente`,
     items: ['Agente registrado na Flórida o ano todo', 'Relatório anual enviado por nós antes de 1º de maio', 'Endereço comercial profissional na Flórida', 'Correspondência encaminhada na sua frequência, ou um aviso de “sem correspondência”', 'Documentos legais digitalizados no seu portal no mesmo dia', 'Renova automaticamente, nada para lembrar'],
     whyH: 'Por que os empresários escolhem', incH: 'O que está incluído',
     why: [['home', 'Endereço residencial em sigilo', 'Nosso escritório vai no registro público, não a sua casa.'], ['pin', 'Endereço comercial na Flórida', 'Mais credibilidade no site, nas faturas e nos cartões.'], ['mail', 'Correspondência encaminhada', 'Recebemos e encaminhamos na frequência que você escolher.'], ['cal', 'Nenhum prazo perdido', 'Sem multa de US$ 400. Enviamos seu relatório anual por você.']],
     note: 'Mais as taxas estaduais da Flórida e o frete do encaminhamento, pelo custo.', cta: 'Quero o pacote', more: 'Veja tudo o que está incluído →', href: 'pt/pacote-anual.html' },
-  es: { cur: 'US$ ', name: 'Paquete Anual Empresa al Día', tag: 'El más elegido', per: 'por año', sep: `US$ ${SEP}+ si se contrata por separado`,
+  es: { cur: 'US$ ', name: 'Paquete Anual Esencial', tag: 'El más elegido', per: 'por año', sep: `US$ ${SEP}+ si se contrata por separado`,
     items: ['Agente registrado en Florida todo el año', 'Reporte anual presentado por nosotros antes del 1 de mayo', 'Dirección comercial profesional en Florida', 'Correo reenviado con la frecuencia que elijas, o un aviso de “sin correo”', 'Documentos legales escaneados a tu portal el mismo día', 'Se renueva automáticamente, nada que recordar'],
     whyH: 'Por qué lo eligen los empresarios', incH: 'Qué incluye',
     why: [['home', 'Tu dirección de casa, privada', 'Nuestra oficina va en el registro público, no tu casa.'], ['pin', 'Dirección comercial en Florida', 'Más credibilidad en tu web, facturas y tarjetas.'], ['mail', 'Correo reenviado a ti', 'Lo recibimos y te lo reenviamos con la frecuencia que elijas.'], ['cal', 'Ningún plazo perdido', 'Sin multa de US$ 400. Presentamos tu reporte anual por ti.']],
@@ -50,10 +50,10 @@ const CSS = `
 
 // Page content per language (markdown + benefits grid)
 const PAGE = {
-  en: { path: 'compliance-pack.html', crumb: 'Annual Compliance Pack', kicker: 'Our main plan',
-    title: `Annual Compliance Pack: Registered Agent, Annual Report & Florida Business Address for $${P.bundle}/year | The Business Clerk`,
+  en: { path: 'compliance-pack.html', crumb: 'Annual Essentials Pack', kicker: 'Our main plan',
+    title: `Annual Essentials Pack: Registered Agent, Annual Report & Florida Business Address for $${P.bundle}/year | The Business Clerk`,
     desc: `One yearly subscription that keeps your Florida company compliant: registered agent, annual report filing and a professional business address with mail forwarding. $${P.bundle}/year.`,
-    h1: 'Stay compliant all year, with one simple subscription.',
+    h1: 'Your Florida essentials, handled all year, with one simple subscription.',
     lead: `Registered agent, your annual report filed on time and a professional Florida business address with mail forwarding, for $${P.bundle} a year. Set it once and stop worrying about deadlines.`,
     cta: `Get the pack for $${P.bundle}/year`,
     benefitsH: 'Why business owners choose the pack',
@@ -68,7 +68,7 @@ const PAGE = {
 - **Your client portal.** Every piece of mail logged with a photo of the envelope, every document and deadline in one place.
 
 ## Pricing
-| | Separately | Annual Compliance Pack |
+| | Separately | Annual Essentials Pack |
 |---|---|---|
 | Registered agent | $${P.raAnnual}/year | Included |
 | Annual report filing | $${P.annualReport}/year | Included |
@@ -83,10 +83,10 @@ Not included: the Florida annual report state fee (at cost) and postage for forw
 2. **Complete USPS Form 1583** in your portal (two IDs). USPS requires it before we can receive mail for you.
 3. **Pick your forwarding address and schedule.** We take care of the rest, every year, until you cancel.`,
     faqs: [['Is it a subscription?', 'Yes. It renews automatically every year on your card on file, so your company stays compliant without you having to remember anything. You can turn off the renewal any time before the renewal date.'], ['What do I pay besides the $' + P.bundle + '?', 'Only the Florida annual report state fee, charged at cost when we file, and postage for the mail we forward to you.'], ['Can our address be used for the managers and members listed on Sunbiz?', 'Yes. Florida asks for a street address for the managers, officers and authorized persons on your annual report, not a home address. With the pack, your company and the people listed on its record can use our Florida address, so their home addresses stay off the public record. Their names are still public, and everyone who receives mail at our address must be listed on your USPS Form 1583.'], ['Can I use the address as my business address?', 'Yes, for your website, invoices, marketing and correspondence. Some banks and licensing agencies require a physical business location; ask us before you rely on it for a specific purpose.'], ['I already have a registered agent. Can I switch?', 'Yes. We file the change of registered agent with Florida within one business day of your order.']] },
-  pt: { path: 'pt/pacote-anual.html', crumb: 'Pacote Anual Empresa em Dia', kicker: 'Nosso plano principal',
-    title: `Pacote Anual Empresa em Dia: agente registrado, relatório anual e endereço comercial na Flórida por US$ ${P.bundle}/ano | The Business Clerk`,
+  pt: { path: 'pt/pacote-anual.html', crumb: 'Pacote Anual Essencial', kicker: 'Nosso plano principal',
+    title: `Pacote Anual Essencial: agente registrado, relatório anual e endereço comercial na Flórida por US$ ${P.bundle}/ano | The Business Clerk`,
     desc: `Uma assinatura anual que mantém sua empresa na Flórida em dia: agente registrado, relatório anual e endereço comercial com encaminhamento de correspondência. US$ ${P.bundle}/ano.`,
-    h1: 'Sua empresa em dia o ano inteiro, com uma única assinatura.',
+    h1: 'O essencial da sua empresa na Flórida resolvido o ano inteiro, com uma única assinatura.',
     lead: `Agente registrado, relatório anual enviado no prazo e um endereço comercial profissional na Flórida com encaminhamento de correspondência, por US$ ${P.bundle} por ano. Você contrata uma vez e esquece os prazos.`,
     cta: `Quero o pacote por US$ ${P.bundle}/ano`,
     benefitsH: 'Por que os empresários escolhem o pacote',
@@ -101,7 +101,7 @@ Not included: the Florida annual report state fee (at cost) and postage for forw
 - **Seu portal do cliente.** Cada correspondência registrada com foto do envelope; documentos e prazos em um só lugar.
 
 ## Preço
-| | Separado | Pacote Anual Empresa em Dia |
+| | Separado | Pacote Anual Essencial |
 |---|---|---|
 | Agente registrado | US$ ${P.raAnnual}/ano | Incluído |
 | Relatório anual | US$ ${P.annualReport}/ano | Incluído |
@@ -116,10 +116,10 @@ Não incluído: a taxa estadual do relatório anual (pelo custo) e a postagem da
 2. **Preencha o Formulário USPS 1583** no portal (dois documentos). O USPS exige antes de recebermos correspondência para você.
 3. **Escolha o endereço e a frequência de envio.** Nós cuidamos do resto, todo ano, até você cancelar.`,
     faqs: [['É uma assinatura?', 'Sim. Renova automaticamente todo ano no cartão cadastrado, para sua empresa ficar em dia sem você precisar lembrar de nada. Você pode desligar a renovação quando quiser, antes da data de renovação.'], [`O que eu pago além dos US$ ${P.bundle}?`, 'Só a taxa estadual do relatório anual, cobrada pelo custo no envio, e a postagem da correspondência que encaminhamos.'], ['Os administradores e sócios listados no Sunbiz podem usar o endereço de vocês?', 'Sim. A Flórida pede um endereço de rua para os administradores, diretores e pessoas autorizadas no relatório anual, não um endereço residencial. Com o pacote, sua empresa e as pessoas listadas no registro podem usar nosso endereço na Flórida, e o endereço de casa delas não fica público. Os nomes continuam públicos, e todos que recebem correspondência no nosso endereço precisam estar no Formulário USPS 1583 da empresa.'], ['Posso usar o endereço como endereço da empresa?', 'Sim, no site, nas faturas, no marketing e na correspondência. Alguns bancos e órgãos de licença exigem um local físico; consulte-nos antes de usá-lo para um fim específico.'], ['Já tenho agente registrado. Posso trocar?', 'Sim. Registramos a troca de agente na Flórida em até 1 dia útil após o pedido.']] },
-  es: { path: 'es/paquete-anual.html', crumb: 'Paquete Anual Empresa al Día', kicker: 'Nuestro plan principal',
-    title: `Paquete Anual Empresa al Día: agente registrado, reporte anual y dirección comercial en Florida por US$ ${P.bundle}/año | The Business Clerk`,
+  es: { path: 'es/paquete-anual.html', crumb: 'Paquete Anual Esencial', kicker: 'Nuestro plan principal',
+    title: `Paquete Anual Esencial: agente registrado, reporte anual y dirección comercial en Florida por US$ ${P.bundle}/año | The Business Clerk`,
     desc: `Una suscripción anual que mantiene tu empresa en Florida al día: agente registrado, reporte anual y dirección comercial con reenvío de correo. US$ ${P.bundle}/año.`,
-    h1: 'Tu empresa al día todo el año, con una sola suscripción.',
+    h1: 'Lo esencial de tu empresa en Florida resuelto todo el año, con una sola suscripción.',
     lead: `Agente registrado, tu reporte anual presentado a tiempo y una dirección comercial profesional en Florida con reenvío de correo, por US$ ${P.bundle} al año. Lo contratas una vez y te olvidas de los plazos.`,
     cta: `Quiero el paquete por US$ ${P.bundle}/año`,
     benefitsH: 'Por qué los empresarios eligen el paquete',
@@ -134,7 +134,7 @@ Não incluído: a taxa estadual do relatório anual (pelo custo) e a postagem da
 - **Tu portal de cliente.** Cada correo registrado con foto del sobre; documentos y plazos en un solo lugar.
 
 ## Precio
-| | Por separado | Paquete Anual Empresa al Día |
+| | Por separado | Paquete Anual Esencial |
 |---|---|---|
 | Agente registrado | US$ ${P.raAnnual}/año | Incluido |
 | Reporte anual | US$ ${P.annualReport}/año | Incluido |
