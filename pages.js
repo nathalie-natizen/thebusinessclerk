@@ -289,7 +289,7 @@ pages.push(servicePage({
 - **Bank accounts**: some U.S. banks require an in-person visit; others open accounts online. We explain the requirements, but we can't guarantee approval.
 - **Tax filings**: foreign-owned single-member LLCs generally must file IRS Form 5472 with a pro forma Form 1120 every year, even with no income. Penalties for missing it can reach $25,000. We'll refer you to a qualified tax professional.
 - **Immigration**: owning a U.S. company does not by itself give you the right to live or work in the U.S. Ask an immigration attorney.
-> We are not a law firm or a CPA firm. For legal, tax or immigration advice we refer you to independent licensed professionals.
+> We are not a law firm or a CPA firm. For legal, tax or immigration advice, please consult an independent licensed professional.
 ## Falamos português. Hablamos español.
 Our team works in English, Portuguese and Spanish, so you can understand every step of the process.`,
   aside: rel => priceCard('Florida LLC Formation', `$${P.formation}`, 'one time', ['State fee included', 'First-year registered agent', `EIN for non-SSN owners: +$${P.ein}`, 'Service in EN / PT / ES'], 'get-started.html', 'Start now', rel) + linksCard('Guides', [['resources/florida-llc-for-non-residents.html', 'Florida LLC for non-residents'], ['resources/registered-agent-vs-virtual-address.html', 'Agent vs. virtual address']], rel),
@@ -359,7 +359,7 @@ Starting a business shouldn't require five different websites, hidden fees and a
 ## Who we are
 THE BUSINESS CLERK LLC is a Florida company with a staffed office in the state. Our founder has a background in bookkeeping, business filings and back-office operations for law firms and small businesses, and our team works in English, Portuguese and Spanish.
 ## What we are not
-We are not a law firm, a CPA firm or a government agency, and we are not affiliated with the Florida Department of State. We provide administrative filing, registered agent and mail-handling services. When you need legal, tax or immigration advice, we refer you to independent licensed professionals.`,
+We are not a law firm, a CPA firm or a government agency, and we are not affiliated with the Florida Department of State. We provide administrative filing, registered agent and mail-handling services. For legal, tax or immigration advice, please consult an independent licensed professional.`,
 }));
 
 pages.push(servicePage({
@@ -376,7 +376,7 @@ pages.push(servicePage({
     ['When is my Florida annual report due?', `Between January 1 and May 1 each year. After May 1, the LLC fee rises from $${F.llcAnnual} to $${F.llcAnnualLate}.`],
     ['What if my company was administratively dissolved?', 'You can usually reinstate it by filing a reinstatement with all missed annual reports and fees. [See the reinstatement guide](resources/florida-llc-reinstatement.html).'],
     ['Is your business address a physical office?', 'Yes, it is our staffed Florida office. Mail is received under your PMB (private mailbox) number. Some banks and agencies have their own rules about addresses, so check before relying on it for a specific registration.'],
-    ['Do you give legal or tax advice?', 'No. We are not a law firm or CPA firm. We provide filing, registered agent and mail services, and we can refer you to independent licensed professionals.'],
+    ['Do you give legal or tax advice?', 'No. We are not a law firm or CPA firm. We provide filing, registered agent and mail services. For legal or tax advice, please consult an independent licensed professional.'],
     ['Which languages do you speak?', 'English, Portuguese and Spanish.'],
     ['How do I get my documents?', 'Everything we file or receive for you is uploaded to your client account, and you get an email notification.'],
   ],
