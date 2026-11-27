@@ -3,12 +3,12 @@ import { supabaseAdmin } from './supabase/admin';
 
 const APP = process.env.NEXT_PUBLIC_APP_URL || 'https://app.thebusinessclerk.com';
 
-export async function sendEmail(to, subject, text) {
+export async function sendEmail(to, subject, text, { replyTo } = {}) {
   if (!process.env.RESEND_API_KEY) return { ok: false, error: 'email not configured' };
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: process.env.EMAIL_FROM, to, subject, text }),
+    body: JSON.stringify({ from: process.env.EMAIL_FROM, to, subject, text, ...(replyTo ? { reply_to: replyTo } : {}) }),
   });
   return r.ok ? { ok: true } : { ok: false, error: await r.text() };
 }
