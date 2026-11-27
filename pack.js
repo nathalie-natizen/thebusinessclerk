@@ -7,13 +7,13 @@ const SCAN = (P.scanLevels.find(l => !l[1]) || P.scanLevels[0])[3];
 const START = lang => `https://app.thebusinessclerk.com/start?service=bundle&lang=${lang}`;
 
 const T = {
-  en: { cur: '$', name: 'Annual Compliance Pack', tag: 'Most popular', per: 'per year', sep: `$${SEP} if bought separately · save $${SAVE}`,
+  en: { cur: '$', name: 'Annual Compliance Pack', tag: 'Most popular', per: 'per year', sep: `$${SEP} if bought separately`,
     items: ['Florida registered agent, all year', 'Annual report filed for you before May 1', 'Professional Florida business address', 'Mail forwarded weekly, every two weeks or monthly: you pay only postage', 'Never miss a deadline: renews automatically'],
     note: 'Plus the Florida annual report state fee, at cost.', cta: 'Get the pack', more: 'See everything included →', href: 'compliance-pack.html' },
-  pt: { cur: 'US$ ', name: 'Pacote Anual Empresa em Dia', tag: 'Mais escolhido', per: 'por ano', sep: `US$ ${SEP} se contratado separadamente · economize US$ ${SAVE}`,
+  pt: { cur: 'US$ ', name: 'Pacote Anual Empresa em Dia', tag: 'Mais escolhido', per: 'por ano', sep: `US$ ${SEP} se contratado separadamente`,
     items: ['Agente registrado na Flórida o ano todo', 'Relatório anual enviado por nós antes de 1º de maio', 'Endereço comercial profissional na Flórida', 'Correspondência encaminhada toda semana, a cada 15 dias ou todo mês: você paga só a postagem', 'Nunca perca um prazo: renova automaticamente'],
     note: 'Mais a taxa estadual do relatório anual, pelo custo.', cta: 'Quero o pacote', more: 'Veja tudo o que está incluído →', href: 'pt/pacote-anual.html' },
-  es: { cur: 'US$ ', name: 'Paquete Anual Empresa al Día', tag: 'El más elegido', per: 'por año', sep: `US$ ${SEP} si se contrata por separado · ahorras US$ ${SAVE}`,
+  es: { cur: 'US$ ', name: 'Paquete Anual Empresa al Día', tag: 'El más elegido', per: 'por año', sep: `US$ ${SEP} si se contrata por separado`,
     items: ['Agente registrado en Florida todo el año', 'Reporte anual presentado por nosotros antes del 1 de mayo', 'Dirección comercial profesional en Florida', 'Correo reenviado cada semana, cada 15 días o cada mes: solo pagas el franqueo', 'Nunca pierdas una fecha límite: se renueva automáticamente'],
     note: 'Más la tarifa estatal del reporte anual, al costo.', cta: 'Quiero el paquete', more: 'Mira todo lo que incluye →', href: 'es/paquete-anual.html' },
 };
