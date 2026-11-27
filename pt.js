@@ -125,7 +125,7 @@ const intl = servicePage({
 - **Conta bancária**: alguns bancos americanos exigem visita presencial; outros abrem contas online. Explicamos os requisitos, mas não garantimos a aprovação.
 - **Obrigações fiscais**: LLCs de um único sócio estrangeiro geralmente precisam enviar todo ano o Formulário 5472 do IRS com um Formulário 1120 pro forma, mesmo sem receita. A multa por não enviar pode chegar a US$ 25.000. Indicamos um profissional de impostos qualificado.
 - **Imigração**: ter uma empresa nos EUA não dá, por si só, direito de morar ou trabalhar no país. Consulte um advogado de imigração.
-> Não somos escritório de advocacia nem de contabilidade. Para orientação jurídica, tributária ou de imigração, indicamos profissionais independentes e habilitados.`,
+> Não somos escritório de advocacia nem de contabilidade. Para orientação jurídica, tributária ou de imigração, consulte um profissional independente e habilitado.`,
   aside: rel => priceCard('LLC na Flórida', $(P.formation), 'pagamento único', ['Taxa estadual incluída', '1º ano de agente registrado', `EIN sem SSN: +${$(P.ein)}`, 'Atendimento em português'], 'pt/comecar.html', 'Começar agora', rel) + linksCard('Guias', [['pt/guias/llc-na-florida-para-nao-residentes.html', 'LLC na Flórida para não residentes'], ['pt/guias/o-que-e-agente-registrado.html', 'O que é um agente registrado?']], rel),
 });
 
