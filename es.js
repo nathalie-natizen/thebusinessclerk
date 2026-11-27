@@ -17,7 +17,8 @@ const home = homeL('es', {
   svcP: 'En lugar de contratar a varios proveedores, resuelves todo en un solo lugar y mantienes tu empresa al día, año tras año.',
   services: [
     ['agent', 'Agente Registrado en Florida', 'Nuestra oficina en Florida recibe tu correo legal y del estado, lo escanea y te avisa el mismo día.', 'es/agente-registrado-florida.html', `${$(P.raAnnual)}/año`],
-    ['form', 'Formación de LLC y Corporación', 'Presentamos tus Articles ante la División de Corporaciones de Florida y somos tu agente registrado.', 'es/abrir-llc-en-florida.html', `${$(P.formation)} todo incluido`],
+    ['form', 'Formación de LLC en Florida', 'Presentamos tus Articles of Organization ante la División de Corporaciones de Florida y somos tu agente registrado.', 'es/abrir-llc-en-florida.html', `${$(P.formation)} todo incluido`],
+    ['form', 'Formación de Corporación en Florida', 'Presentamos tus Articles of Incorporation ante el estado de Florida y somos tu agente registrado.', 'es/precios.html', `${$(P.formationCorp)} todo incluido`],
     ['globe', 'Emprendedores Internacionales', '¿Vives fuera de EE. UU.? Abre tu LLC en Florida a distancia, con EIN sin SSN.', 'es/emprendedores-internacionales.html', '100% remoto'],
     ['cal', 'Reporte Anual y Trámites', 'Reporte anual automático, enmiendas, cambio de agente, reinstalación y disolución.', 'es/precios.html', `Reporte anual ${$(P.annualReport)}`, 'Ver precios →'],
     ['mail', 'Dirección Comercial y Correo', 'Dirección comercial en Florida. Tú eliges para cada carta: reenviar, abrir y escanear o destruir.', 'es/precios.html', `${$(P.mailBasic)}/mes`, 'Ver precios →'],
