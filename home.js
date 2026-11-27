@@ -50,7 +50,8 @@ const icon = {
 
 const services = [
   ['agent', 'Florida Registered Agent', `Our Florida office receives your legal and state mail during business hours. We scan it and notify you the same day.`, 'florida-registered-agent.html', `$${C.prices.raAnnual}/year`],
-  ['form', 'LLC & Corporation Formation', `We file your Articles with the Florida Division of Corporations, serve as your agent and deliver your documents.`, 'florida-llc-formation.html', `$${C.prices.formation} all-in`],
+  ['form', 'Florida LLC Formation', `We file your Articles of Organization with the Florida Division of Corporations, serve as your agent and deliver your documents.`, 'florida-llc-formation.html', `$${C.prices.formation} all-in`],
+  ['form', 'Florida Corporation Formation', `We file your Articles of Incorporation with the State of Florida, serve as your agent and deliver your documents.`, 'florida-corporation-formation.html', `$${C.prices.formationCorp} all-in`],
   ['cal', 'Annual Reports & Filings', `Annual reports, amendments, agent changes, reinstatements, dissolutions and certificates.`, 'business-filings.html', `Annual report $${C.prices.annualReport}`],
   ['mail', 'Business Address & Mail', `A professional Florida mailing address. For each piece of mail you choose: forward it, open and scan it to your portal, or shred it.`, 'business-address-mail.html', `from $${C.prices.mailBasic}/month`],
   ['globe', 'International Founders', `Living outside the U.S.? Form a Florida LLC remotely, in English, Portuguese or Spanish.`, 'international-founders.html', 'Remote-friendly'],
