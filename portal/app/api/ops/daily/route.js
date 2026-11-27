@@ -41,10 +41,10 @@ export async function GET(req) {
     const bskip = new Set((bdone || []).map(o => o.entity_id));
     for (const e of bents || []) {
       if (bskip.has(e.id) || new Date(e.created_at).getFullYear() === year) continue;
-      const { data: o } = await db.from('orders').insert({ entity_id: e.id, kind: 'annual_report', service: `Annual Report Filing ${year} (included in your Annual Compliance Pack)`, status: 'information_needed', amount_cents: 0, source: 'bundle' }).select().single();
+      const { data: o } = await db.from('orders').insert({ entity_id: e.id, kind: 'annual_report', service: `Annual Report Filing ${year} (included in your Annual Essentials Pack)`, status: 'information_needed', amount_cents: 0, source: 'bundle' }).select().single();
       if (!o) continue;
-      await db.from('order_events').insert({ order_id: o.id, status: 'information_needed', note: 'Included in your Annual Compliance Pack. Please answer the short annual report questions so we can file. The Florida state fee is charged at cost when we file.', notified: true });
-      await notifyEntity(e.id, { category: 'compliance', subject: `Your ${year} Florida annual report: please confirm your information`, text: `Your Annual Compliance Pack includes the ${year} Florida annual report for ${e.legal_name}. Please answer a few short questions in your portal so we can file it before May 1: ${APP}/e/${e.file_number}/orders/${o.id}\n\nThe Florida state fee is charged at cost when we file.`, sms: `THE BUSINESS CLERK: please confirm your ${year} annual report info for ${e.legal_name}:` });
+      await db.from('order_events').insert({ order_id: o.id, status: 'information_needed', note: 'Included in your Annual Essentials Pack. Please answer the short annual report questions so we can file. The Florida state fee is charged at cost when we file.', notified: true });
+      await notifyEntity(e.id, { category: 'compliance', subject: `Your ${year} Florida annual report: please confirm your information`, text: `Your Annual Essentials Pack includes the ${year} Florida annual report for ${e.legal_name}. Please answer a few short questions in your portal so we can file it before May 1: ${APP}/e/${e.file_number}/orders/${o.id}\n\nThe Florida state fee is charged at cost when we file.`, sms: `THE BUSINESS CLERK: please confirm your ${year} annual report info for ${e.legal_name}:` });
       bundleReports++;
     }
   }
