@@ -84,7 +84,7 @@ const body = rel => `
 <section class="band sand"><div class="wrap split">
 <div><p class="kicker">Why founders choose us</p><h2 style="margin-top:0">A real Florida office, not a mailbox in a warehouse.</h2>
 <p>Our staff is on site every business day, including the hours Florida law requires registered agents to be available. When a process server or the state sends something, a person receives it, logs it, scans it and notifies you the same day.</p>
-<p>We are a small, specialized team. You get a clear answer from someone who knows Florida filings, not a ticket number.</p></div>
+<p>Our specialists know Florida filings inside and out. Every question gets a clear, personal answer, in English, Portuguese or Spanish.</p></div>
 <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))">
 <div class="card"><h3>Same-day notice</h3><p>Legal mail is scanned and uploaded to your account the day it arrives.</p></div>
 <div class="card"><h3>Privacy</h3><p>Our address goes on the public record instead of your home address.</p></div>
