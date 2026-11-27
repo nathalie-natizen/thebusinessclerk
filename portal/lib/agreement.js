@@ -4,7 +4,7 @@
 import { clientTerms } from './guidelines';
 import { FILINGS, FILING_KINDS } from './filings';
 
-export const AGREEMENT_VERSION = '2026-11-26-draft2';
+export const AGREEMENT_VERSION = '2026-11-27-draft3';
 const CO = 'THE BUSINESS CLERK LLC';
 
 const NAMES = { llc: 'Florida LLC Formation', corp: 'Florida Corporation Formation', ra: 'Florida Registered Agent', annual_report: 'Annual Report Filing', ein: 'EIN Application', mail: 'Business Address & Mail (Mail Service Addendum)', launch: 'Launch Pack' };
@@ -72,7 +72,7 @@ const SCHEDULE_TERMS = {
     'Monthly charges are billed on the card on file at month end with an itemized statement. When this service ends, we will forward or return remaining mail per your instruction and handle later mail as USPS rules require.'],
   bundle: [
     'The Annual Compliance Pack combines the Registered Agent, Annual Report Filing and Business Address & Mail schedules of this Agreement, which apply in full, for one yearly fee of $389 charged to the card on file.',
-    'While the pack is active, mail is forwarded on the schedule you choose (weekly, every two weeks or monthly) and you pay only postage at cost: there are no per-item, package or forwarding fees. Open & scan is optional and billed at the regular price only when you request it.',
+    'While the pack is active, mail is forwarded on the schedule you choose (weekly, every two weeks or monthly) and you pay only postage at cost: there are no per-item, package or forwarding fees. Up to 5 open & scan items a month are included; unused scans do not carry over. Additional scans, and pages above 10 per item, are billed at the regular price only when you request them.',
     'The Florida annual report state fee is not included and is charged at cost when we file.',
     'The pack renews automatically every year until you cancel. It replaces any separate registered agent or mail subscription for the same company. The current year is not prorated on cancellation.'],
   launch: [

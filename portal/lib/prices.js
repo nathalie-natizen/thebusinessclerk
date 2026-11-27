@@ -11,7 +11,7 @@ export const CATALOG = {
   annual_report: { name: 'Annual Report Filing (service fee)', cents: 10000, desc: 'State fee charged separately when filed' },
   ein: { name: 'EIN Application', cents: 7500 },
   mail: { name: 'Business Address & Mail (base plan)', cents: 2500, interval: 'month', desc: '30 items logged a month; usage billed at month end' },
-  bundle: { name: 'Annual Compliance Pack: Registered Agent + Annual Report + Business Address & Mail Forwarding', cents: 38900, interval: 'year', desc: 'Registered agent, annual report filing and 12 months of business address with scheduled mail forwarding; you pay only postage, plus the annual report state fee' },
+  bundle: { name: 'Annual Compliance Pack: Registered Agent + Annual Report + Business Address & Mail Forwarding', cents: 38900, interval: 'year', desc: 'Registered agent, annual report filing and 12 months of business address with scheduled mail forwarding and up to 5 scans a month; you pay only postage, plus the annual report state fee' },
   launch: { name: 'Launch Pack', cents: 59900, desc: 'Domain, email and website up to 5 pages, up to 2 revisions' },
   ...Object.fromEntries(Object.entries(FILINGS).map(([k, f]) => [k, { name: `${f.name} (service fee)`, cents: f.cents, desc: f.withRa ? 'Service and first year of registered agent; Florida state fee charged separately when filed' : 'Florida state fee charged separately when filed' }])),
 };

@@ -4,17 +4,18 @@ const P = C.prices, F = C.stateFees;
 const SEP = P.raAnnual + P.annualReport + 12 * P.mailBasic; // price if bought separately
 const SAVE = SEP - P.bundle;
 const SCAN = (P.scanLevels.find(l => !l[1]) || P.scanLevels[0])[3];
+const FS = P.packScans; // free scans per month in the pack
 const START = lang => `https://app.thebusinessclerk.com/start?service=bundle&lang=${lang}`;
 
 const T = {
   en: { cur: '$', name: 'Annual Compliance Pack', tag: 'Most popular', per: 'per year', sep: `$${SEP} if bought separately`,
-    items: ['Florida registered agent, all year', 'Annual report filed for you before May 1', 'Professional Florida business address', 'Mail forwarding on the schedule you choose', 'Never miss a deadline: renews automatically'],
+    items: ['Florida registered agent, all year', 'Annual report filed for you before May 1', 'Professional Florida business address', 'Mail forwarding on the schedule you choose', `Up to ${FS} mail scans a month included`, 'Never miss a deadline: renews automatically'],
     note: 'Plus Florida state fees and forwarding shipping, at cost.', cta: 'Get the pack', more: 'See everything included →', href: 'compliance-pack.html' },
   pt: { cur: 'US$ ', name: 'Pacote Anual Empresa em Dia', tag: 'Mais escolhido', per: 'por ano', sep: `US$ ${SEP} se contratado separadamente`,
-    items: ['Agente registrado na Flórida o ano todo', 'Relatório anual enviado por nós antes de 1º de maio', 'Endereço comercial profissional na Flórida', 'Encaminhamento de correspondência na frequência que você escolher', 'Nunca perca um prazo: renova automaticamente'],
+    items: ['Agente registrado na Flórida o ano todo', 'Relatório anual enviado por nós antes de 1º de maio', 'Endereço comercial profissional na Flórida', 'Encaminhamento de correspondência na frequência que você escolher', `Até ${FS} digitalizações por mês incluídas`, 'Nunca perca um prazo: renova automaticamente'],
     note: 'Mais as taxas estaduais da Flórida e o frete do encaminhamento, pelo custo.', cta: 'Quero o pacote', more: 'Veja tudo o que está incluído →', href: 'pt/pacote-anual.html' },
   es: { cur: 'US$ ', name: 'Paquete Anual Empresa al Día', tag: 'El más elegido', per: 'por año', sep: `US$ ${SEP} si se contrata por separado`,
-    items: ['Agente registrado en Florida todo el año', 'Reporte anual presentado por nosotros antes del 1 de mayo', 'Dirección comercial profesional en Florida', 'Reenvío de correo con la frecuencia que elijas', 'Nunca pierdas una fecha límite: se renueva automáticamente'],
+    items: ['Agente registrado en Florida todo el año', 'Reporte anual presentado por nosotros antes del 1 de mayo', 'Dirección comercial profesional en Florida', 'Reenvío de correo con la frecuencia que elijas', `Hasta ${FS} escaneos de correo al mes incluidos`, 'Nunca pierdas una fecha límite: se renueva automáticamente'],
     note: 'Más las tarifas estatales de Florida y el envío del reenvío, al costo.', cta: 'Quiero el paquete', more: 'Mira todo lo que incluye →', href: 'es/paquete-anual.html' },
 };
 
@@ -49,6 +50,7 @@ const PAGE = {
 - **Annual report, filed for you.** Each January we open your annual report in the portal; you confirm any changes and we file it with Florida before May 1. The state fee ($${F.llcAnnual} LLC / $${F.corpAnnual} corporation) is charged at cost when we file.
 - **Professional Florida business address.** A real street address with your private mailbox (PMB) number for your website, invoices, bank statements and marketing.
 - **Mail forwarding on your schedule.** Choose weekly, every two weeks or monthly. We collect everything that arrives and ship it to you in one package. **You pay only the postage:** no per-envelope, package or forwarding fees.
+- **Up to ${FS} scans a month included.** Want to see a letter right away? Ask us to open and scan it to your portal. Your first ${FS} scans each month are included.
 - **Your client portal.** Every piece of mail logged with a photo of the envelope, every document and deadline in one place.
 
 ## Pricing
@@ -58,15 +60,16 @@ const PAGE = {
 | Annual report filing | $${P.annualReport}/year | Included |
 | Business address & mail | $${P.mailBasic}/month ($${12 * P.mailBasic}/year) | Included |
 | Per-envelope, package and forwarding fees | Yes | **None** |
+| Open & scan | $${SCAN} each | **${FS} a month included** |
 | **Total** | **$${SEP}/year + fees** | **$${P.bundle}/year** |
 
-Not included: the Florida annual report state fee (at cost), postage for forwarded mail (at cost), and optional open & scan if you ask us to scan an item ($${SCAN} each).
+Not included: the Florida annual report state fee (at cost), postage for forwarded mail (at cost), and scans above ${FS} a month ($${SCAN} each, up to ${P.scanPages} pages; $${P.scanPage} per extra page). Unused scans don't carry over.
 
 ## How it works
 1. **Order the pack** online. New company? Form your LLC first; the pack takes over when your included first year of registered agent service ends.
 2. **Complete USPS Form 1583** in your portal (two IDs). USPS requires it before we can receive mail for you.
 3. **Pick your forwarding address and schedule.** We take care of the rest, every year, until you cancel.`,
-    faqs: [['Is it a subscription?', 'Yes. It renews automatically every year on your card on file, so your company stays compliant without you having to remember anything. You can turn off the renewal any time before the renewal date.'], ['What do I pay besides the $' + P.bundle + '?', 'Only the Florida annual report state fee, charged at cost when we file, and postage for the mail we forward to you. Scanning an item is optional and only charged if you ask for it.'], ['Can our address be used for the managers and members listed on Sunbiz?', 'Yes. Florida asks for a street address for the managers, officers and authorized persons on your annual report, not a home address. With the pack, your company and the people listed on its record can use our Florida address, so their home addresses stay off the public record. Their names are still public, and everyone who receives mail at our address must be listed on your USPS Form 1583.'], ['Can I use the address as my business address?', 'Yes, for your website, invoices, marketing and correspondence. Some banks and licensing agencies require a physical business location; ask us before you rely on it for a specific purpose.'], ['I already have a registered agent. Can I switch?', 'Yes. We file the change of registered agent with Florida within one business day of your order.']] },
+    faqs: [['Is it a subscription?', 'Yes. It renews automatically every year on your card on file, so your company stays compliant without you having to remember anything. You can turn off the renewal any time before the renewal date.'], ['What do I pay besides the $' + P.bundle + '?', 'Only the Florida annual report state fee, charged at cost when we file, and postage for the mail we forward to you. Your first ${FS} scans each month are included; more scans are only charged if you ask for them.'], ['Can our address be used for the managers and members listed on Sunbiz?', 'Yes. Florida asks for a street address for the managers, officers and authorized persons on your annual report, not a home address. With the pack, your company and the people listed on its record can use our Florida address, so their home addresses stay off the public record. Their names are still public, and everyone who receives mail at our address must be listed on your USPS Form 1583.'], ['Can I use the address as my business address?', 'Yes, for your website, invoices, marketing and correspondence. Some banks and licensing agencies require a physical business location; ask us before you rely on it for a specific purpose.'], ['I already have a registered agent. Can I switch?', 'Yes. We file the change of registered agent with Florida within one business day of your order.']] },
   pt: { path: 'pt/pacote-anual.html', crumb: 'Pacote Anual Empresa em Dia', kicker: 'Nosso plano principal',
     title: `Pacote Anual Empresa em Dia: agente registrado, relatório anual e endereço comercial na Flórida por US$ ${P.bundle}/ano | The Business Clerk`,
     desc: `Uma assinatura anual que mantém sua empresa na Flórida em dia: agente registrado, relatório anual e endereço comercial com encaminhamento de correspondência. US$ ${P.bundle}/ano.`,
@@ -81,6 +84,7 @@ Not included: the Florida annual report state fee (at cost), postage for forward
 - **Relatório anual enviado por nós.** Todo mês de janeiro abrimos seu relatório anual no portal; você confirma as alterações e enviamos à Flórida antes de 1º de maio. A taxa estadual (US$ ${F.llcAnnual} LLC / US$ ${F.corpAnnual} corporação) é cobrada pelo custo no envio.
 - **Endereço comercial profissional na Flórida.** Um endereço real com seu número de caixa postal privada (PMB) para site, faturas, extratos e marketing.
 - **Correspondência encaminhada na sua frequência.** Toda semana, a cada 15 dias ou todo mês. Juntamos tudo o que chegar e enviamos em um só pacote. **Você paga só a postagem:** sem taxa por envelope, pacote ou encaminhamento.
+- **Até ${FS} digitalizações por mês incluídas.** Quer ver uma carta na hora? Peça para abrirmos e digitalizarmos no seu portal. As primeiras ${FS} digitalizações de cada mês estão incluídas.
 - **Seu portal do cliente.** Cada correspondência registrada com foto do envelope; documentos e prazos em um só lugar.
 
 ## Preço
@@ -90,15 +94,16 @@ Not included: the Florida annual report state fee (at cost), postage for forward
 | Relatório anual | US$ ${P.annualReport}/ano | Incluído |
 | Endereço comercial e correspondência | US$ ${P.mailBasic}/mês (US$ ${12 * P.mailBasic}/ano) | Incluído |
 | Taxas por envelope, pacote e encaminhamento | Sim | **Nenhuma** |
+| Abrir e digitalizar | US$ ${SCAN.replace('.', ',')} cada | **${FS} por mês incluídas** |
 | **Total** | **US$ ${SEP}/ano + taxas** | **US$ ${P.bundle}/ano** |
 
-Não incluído: a taxa estadual do relatório anual (pelo custo), a postagem da correspondência encaminhada (pelo custo) e, se você pedir, abrir e digitalizar um item (US$ ${SCAN} cada).
+Não incluído: a taxa estadual do relatório anual (pelo custo), a postagem da correspondência encaminhada (pelo custo) e digitalizações acima de ${FS} por mês (US$ ${SCAN.replace('.', ',')} cada, até ${P.scanPages} páginas; US$ ${P.scanPage.replace('.', ',')} por página extra). Digitalizações não usadas não acumulam.
 
 ## Como funciona
 1. **Contrate o pacote** online. Empresa nova? Abra sua LLC primeiro; o pacote assume quando terminar o 1º ano de agente registrado incluído.
 2. **Preencha o Formulário USPS 1583** no portal (dois documentos). O USPS exige antes de recebermos correspondência para você.
 3. **Escolha o endereço e a frequência de envio.** Nós cuidamos do resto, todo ano, até você cancelar.`,
-    faqs: [['É uma assinatura?', 'Sim. Renova automaticamente todo ano no cartão cadastrado, para sua empresa ficar em dia sem você precisar lembrar de nada. Você pode desligar a renovação quando quiser, antes da data de renovação.'], [`O que eu pago além dos US$ ${P.bundle}?`, 'Só a taxa estadual do relatório anual, cobrada pelo custo no envio, e a postagem da correspondência que encaminhamos. Digitalizar um item é opcional e só é cobrado se você pedir.'], ['Os administradores e sócios listados no Sunbiz podem usar o endereço de vocês?', 'Sim. A Flórida pede um endereço de rua para os administradores, diretores e pessoas autorizadas no relatório anual, não um endereço residencial. Com o pacote, sua empresa e as pessoas listadas no registro podem usar nosso endereço na Flórida, e o endereço de casa delas não fica público. Os nomes continuam públicos, e todos que recebem correspondência no nosso endereço precisam estar no Formulário USPS 1583 da empresa.'], ['Posso usar o endereço como endereço da empresa?', 'Sim, no site, nas faturas, no marketing e na correspondência. Alguns bancos e órgãos de licença exigem um local físico; consulte-nos antes de usá-lo para um fim específico.'], ['Já tenho agente registrado. Posso trocar?', 'Sim. Registramos a troca de agente na Flórida em até 1 dia útil após o pedido.']] },
+    faqs: [['É uma assinatura?', 'Sim. Renova automaticamente todo ano no cartão cadastrado, para sua empresa ficar em dia sem você precisar lembrar de nada. Você pode desligar a renovação quando quiser, antes da data de renovação.'], [`O que eu pago além dos US$ ${P.bundle}?`, 'Só a taxa estadual do relatório anual, cobrada pelo custo no envio, e a postagem da correspondência que encaminhamos. As primeiras ${FS} digitalizações de cada mês estão incluídas; as demais só são cobradas se você pedir.'], ['Os administradores e sócios listados no Sunbiz podem usar o endereço de vocês?', 'Sim. A Flórida pede um endereço de rua para os administradores, diretores e pessoas autorizadas no relatório anual, não um endereço residencial. Com o pacote, sua empresa e as pessoas listadas no registro podem usar nosso endereço na Flórida, e o endereço de casa delas não fica público. Os nomes continuam públicos, e todos que recebem correspondência no nosso endereço precisam estar no Formulário USPS 1583 da empresa.'], ['Posso usar o endereço como endereço da empresa?', 'Sim, no site, nas faturas, no marketing e na correspondência. Alguns bancos e órgãos de licença exigem um local físico; consulte-nos antes de usá-lo para um fim específico.'], ['Já tenho agente registrado. Posso trocar?', 'Sim. Registramos a troca de agente na Flórida em até 1 dia útil após o pedido.']] },
   es: { path: 'es/paquete-anual.html', crumb: 'Paquete Anual Empresa al Día', kicker: 'Nuestro plan principal',
     title: `Paquete Anual Empresa al Día: agente registrado, reporte anual y dirección comercial en Florida por US$ ${P.bundle}/año | The Business Clerk`,
     desc: `Una suscripción anual que mantiene tu empresa en Florida al día: agente registrado, reporte anual y dirección comercial con reenvío de correo. US$ ${P.bundle}/año.`,
@@ -113,6 +118,7 @@ Não incluído: a taxa estadual do relatório anual (pelo custo), a postagem da 
 - **Reporte anual presentado por nosotros.** Cada enero abrimos tu reporte anual en el portal; confirmas los cambios y lo presentamos ante Florida antes del 1 de mayo. La tarifa estatal (US$ ${F.llcAnnual} LLC / US$ ${F.corpAnnual} corporación) se cobra al costo al presentar.
 - **Dirección comercial profesional en Florida.** Una dirección real con tu número de buzón privado (PMB) para tu web, facturas, estados de cuenta y marketing.
 - **Reenvío de correo con tu frecuencia.** Cada semana, cada 15 días o cada mes. Juntamos todo lo que llegue y te lo enviamos en un solo paquete. **Solo pagas el franqueo:** sin cargos por sobre, paquete ni reenvío.
+- **Hasta ${FS} escaneos al mes incluidos.** ¿Quieres ver una carta de inmediato? Pídenos abrirla y escanearla a tu portal. Tus primeros ${FS} escaneos de cada mes están incluidos.
 - **Tu portal de cliente.** Cada correo registrado con foto del sobre; documentos y plazos en un solo lugar.
 
 ## Precio
@@ -122,15 +128,16 @@ Não incluído: a taxa estadual do relatório anual (pelo custo), a postagem da 
 | Reporte anual | US$ ${P.annualReport}/año | Incluido |
 | Dirección comercial y correo | US$ ${P.mailBasic}/mes (US$ ${12 * P.mailBasic}/año) | Incluido |
 | Cargos por sobre, paquete y reenvío | Sí | **Ninguno** |
+| Abrir y escanear | US$ ${SCAN} cada uno | **${FS} al mes incluidos** |
 | **Total** | **US$ ${SEP}/año + cargos** | **US$ ${P.bundle}/año** |
 
-No incluye: la tarifa estatal del reporte anual (al costo), el franqueo del correo reenviado (al costo) y, si lo pides, abrir y escanear un artículo (US$ ${SCAN} cada uno).
+No incluye: la tarifa estatal del reporte anual (al costo), el franqueo del correo reenviado (al costo) y los escaneos por encima de ${FS} al mes (US$ ${SCAN} cada uno, hasta ${P.scanPages} páginas; US$ ${P.scanPage} por página extra). Los escaneos no usados no se acumulan.
 
 ## Cómo funciona
 1. **Contrata el paquete** en línea. ¿Empresa nueva? Abre tu LLC primero; el paquete continúa cuando termine el primer año de agente registrado incluido.
 2. **Completa el Formulario USPS 1583** en tu portal (dos identificaciones). El USPS lo exige antes de recibir correo para ti.
 3. **Elige la dirección y la frecuencia de envío.** Nosotros nos encargamos del resto, cada año, hasta que canceles.`,
-    faqs: [['¿Es una suscripción?', 'Sí. Se renueva automáticamente cada año con tu tarjeta registrada, para que tu empresa esté al día sin que tengas que recordar nada. Puedes desactivar la renovación cuando quieras, antes de la fecha de renovación.'], [`¿Qué pago además de los US$ ${P.bundle}?`, 'Solo la tarifa estatal del reporte anual, cobrada al costo al presentar, y el franqueo del correo que te reenviamos. Escanear un artículo es opcional y solo se cobra si lo pides.'], ['¿Los administradores y socios que aparecen en Sunbiz pueden usar su dirección?', 'Sí. Florida pide una dirección de calle para los administradores, directivos y personas autorizadas en el reporte anual, no una dirección residencial. Con el paquete, tu empresa y las personas que aparecen en su registro pueden usar nuestra dirección en Florida, y su dirección de casa no queda pública. Los nombres siguen siendo públicos, y todas las personas que reciban correo en nuestra dirección deben estar en el Formulario USPS 1583 de la empresa.'], ['¿Puedo usar la dirección como dirección de mi empresa?', 'Sí, en tu web, facturas, marketing y correspondencia. Algunos bancos y agencias de licencias exigen un local físico; consúltanos antes de usarla para un fin específico.'], ['Ya tengo agente registrado. ¿Puedo cambiarme?', 'Sí. Presentamos el cambio de agente ante Florida en 1 día hábil desde tu pedido.']] },
+    faqs: [['¿Es una suscripción?', 'Sí. Se renueva automáticamente cada año con tu tarjeta registrada, para que tu empresa esté al día sin que tengas que recordar nada. Puedes desactivar la renovación cuando quieras, antes de la fecha de renovación.'], [`¿Qué pago además de los US$ ${P.bundle}?`, 'Solo la tarifa estatal del reporte anual, cobrada al costo al presentar, y el franqueo del correo que te reenviamos. Tus primeros ${FS} escaneos de cada mes están incluidos; los demás solo se cobran si los pides.'], ['¿Los administradores y socios que aparecen en Sunbiz pueden usar su dirección?', 'Sí. Florida pide una dirección de calle para los administradores, directivos y personas autorizadas en el reporte anual, no una dirección residencial. Con el paquete, tu empresa y las personas que aparecen en su registro pueden usar nuestra dirección en Florida, y su dirección de casa no queda pública. Los nombres siguen siendo públicos, y todas las personas que reciban correo en nuestra dirección deben estar en el Formulario USPS 1583 de la empresa.'], ['¿Puedo usar la dirección como dirección de mi empresa?', 'Sí, en tu web, facturas, marketing y correspondencia. Algunos bancos y agencias de licencias exigen un local físico; consúltanos antes de usarla para un fin específico.'], ['Ya tengo agente registrado. ¿Puedo cambiarme?', 'Sí. Presentamos el cambio de agente ante Florida en 1 día hábil desde tu pedido.']] },
 };
 
 module.exports = { packCard, PACK_CSS: CSS, PAGE, START, T, SEP, SAVE };

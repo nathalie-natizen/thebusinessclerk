@@ -6,6 +6,8 @@ import { MAIL_CATEGORY } from './labels';
 
 // Registered agent legal papers and state notices never count toward the mail plan
 const FREE = ['service_of_process', 'state_notice'];
+// Annual pack: open & scan items included each month (unused scans don't carry over; extra pages still billed)
+export const PACK_FREE_SCANS = 5;
 const money = c => '$' + (c / 100).toFixed(2);
 
 // Pick the cheapest scan level for this many scans (clients never choose a plan; the month-end bill always takes the lowest total)
@@ -28,7 +30,7 @@ export async function buildStatement(entity, start, end, pricing) {
   const extraPages = scanned.reduce((s, i) => s + Math.max(0, (i.pages || 0) - pricing.scan_pages), 0);
   const postage = forwarded.reduce((s, i) => s + (i.postage_cents || 0), 0);
   const lines = [{ label: `Business address & mail plan (${counted.length} item${counted.length === 1 ? '' : 's'} logged, ${pricing.included_items} included)`, cents: entity.mail_service ? pricing.base_cents : 0 }];
-  // Annual pack: no per-item, package or forwarding fees; only postage at cost (and scans, if requested)
+  // Annual pack: no per-item, package or forwarding fees; only postage at cost, plus scans above the included monthly scans
   const pack = !!entity.bundle;
   if (pack) lines[0].label = `Business address & mail (annual pack, prepaid): ${counted.length} item${counted.length === 1 ? '' : 's'} logged, no per-item fees`;
   const over = pack ? 0 : Math.max(0, counted.length - pricing.included_items);
@@ -36,8 +38,11 @@ export async function buildStatement(entity, start, end, pricing) {
   if (packages.length && !pack) lines.push({ label: `Packages received: ${packages.length} × ${money(pricing.package_cents)}`, cents: packages.length * pricing.package_cents });
   if (forwarded.length && !pack) lines.push({ label: `Forwarding: ${forwarded.length} × ${money(pricing.forward_cents)}`, cents: forwarded.length * pricing.forward_cents });
   if (postage) lines.push({ label: 'Postage (at cost)', cents: postage });
-  const lvl = bestScanLevel(scanned.length, pricing);
-  if (lvl) lines.push({ label: `Open & scan: ${scanned.length} scan${scanned.length === 1 ? '' : 's'}, best price ${lvl.name}${lvl.cents ? ` (${money(lvl.cents)} for ${lvl.included})` : ''}${scanned.length > lvl.included ? ` + ${scanned.length - lvl.included} × ${money(lvl.extra_cents)}` : ''}`, cents: lvl.total });
+  const freeScans = pack ? Math.min(PACK_FREE_SCANS, scanned.length) : 0;
+  if (freeScans) lines.push({ label: `Open & scan: ${freeScans} scan${freeScans === 1 ? '' : 's'} included in your annual pack (up to ${PACK_FREE_SCANS} a month)`, cents: 0 });
+  const paidScans = scanned.length - freeScans;
+  const lvl = bestScanLevel(paidScans, pricing);
+  if (lvl) lines.push({ label: `Open & scan${pack ? ' above the included ' + PACK_FREE_SCANS : ''}: ${paidScans} scan${paidScans === 1 ? '' : 's'}, best price ${lvl.name}${lvl.cents ? ` (${money(lvl.cents)} for ${lvl.included})` : ''}${paidScans > lvl.included ? ` + ${paidScans - lvl.included} × ${money(lvl.extra_cents)}` : ''}`, cents: lvl.total });
   if (extraPages) lines.push({ label: `Extra scanned pages (over ${pricing.scan_pages} per item): ${extraPages} × ${money(pricing.page_cents)}`, cents: extraPages * pricing.page_cents });
   const gross = lines.reduce((s, l) => s + l.cents, 0);
   const base = entity.mail_service ? pricing.base_cents : 0;
