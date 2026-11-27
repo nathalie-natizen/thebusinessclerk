@@ -9,13 +9,13 @@ const START = lang => `https://app.thebusinessclerk.com/start?service=bundle&lan
 const T = {
   en: { cur: '$', name: 'Annual Compliance Pack', tag: 'Most popular', per: 'per year', sep: `$${SEP} if bought separately`,
     items: ['Florida registered agent, all year', 'Annual report filed for you before May 1', 'Professional Florida business address', 'Mail forwarding on the schedule you choose', 'Never miss a deadline: renews automatically'],
-    note: 'Plus the Florida annual report state fee, at cost.', cta: 'Get the pack', more: 'See everything included →', href: 'compliance-pack.html' },
+    note: 'Plus Florida state fees and forwarding shipping, at cost.', cta: 'Get the pack', more: 'See everything included →', href: 'compliance-pack.html' },
   pt: { cur: 'US$ ', name: 'Pacote Anual Empresa em Dia', tag: 'Mais escolhido', per: 'por ano', sep: `US$ ${SEP} se contratado separadamente`,
     items: ['Agente registrado na Flórida o ano todo', 'Relatório anual enviado por nós antes de 1º de maio', 'Endereço comercial profissional na Flórida', 'Encaminhamento de correspondência na frequência que você escolher', 'Nunca perca um prazo: renova automaticamente'],
-    note: 'Mais a taxa estadual do relatório anual, pelo custo.', cta: 'Quero o pacote', more: 'Veja tudo o que está incluído →', href: 'pt/pacote-anual.html' },
+    note: 'Mais as taxas estaduais da Flórida e o frete do encaminhamento, pelo custo.', cta: 'Quero o pacote', more: 'Veja tudo o que está incluído →', href: 'pt/pacote-anual.html' },
   es: { cur: 'US$ ', name: 'Paquete Anual Empresa al Día', tag: 'El más elegido', per: 'por año', sep: `US$ ${SEP} si se contrata por separado`,
     items: ['Agente registrado en Florida todo el año', 'Reporte anual presentado por nosotros antes del 1 de mayo', 'Dirección comercial profesional en Florida', 'Reenvío de correo con la frecuencia que elijas', 'Nunca pierdas una fecha límite: se renueva automáticamente'],
-    note: 'Más la tarifa estatal del reporte anual, al costo.', cta: 'Quiero el paquete', more: 'Mira todo lo que incluye →', href: 'es/paquete-anual.html' },
+    note: 'Más las tarifas estatales de Florida y el envío del reenvío, al costo.', cta: 'Quiero el paquete', more: 'Mira todo lo que incluye →', href: 'es/paquete-anual.html' },
 };
 
 const packCard = (lang, rel) => { const t = T[lang]; return `<div class="packcard"><span class="tag">${t.tag}</span><p class="pk-name">${t.name}</p><p class="pk-price">${t.cur}${P.bundle} <small>${t.per}</small></p><p class="pk-sep">${t.sep}</p><ul>${t.items.map(i => `<li>${i}</li>`).join('')}</ul><p class="pk-note">${t.note}</p><a class="btn primary" href="${START(lang)}">${t.cta}</a> <a class="pk-more" href="${rel}${t.href}">${t.more}</a></div>`; };
