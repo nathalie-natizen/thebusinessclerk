@@ -57,7 +57,7 @@ p{margin:0 0 1em}
 .brand{flex:0 1 auto;display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--teal);font-weight:800;letter-spacing:.02em;font-size:15px;line-height:1.1}
 :root:not([data-theme=light]) .brand{color:light-dark(var(--teal),#EEF3F2)}
 .brand small{display:block;font-weight:500;color:var(--soft);font-size:11px;letter-spacing:0;margin-top:3px;max-width:300px;line-height:1.35}
-.mark{width:36px;height:36px;color:var(--teal);flex:none}
+.mark{width:52px;height:52px;color:var(--teal);flex:none}
 nav.main{margin-left:auto;display:flex;gap:2px;flex-wrap:nowrap;flex:none}
 nav.main a{color:var(--ink);text-decoration:none;font-size:14.5px;font-weight:500;padding:10px 9px;border-radius:8px;white-space:nowrap}
 nav.main a:hover,nav.main a[aria-current]{background:var(--sand);color:var(--link)}
@@ -152,7 +152,7 @@ footer .brand{color:#fff}footer .mark{color:#E3EEEC;--mark-text:#0F4C5C}
 @media(max-width:520px){footer .wrap{grid-template-columns:1fr}}
 .pill{display:inline-block;background:var(--sand);color:var(--ink);border-radius:20px;padding:4px 12px;font-size:13.5px;font-weight:600;margin:0 6px 6px 0}
 .scroll{overflow-x:auto}
-@media(max-width:600px){.brand small{display:none}.brand{font-size:13px;white-space:nowrap;gap:8px}.mark{width:30px;height:30px}.top .wrap{gap:8px}.top .wrap{justify-content:space-between}.menu{padding:0 10px;margin-left:2px}table{font-size:14px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 16px;padding-inline-start:9em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:8.5em;margin-inline-start:-8.5em;font-weight:600;white-space:normal}}
+@media(max-width:600px){.brand small{display:none}.brand{font-size:13px;white-space:nowrap;gap:8px}.mark{width:42px;height:42px}.top .wrap{gap:8px}.top .wrap{justify-content:space-between}.menu{padding:0 10px;margin-left:2px}table{font-size:14px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 16px;padding-inline-start:9em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:8.5em;margin-inline-start:-8.5em;font-weight:600;white-space:normal}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.sunrise{animation:none!important}}
 .sunrise{animation:rise 1.6s ease-out both}@keyframes rise{from{transform:translateY(40px);opacity:.2}to{transform:none;opacity:1}}
 `;
