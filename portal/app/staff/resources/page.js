@@ -28,6 +28,7 @@ export default async function ManageResources({ searchParams }) {
       <li><a href="https://dos.fl.gov/sunbiz/" target="_blank" rel="noopener noreferrer">Sunbiz home</a> (e-filing, forms, fees)</li>
       <li><a href="https://www.irs.gov/businesses/small-businesses-self-employed/get-an-employer-identification-number" target="_blank" rel="noopener noreferrer">IRS: get an EIN</a> (online application and SS-4)</li>
     </ul><p className="muted" style={{ marginBottom: 0 }}>Add the Sunbiz prepaid account login page, the USPS CMRA customer database and your county court lookups below as "Staff only".</p></section>
+    <p><a className="btn small sec" href="/staff/network">Trusted network (partners and introduction requests)</a></p>
     <h2>Manage links</h2>
     <p className="sub">"Clients and staff" links show on everyone's Resources page. "Staff only" links show only to staff.</p>
     {searchParams?.error && <div className="note">{searchParams.error}</div>}
