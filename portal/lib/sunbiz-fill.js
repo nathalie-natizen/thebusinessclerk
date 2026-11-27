@@ -8,7 +8,7 @@ export const country = c => COUNTRY[c] || c || '';
 // Position of the matching option in the form's role list (corp: President, Director, Secretary, Treasurer; LLC: Manager, Authorized member)
 export function roleIndex(title, corp) {
   const t = String(title || '').toUpperCase();
-  if (corp) return { P: 0, D: 1, C: 1, S: 2, T: 3 }[t];
+  if (corp) { const c = { P: 0, D: 1, C: 1, S: 2, T: 3 }[t]; if (c !== undefined) return c; if (/^PRES|^CEO|^VP|^VICE/.test(t)) return 0; if (/^DIR|^CHAIR/.test(t)) return 1; if (/^SEC/.test(t)) return 2; if (/^TREAS|^CFO/.test(t)) return 3; return undefined; }
   if (t.startsWith('MGR')) return 0;
   if (['AMBR', 'MBR', 'AP', 'MEM', 'MMBR'].includes(t)) return 1;
   return undefined;

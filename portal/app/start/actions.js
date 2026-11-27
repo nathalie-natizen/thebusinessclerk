@@ -25,16 +25,25 @@ export async function submitIntake(_prev, fd) {
   if (!g('contact_name') || !/^\S+@\S+\.\S+$/.test(email) || !g('company') || fd.get('terms') !== 'on' || fd.get('service_terms') !== 'on' || !g('sign_name')) return { error: 'required' };
   if (FORMATION.includes(service) && (!g('p1_name') || !g('name2') || !g('signer'))) return { error: 'required' };
 
-  const people = [1, 2, 3, 4].map(i => ({ name: g(`p${i}_name`), title: g(`p${i}_title`), address: g(`p${i}_address`, 300) })).filter(p => p.name);
+  const people = [1, 2, 3, 4, 5, 6].map(i => ({ name: g(`p${i}_name`), title: g(`p${i}_title`), address: g(`p${i}_address`, 300) })).filter(p => p.name);
   const useOurs = fd.get('use_our_address') === 'on' && (service === 'mail' || service === 'bundle' || addons.includes('mail'));
   const details = {
     service, addons, company: g('company'), names: [g('company'), g('name2'), g('name3')].filter(Boolean), ending: g('ending', 40) || null,
     use_backup: fd.get('use_backup') === 'on', management: g('management'), shares: g('shares', 20), par: g('par', 20), incorporator: g('incorporator'), s_corp: g('s_corp'),
     effective_date: g('effective_date', 10), signer: g('signer'), mailing_address: g('mailing_address'), sunbiz_doc_number: g('doc'), purpose: g('purpose', 300),
     principal_address: useOurs ? 'Use THE BUSINESS CLERK office address' : [g('line1'), g('line2'), g('city'), g('state'), g('postal'), g('country')].filter(Boolean).join(', '),
-    people, contact: { name: g('contact_name'), email, phone: g('phone', 40), language: lang }, notes: g('notes', 2000),
+    people, contact: { name: g('contact_name'), email, phone: g('phone', 40), language: lang }, notes: g('notes', 2000), fein: g('fein', 12) || null,
     ip: headers().get('x-forwarded-for')?.split(',')[0] || null, submitted_at: new Date().toISOString(), terms_accepted: true, service_terms_version: GUIDELINES_VERSION,
   };
+
+  // Annual report: the order form doubles as the questionnaire (what changed + who authorizes), so the order starts right away
+  if (service === 'annual_report') {
+    const AR = { principal: 'Principal address', mailing: 'Mailing address', people: 'Managers, members or officers', fein: 'FEIN' };
+    const changed = Object.keys(AR).filter(k => fd.get('ar_' + k) === 'on');
+    if (!g('ar_signer')) return { error: 'required' };
+    details.ar_changes = changed;
+    details.q = { changes: changed.length ? 'Yes (describe below)' : 'No changes', change_details: changed.map(k => `${AR[k]}: ${k === 'principal' ? details.principal_address : k === 'mailing' ? details.mailing_address : k === 'fein' ? details.fein : people.map(p => `${p.name} (${p.title})${p.address ? ' · ' + p.address : ''}`).join('; ')}`).join('\n'), signer: g('ar_signer') };
+  }
 
   const db = supabaseAdmin();
   const { data: entity, error } = await db.from('entities').insert({
@@ -52,7 +61,7 @@ export async function submitIntake(_prev, fd) {
   const canPay = !!process.env.STRIPE_SECRET_KEY && kinds.every(k => pr[k]);
   const orders = [];
   for (const k of kinds) {
-    const { data: o } = await db.from('orders').insert({ entity_id: entity.id, kind: k, service: KINDS[k].name, status: canPay ? 'awaiting_payment' : needsQuestionnaire(k) ? 'information_needed' : 'received', source: 'website', details: k === service ? details : { parent_service: service, service_terms_version: GUIDELINES_VERSION } }).select().single();
+    const { data: o } = await db.from('orders').insert({ entity_id: entity.id, kind: k, service: KINDS[k].name, status: canPay ? 'awaiting_payment' : needsQuestionnaire(k) && !(k === service && details.q) ? 'information_needed' : 'received', source: 'website', details: k === service ? details : { parent_service: service, service_terms_version: GUIDELINES_VERSION } }).select().single();
     await db.from('order_events').insert({ order_id: o.id, status: o.status, note: o.status === 'information_needed' ? 'Order placed. Please complete the short questionnaire in your portal so we can start.' : 'Order placed on the website.' });
     orders.push(o);
   }

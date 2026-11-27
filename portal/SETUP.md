@@ -52,6 +52,8 @@ Security: every table uses row level security (clients only ever see their own c
 Without EasyPost, tracking numbers still show as a link to the carrier's site; statuses just don't update automatically.
 
 ## Florida company lookup (Sunbiz records)
+
+The order form and staff "New entity" look companies up **live** on Sunbiz's public search pages (`lib/sunbiz-live.js`), so nothing below is needed to start. The data-file copy below is an optional backup, used automatically only if Sunbiz is unreachable or blocks the live lookup. The sync workflow skips itself until the secret is added.
 The order form ("Find your company in the Florida records") and Staff → New entity search our own copy of the state's public data files. The state publishes them free on its SFTP server (no API); a GitHub Action loads them into Supabase.
 1. **Supabase plan:** the full list of Florida companies (active ones plus inactive ones from the last 5 years) needs roughly 2–4 GB of database space, more than the free plan's 500 MB. Use the Pro plan (8 GB included).
 2. **SQL Editor:** run `supabase/23_sunbiz_registry.sql`.

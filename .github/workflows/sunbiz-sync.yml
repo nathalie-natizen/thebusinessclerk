@@ -17,12 +17,16 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    # Backup source: the order form looks up Sunbiz live. This sync only runs once the secret is added (then the data files are the fallback).
+    env: { HAS_DB: "${{ secrets.SUPABASE_DB_URL != '' }}" }
     defaults: { run: { working-directory: portal/scripts/sunbiz } }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - run: npm ci --no-audit --no-fund
-      - run: node sync.mjs ${{ inputs.mode || (github.event.schedule == '0 8 15 1,4,7,10 *' && 'full' || 'daily') }}
+      - if: env.HAS_DB == 'true'
+        run: npm ci --no-audit --no-fund
+      - if: env.HAS_DB == 'true'
+        run: node sync.mjs ${{ inputs.mode || (github.event.schedule == '0 8 15 1,4,7,10 *' && 'full' || 'daily') }}
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}

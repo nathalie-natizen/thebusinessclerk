@@ -33,7 +33,15 @@ export default function SunbizLookup({ lang = 'en', onPick }) {
     return () => { clearTimeout(timer); ctl.abort(); };
   }, [q, by, picked]);
 
-  function choose(r) { setPicked(r); onPick?.(r, box.current?.closest('form')); }
+  // Name results from the live lookup are partial (name, document #, status): load the full record before filling the form
+  async function choose(r) {
+    let full = r;
+    if (r.partial) {
+      setState(s => ({ ...s, status: 'searching' }));
+      try { const j = await (await fetch(`/api/sunbiz/search?doc=${encodeURIComponent(r.doc_number)}`)).json(); if (j.results?.[0]) full = j.results[0]; } catch { /* keep the partial record */ }
+    }
+    setPicked(full); onPick?.(full, box.current?.closest('form'));
+  }
 
   return (<div ref={box} className="stack" style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 16, background: 'var(--sand)' }}>
     <div><p style={{ fontWeight: 700, margin: 0 }}>{t.h}</p><p className="muted" style={{ margin: 0 }}>{t.help}</p></div>

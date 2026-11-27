@@ -34,9 +34,9 @@ export async function POST(req) {
     const s = event.data.object; const entityId = s.metadata.entity_id;
     if (s.customer) await db.from('entities').update({ stripe_customer_id: s.customer }).eq('id', entityId).is('stripe_customer_id', null);
     const ids = s.metadata.order_ids.split(',').filter(Boolean);
-    const { data: orders } = await db.from('orders').select('id, kind, status').in('id', ids);
+    const { data: orders } = await db.from('orders').select('id, kind, status, details').in('id', ids);
     for (const o of orders || []) if (o.status === 'awaiting_payment') {
-      const q = needsQuestionnaire(o.kind);
+      const q = needsQuestionnaire(o.kind) && !o.details?.q;
       await setOrderStatus({ orderId: o.id, status: q ? 'information_needed' : 'received', note: q ? 'Payment received. Please complete the short questionnaire in your portal so we can start.' : 'Payment received. We\u2019re starting on it.' });
     }
     const { data: ent } = await db.from('entities').select('legal_name, file_number, contact_name, contact_email').eq('id', entityId).single();

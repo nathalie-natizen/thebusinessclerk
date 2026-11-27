@@ -8,6 +8,7 @@ import { headings } from '@/lib/guidelines';
 import { buildAgreement } from '@/lib/agreement';
 import AgreementBox from '@/components/AgreementBox';
 import SunbizLookup from '@/components/SunbizLookup';
+import AnnualReportChanges from '@/components/AnnualReportChanges';
 import { isCorp, personName, oneLine, country, roleIndex, fillForm } from '@/lib/sunbiz-fill';
 
 const AG = {
@@ -67,9 +68,10 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
       <label>{t.effective}<input name="effective_date" type="date" /></label>
     </> : <label>{existing ? t.nameExisting : t.name}{R}<input name="company" required maxLength={200} value={company} onChange={e => setCompany(e.target.value)} /></label>}
     {existing && <label>{t.doc}<input name="doc" maxLength={20} /></label>}
+    {service === 'annual_report' && <AnnualReportChanges lang={lang} record={picked} roles={t.roles[corpRoles ? 'corp' : 'llc']} corp={corpRoles} />}
     {formation && <label>{t.purpose}<input name="purpose" maxLength={300} /></label>}
 
-    {(formation || service === 'annual_report') && <>
+    {formation && <>
       <h2>{t.principal}</h2><p className="muted">{t.principalHelp}</p>
       {hasMail && <label style={{ display: 'flex', gap: 10, fontWeight: 400 }}><input type="checkbox" name="use_our_address" style={{ minHeight: 'auto' }} />{t.useOurs}</label>}
       <label>{t.line1}<input name="line1" autoComplete="address-line1" /></label>
@@ -79,7 +81,7 @@ export default function IntakeForm({ t, lang, initial, payReady }) {
       {formation && <label>{t.mailing}<input name="mailing_address" /></label>}
     </>}
 
-    {(formation || service === 'annual_report') && <>
+    {formation && <>
       <h2>{t.people}</h2><p className="muted">{t.peopleHelp}</p>
       {[1, 2, 3, 4].map(i => <div key={i} className="row" style={{ alignItems: 'end' }}>
         <label>{t.pname}{i === 1 && formation && R}<input name={`p${i}_name`} required={i === 1 && formation} /></label>

@@ -17,7 +17,7 @@ export default function OrderDetails({ d, kind, orderId }) {
         {row('Sunbiz doc #', d.sunbiz_doc_number)}{row('Business purpose', d.purpose)}{row('Management', d.management)}
         {row('Shares / par value', d.shares ? `${d.shares} shares, par ${d.par || 'none'}` : null)}{row('Incorporator', d.incorporator)}{row('S-corp election', d.s_corp)}
         {row('Effective date', d.effective_date)}{row('Authorized signer', d.signer)}
-        {row('Add-ons', (d.addons || []).map(a => KINDS[a]?.name || a).join(', '))}{row('Principal address', addr(d.principal_address) || (d.service ? 'Not provided' : null))}{row('Mailing address', addr(d.mailing_address) || (d.service ? 'Same as principal' : null))}
+        {row('Add-ons', (d.addons || []).map(a => KINDS[a]?.name || a).join(', '))}{row('Principal address', addr(d.principal_address) || (d.service && kind !== 'annual_report' ? 'Not provided' : null))}{row('Mailing address', addr(d.mailing_address) || (d.service && kind !== 'annual_report' ? 'Same as principal' : null))}{row('FEIN', d.fein)}{row('What changed (annual report)', d.ar_changes ? (d.ar_changes.length ? d.ar_changes.join(', ') : 'Nothing: file as on record') : null)}
         {row('People', (d.people || []).length ? d.people.map(p => `${p.name} (${p.title})${p.address ? ' · ' + p.address : ''}`).join('\n') : null)}
         {row('Contact', [d.contact?.name, d.contact?.email, d.contact?.phone, d.contact?.language?.toUpperCase()].filter(Boolean).join(' · '))}
         {row('Notes', d.notes)}{row('Submitted', d.submitted_at && new Date(d.submitted_at).toLocaleString('en-US', { timeZone: 'America/New_York' }))}
