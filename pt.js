@@ -17,7 +17,8 @@ const home = homeL('pt', {
   svcP: 'Em vez de contratar vários fornecedores, você resolve tudo em um só lugar e mantém sua empresa em dia, ano após ano.',
   services: [
     ['agent', 'Agente Registrado na Flórida', 'Nosso escritório na Flórida recebe sua correspondência legal e do estado, digitaliza e avisa você no mesmo dia.', 'pt/agente-registrado-florida.html', `${$(P.raAnnual)}/ano`],
-    ['form', 'Abertura de LLC e Corporação', 'Registramos seus Articles na Divisão de Corporações da Flórida e atuamos como seu agente registrado.', 'pt/abrir-llc-na-florida.html', `${$(P.formation)} tudo incluído`],
+    ['form', 'Abertura de LLC na Flórida', 'Registramos seus Articles of Organization na Divisão de Corporações da Flórida e atuamos como seu agente registrado.', 'pt/abrir-llc-na-florida.html', `${$(P.formation)} tudo incluído`],
+    ['form', 'Abertura de Corporação na Flórida', 'Registramos seus Articles of Incorporation no estado da Flórida e atuamos como seu agente registrado.', 'pt/precos.html', `${$(P.formationCorp)} tudo incluído`],
     ['globe', 'Empreendedores Internacionais', 'Mora fora dos EUA? Abra sua LLC na Flórida à distância, com EIN sem SSN.', 'pt/empreendedores-internacionais.html', '100% remoto'],
     ['cal', 'Relatório Anual e Registros', 'Relatório anual automático, alterações, troca de agente, reativação e encerramento.', 'pt/precos.html', `Relatório anual ${$(P.annualReport)}`, 'Ver preços →'],
     ['mail', 'Endereço Comercial e Correspondência', 'Endereço comercial na Flórida. Você escolhe para cada carta: reenviar, abrir e digitalizar ou fragmentar.', 'pt/precos.html', `${$(P.mailBasic)}/mês`, 'Ver preços →'],
