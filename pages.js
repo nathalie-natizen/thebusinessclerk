@@ -310,7 +310,7 @@ pages.push(servicePage({
 ## Ongoing compliance
 - **Florida registered agent: $${P.raAnnual}/year**
 - **Annual report filing: $${P.annualReport}** per filing, plus the state fee ($${F.llcAnnual} LLC, $${F.corpAnnual} corporation)
-- **[Annual Compliance Pack](compliance-pack.html): $${P.bundle}/year, our most popular plan.** Registered agent, annual report filing and a Florida business address with mail forwarded on your schedule, in one yearly subscription (you save $${P.raAnnual + P.annualReport + 12 * P.mailBasic - P.bundle}). No per-envelope, package or forwarding fees, and up to ${P.packScans} scans a month included: you pay only postage and the annual report state fee.
+- **[Annual Compliance Pack](compliance-pack.html): $${P.bundle}/year, our most popular plan.** Registered agent, annual report filing and a Florida business address with mail forwarded on your schedule, in one yearly subscription (you save $${P.raAnnual + P.annualReport + 12 * P.mailBasic - P.bundle}). No per-envelope, package or forwarding fees: you pay only postage and the annual report state fee.
 > Registered agent service, annual report filing and the annual bundle renew automatically by default, so your company stays in good standing without you having to do anything. You can turn off auto-renew anytime.
 ## Address & mail
 - Business address & mail: **$${P.mailBasic}/month**, ${P.mailIncluded} items logged with envelope photo (then $${P.mailOverItem}/item)
