@@ -17,7 +17,7 @@ const L = {
   en: {
     locale: 'en_US', home: 'Home', faq: 'Frequently asked questions', getStarted: 'Get started', portal: 'Client login', menu: 'Menu', skip: 'Skip to content',
     subtitle: 'Florida Registered Agent & Business Filings',
-    nav: [{ label: 'Start a business', items: [['florida-llc-formation.html', 'Form a Florida LLC'], ['florida-corporation-formation.html', 'Form a Florida corporation'], ['international-founders.html', 'International founders']] }, { label: 'Stay compliant', items: [['compliance-pack.html', 'Annual Compliance Pack', 1], ['florida-registered-agent.html', 'Registered agent'], ['florida-annual-report.html', 'Annual report'], ['business-filings.html', 'Other Florida filings']] }, ['business-address-mail.html', 'Address & Mail'], ['pricing.html', 'Pricing'], ['resources/index.html', 'Guides']],
+    nav: [{ label: 'Start a business', items: [['florida-llc-formation.html', 'Form a Florida LLC'], ['florida-corporation-formation.html', 'Form a Florida corporation'], ['international-founders.html', 'International founders']] }, { label: 'Stay compliant', items: [['compliance-pack.html', 'Annual Essentials Pack', 1], ['florida-registered-agent.html', 'Registered agent'], ['florida-annual-report.html', 'Annual report'], ['business-filings.html', 'Other Florida filings']] }, ['business-address-mail.html', 'Address & Mail'], ['pricing.html', 'Pricing'], ['resources/index.html', 'Guides']],
     ctaH: 'Ready to make it official?', ctaP: 'Form your Florida company, name us as your registered agent and get a real business address, all in one place.',
     footAbout: 'Florida registered agent, business formation and filing services for founders in the U.S. and abroad.', email: 'Email',
     fServices: 'Services', fCompany: 'Company', fLegal: 'Legal',
@@ -31,7 +31,7 @@ const L = {
   pt: {
     locale: 'pt_BR', home: 'Início', faq: 'Perguntas frequentes', getStarted: 'Começar', portal: 'Área do cliente', menu: 'Menu', skip: 'Ir para o conteúdo',
     subtitle: 'Agente Registrado e Registros Empresariais na Flórida',
-    nav: [{ label: 'Abrir empresa', items: [['pt/abrir-llc-na-florida.html', 'Abrir uma LLC na Flórida'], ['pt/empreendedores-internacionais.html', 'Empreendedores internacionais']] }, { label: 'Empresa em dia', items: [['pt/pacote-anual.html', 'Pacote Anual Empresa em Dia', 1], ['pt/agente-registrado-florida.html', 'Agente registrado']] }, ['pt/precos.html', 'Preços'], ['pt/guias/index.html', 'Guias']],
+    nav: [{ label: 'Abrir empresa', items: [['pt/abrir-llc-na-florida.html', 'Abrir uma LLC na Flórida'], ['pt/empreendedores-internacionais.html', 'Empreendedores internacionais']] }, { label: 'Empresa em dia', items: [['pt/pacote-anual.html', 'Pacote Anual Essencial', 1], ['pt/agente-registrado-florida.html', 'Agente registrado']] }, ['pt/precos.html', 'Preços'], ['pt/guias/index.html', 'Guias']],
     ctaH: 'Pronto para oficializar sua empresa?', ctaP: 'Abra sua empresa na Flórida, nomeie-nos como agente registrado e tenha um endereço comercial real, tudo em um só lugar.',
     footAbout: 'Agente registrado, abertura de empresas e registros na Flórida para empreendedores nos EUA e no exterior.', email: 'E-mail',
     fServices: 'Serviços', fCompany: 'Empresa', fLegal: 'Legal (em inglês)',
@@ -45,7 +45,7 @@ const L = {
   es: {
     locale: 'es_US', home: 'Inicio', faq: 'Preguntas frecuentes', getStarted: 'Empezar', portal: 'Portal del cliente', menu: 'Menú', skip: 'Ir al contenido',
     subtitle: 'Agente Registrado y Trámites Empresariales en Florida',
-    nav: [{ label: 'Abrir empresa', items: [['es/abrir-llc-en-florida.html', 'Abrir una LLC en Florida'], ['es/emprendedores-internacionales.html', 'Emprendedores internacionales']] }, { label: 'Empresa al día', items: [['es/paquete-anual.html', 'Paquete Anual Empresa al Día', 1], ['es/agente-registrado-florida.html', 'Agente registrado']] }, ['es/precios.html', 'Precios'], ['es/guias/index.html', 'Guías']],
+    nav: [{ label: 'Abrir empresa', items: [['es/abrir-llc-en-florida.html', 'Abrir una LLC en Florida'], ['es/emprendedores-internacionales.html', 'Emprendedores internacionales']] }, { label: 'Empresa al día', items: [['es/paquete-anual.html', 'Paquete Anual Esencial', 1], ['es/agente-registrado-florida.html', 'Agente registrado']] }, ['es/precios.html', 'Precios'], ['es/guias/index.html', 'Guías']],
     ctaH: '¿Listo para formalizar tu empresa?', ctaP: 'Forma tu empresa en Florida, nómbranos tu agente registrado y obtén una dirección comercial real, todo en un solo lugar.',
     footAbout: 'Agente registrado, formación de empresas y trámites en Florida para emprendedores en EE. UU. y el extranjero.', email: 'Correo',
     fServices: 'Servicios', fCompany: 'Empresa', fLegal: 'Legal (en inglés)',
