@@ -21,7 +21,7 @@ for (const p of all) {
 }
 if (fs.existsSync(path.join(__dirname, 'assets'))) fs.cpSync(path.join(__dirname, 'assets'), OUT, { recursive: true });
 fs.writeFileSync(path.join(OUT, 'styles.css'), CSS);
-fs.writeFileSync(path.join(OUT, 'favicon.svg'), logo.replace('class="mark" ', 'xmlns="http://www.w3.org/2000/svg" ').replace('currentColor', '#0F4C5C'));
+fs.writeFileSync(path.join(OUT, 'favicon.svg'), logo.replace('class="mark" ', 'xmlns="http://www.w3.org/2000/svg" ').replace('currentColor', '#0F4C5C').replace('var(--mark-text,#fff)', '#FFFFFF'));
 const today = new Date().toISOString().slice(0, 10);
 const urls = all.filter(p => p.path !== '404.html').map(p => C.domain + '/' + p.path.replace(/index\.html$/, '').replace(/\.html$/, ''));
 fs.writeFileSync(path.join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join('\n')}\n</urlset>\n`);
