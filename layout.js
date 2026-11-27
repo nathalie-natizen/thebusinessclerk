@@ -78,7 +78,7 @@ nav.main a:hover,nav.main a[aria-current]{background:var(--sand);color:var(--lin
 @media(max-width:1300px){nav.main{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:var(--bg);padding:10px max(5vw,18px) 18px;border-bottom:1px solid var(--line)}nav.main.open{display:flex}.dd>button{display:block;width:100%;text-align:left;font-weight:700;cursor:default}.dd>button:after{display:none}.ddm{display:flex;position:static;box-shadow:none;border:0;padding:0 0 4px 12px;min-width:0}.menu{display:block}.top .cta{display:none}.menu{margin-left:auto}}
 /* hero */
 .hero{background:var(--teal);color:#F3F7F6;position:relative;overflow:hidden}
-.hero .wrap{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);align-items:center}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(24px,4vw,56px);align-items:center}
 .hero h1{color:#fff}.hero p.lead{font-size:clamp(17px,1.6vw,19.5px);color:#D6E6E4;max-width:34em}
 .hero .actions{display:flex;gap:12px;flex-wrap:wrap;margin:26px 0 22px}
 .hero .ghost{color:#fff}
